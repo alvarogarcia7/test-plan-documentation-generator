@@ -1,0 +1,28 @@
+image: rust:latest
+
+stages:
+  - ci
+
+variables:
+  RUST_BACKTRACE: "1"
+  CARGO_INCREMENTAL: "0"
+
+before_script:
+  - rustc --version
+  - cargo --version
+  - rustup component add rustfmt
+  - rustup component add clippy
+
+ci:
+  stage: ci
+  script:
+    - cargo fmt -- --check
+    - cargo clippy --all-targets --all-features -- -D warnings
+    - cargo build --release
+    - cargo test --verbose
+  artifacts:
+    paths:
+      - target/release/test-plan-doc-gen
+    expire_in: 1 day
+  coverage: '/(\d+\.\d+)% coverage/'
+  allow_failure: false
