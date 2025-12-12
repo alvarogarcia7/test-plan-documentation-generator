@@ -1,0 +1,18 @@
+---
+source: src/main.rs
+assertion_line: 572
+expression: output
+---
+# TestSuite v2
+
+## Features
+
+- login
+
+- logout
+
+- registration
+
+
+Author: TestTeam
+Date: 2025-12-12

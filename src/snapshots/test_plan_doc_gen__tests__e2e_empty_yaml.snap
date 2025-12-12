@@ -1,0 +1,6 @@
+---
+source: src/main.rs
+assertion_line: 822
+expression: output
+---
+Static Content Only

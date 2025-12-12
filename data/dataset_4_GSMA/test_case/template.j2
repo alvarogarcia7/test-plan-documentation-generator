@@ -1,0 +1,30 @@
+## Test Case: {{ id }}
+
+**Requirement**: {{ requirement }}
+
+**Item**: {{ item }}
+
+## Description
+
+{{ description }}
+
+
+## General Initial Conditions
+
+| **Entity** | **Description of the general initial condition** |
+| ------------- | --------- |
+{% for k,v in initial_conditions -%}
+| {{ k }} | {{ v }} |
+{%- endfor %}
+
+{% for ts in test_sequences %}
+## Test Sequence {{ ts.id }} {{ ts.name }}
+
+{{ ts.description }}
+
+| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
+| --------------- | ---------- | ------------------- | --------------------|
+{% for step in ts.steps -%}
+| {{ step.step }} | {{ step.description }} | {{ step.expected.result }} | {{ step.expected.output }} |
+{% endfor %}
+{% endfor %}

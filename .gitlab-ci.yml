@@ -34,7 +34,7 @@ ci:
     - cargo fmt -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
     - cargo build --release
-    - cargo test --verbose
+    - cargo test --release --verbose
   artifacts:
     paths:
       - target/release/test-plan-doc-gen

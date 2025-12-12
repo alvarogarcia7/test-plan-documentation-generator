@@ -1,0 +1,7 @@
+---
+source: src/main.rs
+assertion_line: 868
+expression: output
+---
+Name: TEST USER
+Count: 42

@@ -1,0 +1,7 @@
+---
+source: src/main.rs
+assertion_line: 508
+expression: stdout
+---
+# Test Report
+Version: 1
