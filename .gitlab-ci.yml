@@ -4,6 +4,8 @@ stages:
   - ci
 
 variables:
+  # Move cargo data into the project directory so it can be cached by the runner
+  CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
   RUST_BACKTRACE: "1"
   CARGO_INCREMENTAL: "0"
 
@@ -12,6 +14,19 @@ before_script:
   - cargo --version
   - rustup component add rustfmt
   - rustup component add clippy
+
+default:
+  # Use the commit reference slug (branch/tag name) as the cache key
+  cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+      # Cache the cargo home directory which contains registries and bins
+      - .cargo
+      # Cache the build artifacts directory
+      - target
+    # This ensures the cache is available to all jobs in the pipeline
+    policy: pull-push
+
 
 ci:
   stage: ci
