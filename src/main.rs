@@ -56,7 +56,10 @@ fn main() -> Result<()> {
     // Output result
     if let Some(output_path) = args.output {
         std::fs::write(&output_path, &rendered)?;
-        println!("Template rendered successfully to {}", output_path.display());
+        println!(
+            "Template rendered successfully to {}",
+            output_path.display()
+        );
     } else {
         println!("{}", rendered);
     }
