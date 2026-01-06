@@ -18,15 +18,16 @@ check:
 	cargo check
 
 test: build
-	cargo test
-		$(MAKE) test-e2e
+	cargo test --release --all-features --tests
+	$(MAKE) test-e2e
 .PHONY: test
 
 test-e2e:
 	./target/release/test-plan-doc-gen \
 	--output ./data/dataset_4_GSMA/output.actual.md \
 	--container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
-	--test-case ./data/dataset_4_GSMA/test_case/schema.json ./data/dataset_4_GSMA/test_case/template.j2 ./data/dataset_4_GSMA/test_case/*yml
+	--test-case ./data/dataset_4_GSMA/test_case/schema.json ./data/dataset_4_GSMA/test_case/template.j2 ./data/dataset_4_GSMA/test_case/*yml \
+	3>log_3.log
 	diff ./data/dataset_4_GSMA/output.actual.md ./data/dataset_4_GSMA/output.expected.md
 .PHONY: test-e2e
 

@@ -1,10 +1,11 @@
-// src/main.rs
 use anyhow::Result;
 use clap::Parser;
 use jsonschema::JSONSchema;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
 use std::fs;
+use std::fs::File;
+use std::os::unix::io::FromRawFd;
 use std::path::PathBuf;
 use std::process::exit;
 use tera::Context;
@@ -35,10 +36,32 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
+// Helper to get a File for fd 3 (do not close on drop)
+fn log_file() -> File {
+    // SAFETY: We must not close fd 3, so we use into_raw_fd to avoid double-close.
+    unsafe { File::from_raw_fd(3) }
+}
+
+// Logging macro
+macro_rules! log_fd3 {
+    ($($arg:tt)*) => {{
+        use std::io::Write;
+        let mut file = log_file();
+        let _ = writeln!(file, $($arg)*);
+        std::mem::forget(file); // Prevent closing fd 3
+    }};
+}
+
 fn main() -> Result<()> {
+    log_fd3!("Starting test-plan-doc-gen");
     tracing_subscriber::fmt::init();
 
+    // Log the raw arguments before parsing
+    let raw_args: Vec<String> = std::env::args().collect();
+    log_fd3!("Raw arguments: {:?}", raw_args);
+
     let args = Args::parse();
+    log_fd3!("Parsed arguments: {:?}", args);
 
     // Parse container arguments
     let container_schema = &args.container[0];
@@ -73,22 +96,28 @@ fn main() -> Result<()> {
         rest_test_case_files.iter().collect::<Vec<_>>(),
     ]
     .concat();
-    for file in all_files {
+    log_fd3!("Checking file existence...");
+    for file in &all_files {
         if !file.exists() {
             missing_files.push(file.display().to_string());
         }
     }
     if !missing_files.is_empty() {
-        eprintln!(
-            "Error: The following files do not exist:\n{}",
-            missing_files.join("\n")
-        );
+        let message = "Error: The following files do not exist:\n{}";
+        let missing_files_as_str = missing_files.join("\n");
+        log_fd3!("{} {}", message, missing_files_as_str);
+        eprintln!("{} {}", message, missing_files_as_str);
         exit(2);
     }
+    log_fd3!("All files exist, proceeding.");
 
     // --- Render all test-case files into a temporary `output.md` ---
     // Read and compile the test-case template
     let test_case_template_path = test_case_template.expect("test_case_template must exist");
+    log_fd3!(
+        "Loading test-case template from: {}",
+        test_case_template_path.display()
+    );
     let tc_template_str = fs::read_to_string(test_case_template_path)?;
     let mut tc_tera = Tera::default();
     tc_tera.add_raw_template("tc_template", &tc_template_str)?;
@@ -104,7 +133,8 @@ fn main() -> Result<()> {
 
     let mut concatenated = String::new();
     let mut first = true;
-    for file in tc_files {
+    for file in &tc_files {
+        log_fd3!("Loading test-case data from: {}", file.display());
         let content = fs::read_to_string(file)?;
         // Try to parse as YAML; if parsing fails, treat it as empty context
         let yaml_val: YamlValue =
@@ -127,6 +157,7 @@ fn main() -> Result<()> {
         tc_context.insert("data", &json_value_full);
 
         // Render
+        log_fd3!("Rendering test-case template for: {}", file.display());
         let rendered = tc_tera.render("tc_template", &tc_context)?;
         if !first {
             concatenated.push_str("\n\n");
@@ -134,6 +165,7 @@ fn main() -> Result<()> {
         first = false;
         concatenated.push_str(&rendered);
     }
+    log_fd3!("Rendering test-case files: {:?}", tc_files);
 
     // Create a unique temporary directory under the OS temp dir and write output.md
     let unique = format!(
@@ -142,16 +174,22 @@ fn main() -> Result<()> {
             .duration_since(std::time::UNIX_EPOCH)?
             .as_nanos()
     );
-    let tmp_dir = std::env::temp_dir().join(unique);
+    let tmp_dir = std::env::temp_dir().join(&unique);
+    log_fd3!("Created temporary folder: {:?}", unique);
     fs::create_dir_all(&tmp_dir)?;
     let output_md_path = tmp_dir.join("output.md");
     fs::write(&output_md_path, &concatenated)?;
+    log_fd3!(
+        "Rendered test-case markdown to: {}",
+        output_md_path.display()
+    );
 
     // Make the rendered test-cases available to container template via context
     // under `test_cases_md` (string) and `test_cases_path` (path string)
     // These will be inserted into the container context later.
 
     // Load YAML data from the container file
+    log_fd3!("Loading container data from: {}", container_file.display());
     let yaml_str = fs::read_to_string(container_file)?;
     let yaml_data: YamlValue = serde_yaml::from_str(&yaml_str)?;
 
@@ -168,14 +206,18 @@ fn main() -> Result<()> {
     let schema_box = Box::new(schema_json);
     let schema_static: &'static JsonValue = Box::leak(schema_box);
     let compiled = JSONSchema::compile(schema_static).map_err(|e| anyhow::anyhow!(e))?;
-    let result = compiled.validate(&json_value);
-    if let Err(errors) = result {
+    log_fd3!("Validating container file against schema...");
+    if let Err(errors) = compiled.validate(&json_value) {
+        log_fd3!("Schema validation: INVALID");
         eprintln!("Error: JSON Schema validation failed for container file:");
         for err in errors {
             eprintln!(" - {}", err);
         }
         exit(3);
+    } else {
+        log_fd3!("Schema validation: VALID");
     }
+    log_fd3!("Validation successful.");
 
     // Convert YAML data to Tera context
     // We convert through JSON to ensure proper serialization for Tera
@@ -184,6 +226,7 @@ fn main() -> Result<()> {
     if let YamlValue::Mapping(map) = yaml_data {
         for (key, value) in map {
             if let Some(key_str) = key.as_str() {
+                log_fd3!("\tFound key: {}", key_str);
                 // Convert YAML value to JSON value for proper Tera serialization
                 let json_str = serde_json::to_string(&value)?;
                 let json_value: JsonValue = serde_json::from_str(&json_str)?;
@@ -208,13 +251,17 @@ fn main() -> Result<()> {
     let rendered = tera.render("template", &context)?;
 
     // Write the output
+    log_fd3!("Rendering container template...");
     if let Some(output_path) = args.output {
+        log_fd3!("Rendering container to file...");
         fs::write(&output_path, &rendered)?;
         println!(
             "Template rendered successfully to {}",
             output_path.display()
         );
+        log_fd3!("Rendered output, writing to {:?}", output_path);
     } else {
+        log_fd3!("Rendering container to console. You can .... 3>log_fd3.txt to ignore the file descriptor 3");
         println!("{}", rendered);
     }
 
@@ -222,6 +269,7 @@ fn main() -> Result<()> {
 }
 
 fn usage(ret_code: i32) -> ! {
+    log_fd3!("Wrong usage? Returning status code {}", ret_code);
     exit(ret_code)
 }
 
