@@ -1,0 +1,11 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+# TestSuite v2.0
+## Features
+- login
+- logout
+- registration
+Author: TestTeam
+Date: 2025-12-12

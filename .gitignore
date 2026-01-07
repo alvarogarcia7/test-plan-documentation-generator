@@ -4,3 +4,4 @@
 *.actual.md
 *.log
 
+/.local/

@@ -1,0 +1,7 @@
+---
+source: tests/e2e.rs
+assertion_line: 65
+expression: output
+---
+Name: InstaTest
+Age: 42

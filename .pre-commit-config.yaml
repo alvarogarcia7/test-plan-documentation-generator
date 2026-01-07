@@ -1,0 +1,23 @@
+repos:
+  - repo: local
+    hooks:
+      - id: rust-fmt
+        name: rustfmt (make fmt)
+        entry: make fmt
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: clippy
+        name: clippy (make clippy)
+        entry: make clippy
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: tests
+        name: tests (make test)
+        entry: make test
+        language: system
+        pass_filenames: false
+        always_run: true

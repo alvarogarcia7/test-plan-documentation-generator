@@ -1,0 +1,6 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+Name: TEST USER
+Count: 42
