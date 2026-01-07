@@ -1,4 +1,10 @@
-.PHONY: help build check test lint format clean fmt-check clippy
+init: install-prek-hooks
+.PHONY: init
+
+install-prek-hooks:
+	@echo "Installing pre-commit hooks..."
+	prek install
+.PHONY: install-prek-hooks
 
 help:
 	@echo "Available targets:"
@@ -10,12 +16,15 @@ help:
 	@echo "  make fmt-check   - Check code formatting without making changes"
 	@echo "  make clippy	  - Run clippy linter"
 	@echo "  make clean	   - Remove build artifacts"
+.PHONY: help
 
 build:
 	cargo build --release
+.PHONY: build
 
 check:
 	cargo check
+.PHONY: check
 
 test: build
 	cargo test --release --all-features --tests
@@ -33,15 +42,20 @@ test-e2e:
 
 fmt:
 	cargo fmt
+.PHONY: fmt
 
 fmt-check:
 	cargo fmt -- --check
+.PHONY: fmt-check
 
 clippy:
 	cargo clippy --all-targets --all-features -- -D warnings
+.PHONY: clippy
 
 lint: fmt-check clippy
 	@echo "All linting checks passed!"
+.PHONY: lint
 
 clean:
 	cargo clean
+.PHONY: clean
