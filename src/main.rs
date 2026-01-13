@@ -131,6 +131,35 @@ fn main() -> Result<()> {
         tc_files.push(p);
     }
 
+    for file in &tc_files {
+        log_fd3!("Validating test-case file: {}", file.display());
+
+        log_fd3!(
+            "\tLoading test-case data for validation from: {}",
+            file.display()
+        );
+        let content = fs::read_to_string(file)?;
+        let yaml_val: YamlValue =
+            serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
+        let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
+
+        let validation_result: Result<(), Vec<String>> =
+            validate_json_schema(test_case_schema, &json_value);
+        match validation_result {
+            Ok(_) => {
+                log_fd3!("\tValidation successful.");
+            }
+            Err(errors) => {
+                log_fd3!("\tValidation failed.");
+                for error in errors {
+                    log_fd3!("\tValidation error: {}", error);
+                }
+                usage(3);
+            }
+        }
+    }
+    log_fd3!("All test-case files validated successfully");
+
     let mut concatenated = String::new();
     let mut first = true;
     for file in &tc_files {
@@ -197,27 +226,20 @@ fn main() -> Result<()> {
     let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
 
     // Validate against container schema
-    let schema_str = fs::read_to_string(container_schema)?;
-    let schema_json: JsonValue = serde_json::from_str(&schema_str)?;
-    // JSONSchema::compile requires the schema to live for 'static because the
-    // compiled schema holds references into it. Allocate the schema on the heap
-    // and leak it to get a &'static reference. This is acceptable for a short-
-    // lived CLI process.
-    let schema_box = Box::new(schema_json);
-    let schema_static: &'static JsonValue = Box::leak(schema_box);
-    let compiled = JSONSchema::compile(schema_static).map_err(|e| anyhow::anyhow!(e))?;
-    log_fd3!("Validating container file against schema...");
-    if let Err(errors) = compiled.validate(&json_value) {
-        log_fd3!("Schema validation: INVALID");
-        eprintln!("Error: JSON Schema validation failed for container file:");
-        for err in errors {
-            eprintln!(" - {}", err);
+    let validation_result: Result<(), Vec<String>> =
+        validate_json_schema(container_schema, &json_value);
+    match validation_result {
+        Ok(_) => {
+            log_fd3!("Validation successful.");
         }
-        exit(3);
-    } else {
-        log_fd3!("Schema validation: VALID");
+        Err(errors) => {
+            log_fd3!("Validation failed.");
+            for error in errors {
+                log_fd3!("Validation error: {}", error);
+            }
+            usage(3);
+        }
     }
-    log_fd3!("Validation successful.");
 
     // Convert YAML data to Tera context
     // We convert through JSON to ensure proper serialization for Tera
@@ -261,10 +283,69 @@ fn main() -> Result<()> {
         );
         log_fd3!("Rendered output, writing to {:?}", output_path);
     } else {
-        log_fd3!("Rendering container to console. You can .... 3>log_fd3.txt to ignore the file descriptor 3");
+        log_fd3!("Rendering container to console. You can redirect the file descriptor 3>log_fd3.txt to capture logs.");
         println!("{}", rendered);
     }
 
+    Ok(())
+}
+
+fn validate_json_schema(
+    schema_path: &PathBuf,
+    payload: &serde_json::Value,
+) -> Result<(), Vec<String>> {
+    let schema_str = fs::read_to_string(schema_path);
+    let schema_str = match schema_str {
+        Ok(s) => s,
+        Err(e) => {
+            log_fd3!(
+                "\tFailed to read schema file {}: {}",
+                schema_path.display(),
+                e
+            );
+            return Err(vec![]); // Return empty vector on read error
+        }
+    };
+    let schema_str_2 = schema_str;
+    let schema_json = serde_json::from_str(&schema_str_2);
+    let schema_json = match schema_json {
+        Ok(s) => s,
+        Err(e) => {
+            log_fd3!(
+                "Failed to parse schema file {}: {}",
+                schema_path.display(),
+                e
+            );
+            return Err(vec![]); // Return empty vector on parse error
+        }
+    };
+    // JSONSchema::compile requires the schema to live for 'static because the
+    // compiled schema holds references into it. Allocate the schema on the heap
+    // and leak it to get a &'static reference. This is acceptable for a short-
+    // lived CLI process.
+    let schema_box = Box::new(schema_json);
+    let schema_static: &'static JsonValue = Box::leak(schema_box);
+    let compiled = JSONSchema::compile(schema_static);
+    let compiled2 = match compiled {
+        Ok(c) => c,
+        Err(e) => {
+            log_fd3!(
+                "\tFailed to compile schema from file {}: {}",
+                schema_path.display(),
+                e
+            );
+            return Err(vec![]); // Return empty vector on compile error
+        }
+    };
+    log_fd3!("\tValidating payload file against schema...");
+    match compiled2.validate(payload) {
+        Ok(_) => log_fd3!("\tSchema validation: VALID"),
+        Err(errors) => {
+            log_fd3!("\tSchema validation: INVALID");
+            return Err(errors.into_iter().map(|e| e.to_string()).collect());
+        }
+    }
+    log_fd3!("\tValidation successful.");
     Ok(())
 }
 

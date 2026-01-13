@@ -326,6 +326,163 @@ fn test_e2e_template_with_filters() {
 }
 
 #[test]
+fn test_e2e_invalid_container_payload_existing_lines() {
+    // Ensure snapshots updates don't interfere with this negative test
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempfile::tempdir().unwrap();
+
+    let schema_path = "data/dataset_4_GSMA/container/schema.json";
+    let template_path = "data/dataset_4_GSMA/container/template.j2";
+    let data_path = "data/dataset_4_GSMA/container/data.yml";
+
+    let tc_schema_path = "data/dataset_4_GSMA/test_case/schema.json";
+    let tc_template_path = "data/dataset_4_GSMA/test_case/template.j2";
+    let tc_data_path = "data/dataset_4_GSMA/test_case/invalid_payload.yml";
+
+    // Build and run the binary
+    let bin = get_binary_path();
+
+    let output_path = dir.path().join("report.md");
+
+    // Capture file descriptor 3 output
+    use std::fs::File;
+    use std::os::unix::io::{FromRawFd, IntoRawFd};
+    use std::os::unix::process::CommandExt;
+
+    let fd3_file = tempfile::tempfile().expect("failed to create temp file for fd3");
+    let fd3_raw = fd3_file.into_raw_fd();
+
+    let mut cmd = std::process::Command::new(bin);
+    cmd.arg("--container")
+        .arg(schema_path)
+        .arg(template_path)
+        .arg(data_path)
+        .arg("--test-case")
+        .arg(tc_schema_path)
+        .arg(tc_template_path)
+        .arg(tc_data_path)
+        .arg("-o")
+        .arg(output_path);
+
+    unsafe {
+        cmd.pre_exec(move || {
+            let temp = File::from_raw_fd(fd3_raw);
+            std::mem::forget(temp);
+            Ok(())
+        });
+    }
+
+    let output_with_fd3 = cmd.output().expect("failed to run binary with fd3");
+    println!("{:?}", output_with_fd3.stderr);
+    println!("{:?}", output_with_fd3.stdout);
+
+    // let mut fd3_output = String::new();
+    // let mut fd3_file_read = unsafe { File::from_raw_fd(fd3_raw) };
+    // use std::io::{Read, Seek, SeekFrom};
+    // fd3_file_read
+    //     .seek(SeekFrom::Start(0))
+    //     .expect("failed to seek fd3");
+    // fd3_file_read
+    //     .read_to_string(&mut fd3_output)
+    //     .expect("failed to read fd3");
+    //
+    // println!("File descriptor 3 output:");
+    // println!("{}", String::from_utf8_lossy(fd3_output.as_bytes()));
+
+    // We expect the program to fail validation and exit with non-zero
+    assert!(
+        !output_with_fd3.status.success(),
+        "binary should have failed schema validation but exited success"
+    );
+}
+
+#[test]
+fn test_e2e_invalid_container_payload() {
+    // Ensure snapshots updates don't interfere with this negative test
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempfile::tempdir().unwrap();
+
+    // Write a schema that requires the property `name`
+    let schema_path = dir.path().join("schema.json");
+    let schema = r#"{
+        "type": "object",
+        "required": ["name"],
+        "properties": { "name": { "type": "string" } }
+    }"#;
+    std::fs::write(&schema_path, schema).unwrap();
+
+    // Write a container template (not important for validation)
+    let template_path = dir.path().join("template.tera");
+    std::fs::write(&template_path, "Name: {{{{ name }}}}").unwrap();
+
+    // Write an invalid YAML file (missing `name`)
+    let data_path = dir.path().join("data.yml");
+    std::fs::write(&data_path, "age: 30\n").unwrap();
+
+    // Create minimal dummy test-case args (schema, template, file)
+    let tc_schema_path = dir.path().join("tc_schema.json");
+    std::fs::write(&tc_schema_path, "{}").unwrap();
+    let tc_template_path = dir.path().join("tc_template.tera");
+    std::fs::write(&tc_template_path, "").unwrap();
+    let tc_file_path = dir.path().join("tc_file.yml");
+    std::fs::write(&tc_file_path, "{}").unwrap();
+
+    // Build and run the binary
+    let bin = get_binary_path();
+
+    // Capture file descriptor 3 output
+    use std::fs::File;
+    use std::os::unix::io::{FromRawFd, IntoRawFd};
+    use std::os::unix::process::CommandExt;
+
+    let fd3_file = tempfile::tempfile().expect("failed to create temp file for fd3");
+    let fd3_raw = fd3_file.into_raw_fd();
+
+    let mut cmd = std::process::Command::new(bin);
+    cmd.arg("--container")
+        .arg(schema_path.to_str().unwrap())
+        .arg(template_path.to_str().unwrap())
+        .arg(data_path.to_str().unwrap())
+        .arg("--test-case")
+        .arg(tc_schema_path.to_str().unwrap())
+        .arg(tc_template_path.to_str().unwrap())
+        .arg(tc_file_path.to_str().unwrap());
+
+    unsafe {
+        cmd.pre_exec(move || {
+            let temp = File::from_raw_fd(fd3_raw);
+            std::mem::forget(temp);
+            Ok(())
+        });
+    }
+
+    let output_with_fd3 = cmd.output().expect("failed to run binary with fd3");
+    println!("{:?}", output_with_fd3.stderr);
+    println!("{:?}", output_with_fd3.stdout);
+
+    let mut fd3_output = String::new();
+    let mut fd3_file_read = unsafe { File::from_raw_fd(fd3_raw) };
+    use std::io::{Read, Seek, SeekFrom};
+    fd3_file_read
+        .seek(SeekFrom::Start(0))
+        .expect("failed to seek fd3");
+    fd3_file_read
+        .read_to_string(&mut fd3_output)
+        .expect("failed to read fd3");
+
+    println!("File descriptor 3 output:");
+    println!("{}", fd3_output);
+
+    // We expect the program to fail validation and exit with non-zero
+    assert!(
+        !output_with_fd3.status.success(),
+        "binary should have failed schema validation but exited success"
+    );
+}
+
+#[test]
 fn test_e2e_dataset_4_gsma() {
     std::env::set_var("INSTA_UPDATE", "auto");
     // Run the binary with the real dataset paths (expand test-case files from dir)
@@ -466,7 +623,11 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     let status = cmd
         .status()
         .expect("failed to execute target/debug/test-plan-doc-gen");
-    assert!(status.success(), "binary exited with non-zero status");
+    assert!(
+        status.success(),
+        "binary exited with non-zero status: {:?}",
+        status.code()
+    );
 
     // Some binaries write in their working dir; check both locations.
     if !report_path.exists() {
