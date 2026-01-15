@@ -1,19 +1,38 @@
-image: rust:latest
-
 stages:
-  - ci
+  - build
+  - build-image
+  - test
 
 variables:
+  DOCKER_HOST: "tcp://server-custom-dind.custom-dind:2375"
   # Move cargo data into the project directory so it can be cached by the runner
   CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
   RUST_BACKTRACE: "1"
   CARGO_INCREMENTAL: "0"
 
-before_script:
-  - rustc --version
-  - cargo --version
-  - rustup component add rustfmt
-  - rustup component add clippy
+build-image:
+  stage: build
+  image: docker:27-cli
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - echo "Building Python + Docker client image"
+    - docker build -t $CI_REGISTRY_IMAGE:latest .
+    - docker push $CI_REGISTRY_IMAGE:latest
+    - docker run $CI_REGISTRY_IMAGE:latest test-plan-doc-gen --help
+  tags:
+    - dind-amd
+
+test-image:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:latest
+  needs:
+    - build-image
+  script:
+    - uname -a 
+    - test-plan-doc-gen --help
+  tags:
+    - dind-amd
+
 
 default:
   # Use the commit reference slug (branch/tag name) as the cache key
@@ -27,9 +46,14 @@ default:
     # This ensures the cache is available to all jobs in the pipeline
     policy: pull-push
 
-
 ci:
-  stage: ci
+  before_script:
+    - rustc --version
+    - cargo --version
+    - rustup component add rustfmt
+    - rustup component add clippy
+  image: rust:latest
+  stage: build
   script:
     - cargo fmt -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
