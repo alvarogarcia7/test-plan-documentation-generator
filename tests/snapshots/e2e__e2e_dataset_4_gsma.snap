@@ -17,7 +17,7 @@ an unified test strategy for checking the eUICC component.
 The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this
 document SHALL be interpreted as described in RFC 2119 [20].
 # Test Plan
-## Test Case: 4.2.2.3 ANOTHER ONE
+## Test Case: 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata
 **Requirement**: XXX100
 **Item**: 1
 ## Description
@@ -40,7 +40,7 @@ icon type values from a Profile.
 | --------------- | ---------- | ------------------- | --------------------|
 | 1 | MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
-## Test Case: 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata
+## Test Case: 4.2.2.3 ANOTHER ONE
 **Requirement**: XXX100
 **Item**: 1
 ## Description

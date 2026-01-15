@@ -59,3 +59,8 @@ lint: fmt-check clippy
 clean:
 	cargo clean
 .PHONY: clean
+
+docker-build:
+	docker build -t test:latest .
+.PHONY: docker-build
+

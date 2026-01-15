@@ -1,7 +1,7 @@
 use insta::assert_snapshot;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use tempfile::tempdir;
 
@@ -497,25 +497,8 @@ fn test_e2e_dataset_4_gsma() {
     let tc_schema = "./data/dataset_4_GSMA/test_case/schema.json";
     let tc_template = "./data/dataset_4_GSMA/test_case/template.j2";
 
-    // Expand all .yml files under the test_case directory
-    let mut tc_files: Vec<String> = Vec::new();
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
-    for entry in std::fs::read_dir(tc_dir).expect("failed to read test_case directory") {
-        let entry = entry.expect("failed to read dir entry");
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if ext == "yml" || ext == "yaml" {
-                    tc_files.push(path.to_string_lossy().to_string());
-                }
-            }
-        }
-    }
-
-    assert!(
-        !tc_files.is_empty(),
-        "no test-case yml files found in dataset_4_GSMA/test_case"
-    );
+    let tc_files = sorted_test_case_files(tc_dir);
 
     // Build args vector
     let mut cmd = Command::new(bin);
@@ -582,24 +565,8 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     let tc_template = "./data/dataset_4_GSMA/test_case/template.j2";
 
     // Expand all .yml files under the test_case directory
-    let mut tc_files: Vec<String> = Vec::new();
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
-    for entry in std::fs::read_dir(tc_dir).expect("failed to read test_case directory") {
-        let entry = entry.expect("failed to read dir entry");
-        let path = entry.path();
-        if path.is_file() {
-            if let Some(ext) = path.extension() {
-                if ext == "yml" || ext == "yaml" {
-                    tc_files.push(path.to_string_lossy().to_string());
-                }
-            }
-        }
-    }
-
-    assert!(
-        !tc_files.is_empty(),
-        "no test-case yml files found in dataset_4_GSMA/test_case"
-    );
+    let tc_files = sorted_test_case_files(tc_dir);
 
     // Build args vector and run
     let mut cmd = std::process::Command::new(bin_path);
@@ -659,4 +626,31 @@ fn test_e2e_dataset_4_gsma_target_debug() {
         output = output.replace(&cwd, "<CWD>");
     }
     assert_snapshot!("e2e_dataset_4_gsma_target_debug", normalize(&output));
+}
+
+fn sorted_test_case_files(tc_dir: &Path) -> Vec<String> {
+    let mut tc_files: Vec<String> = Vec::new();
+    for entry in std::fs::read_dir(tc_dir).expect("failed to read test_case directory") {
+        let entry = entry.expect("failed to read dir entry");
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                if ext == "yml" || ext == "yaml" {
+                    tc_files.push(path.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    assert!(
+        !tc_files.is_empty(),
+        "{}",
+        format!(
+            "no test-case yml files found in {}, cannot proceed",
+            tc_dir.display()
+        )
+    );
+
+    tc_files.sort();
+    tc_files
 }
