@@ -25,12 +25,24 @@ COPY --from=deps /usr/local/cargo /usr/local/cargo
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
+COPY Makefile ./
+
 # Copy full source
 COPY src ./src
 COPY tests ./tests
+COPY data ./data
 
 # Build the application against cached dependencies
 RUN cargo build --release
+
+RUN RUST_BACKTRACE=1 cargo test
+
+RUN make test
+
+RUN ./target/release/test-plan-doc-gen \
+        --output ./data/dataset_4_GSMA/output.actual.md \
+        --container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
+        --test-case ./data/dataset_4_GSMA/test_case/schema.json ./data/dataset_4_GSMA/test_case/template.j2 ./data/dataset_4_GSMA/test_case/*yml
 
 # Stage 3: runtime - Final lightweight image
 FROM debian:bookworm-slim AS runtime
@@ -44,6 +56,7 @@ WORKDIR /app
 
 # Copy binaries from builder
 COPY --from=builder /app/target/release/test-plan-doc-gen /usr/local/bin/test-plan-doc-gen
+
 
 # Copy data directory
 COPY data ./data
