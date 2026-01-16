@@ -14,22 +14,55 @@ build-image:
   stage: build
   image: docker:27-cli
   script:
+    - export COMMIT_SHA=$(git rev-parse --short HEAD)
+    - echo "COMMIT_SHA=$COMMIT_SHA" >> build.env
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - echo "Building Python + Docker client image"
-    - docker build -t $CI_REGISTRY_IMAGE:latest .
-    - docker push $CI_REGISTRY_IMAGE:latest
-    - docker run $CI_REGISTRY_IMAGE:latest test-plan-doc-gen --help
+    # Build
+    ## Builder
+    - docker build --target builder -t ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA} .
+    - docker build --target builder -t ${CI_REGISTRY_IMAGE}:builder_latest        .
+    ## App
+    - docker build -t ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} .
+    - docker build -t ${CI_REGISTRY_IMAGE}:app_latest        .
+    # Push
+    ## Builder
+    - docker push     ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA}
+    - docker push     ${CI_REGISTRY_IMAGE}:builder_latest
+    ## App
+    - docker push     ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA}
+    - docker push     ${CI_REGISTRY_IMAGE}:app_latest
+    # Test
+    - docker run      ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} test-plan-doc-gen --help
+    - docker run      ${CI_REGISTRY_IMAGE}:app_latest        test-plan-doc-gen --help
+  artifacts:
+    reports:
+      dotenv: build.env
   tags:
     - dind-amd
 
-test-image:
+test-image-app:
   stage: test
-  image: $CI_REGISTRY_IMAGE:latest
+  # Variable comes from artifacts->VARIABLE_NAME
+  image: ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA}
   needs:
-    - build-image
+    - job: build-image
+      artifacts: true
   script:
     - uname -a 
     - test-plan-doc-gen --help
+  tags:
+    - dind-amd
+
+test-image-builder:
+  stage: test
+  # Variable comes from artifacts->VARIABLE_NAME
+  image: ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA}
+  needs:
+    - job: build-image
+      artifacts: true
+  script:
+    - uname -a 
   tags:
     - dind-amd
 
