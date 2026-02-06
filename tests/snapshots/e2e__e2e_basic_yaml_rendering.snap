@@ -1,7 +1,6 @@
 ---
 source: tests/e2e.rs
-assertion_line: 65
-expression: output
+expression: normalize(&output)
 ---
 Name: InstaTest
 Age: 42

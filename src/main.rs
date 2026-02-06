@@ -174,8 +174,12 @@ fn main() -> Result<()> {
 
     // --- Validate and render all test-case files ---
     // Group files by type to efficiently load templates
+    // First sort file_types by key to ensure deterministic iteration order
+    let mut sorted_file_types: Vec<_> = file_types.iter().collect();
+    sorted_file_types.sort_by_key(|(file, _)| *file);
+
     let mut files_by_type: HashMap<String, Vec<&PathBuf>> = HashMap::new();
-    for (file, type_name) in &file_types {
+    for (file, type_name) in sorted_file_types {
         files_by_type
             .entry(type_name.clone())
             .or_default()

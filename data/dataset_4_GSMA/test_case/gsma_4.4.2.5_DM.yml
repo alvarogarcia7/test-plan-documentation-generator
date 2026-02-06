@@ -1,0 +1,31 @@
+type: demonstration
+requirement: "XXX300"
+id: '4.2.2.5 DM_eUICC_Profile_Management'
+description: 'Demonstration of profile download, installation, and lifecycle management operations on a live eUICC device.'
+procedure: |
+  1. Power on the device with eUICC installed
+  2. Establish secure connection to SM-DP+ server
+  3. Initiate profile download using activation code
+  4. Monitor profile installation progress
+  5. Verify profile is listed in available profiles
+  6. Enable the newly installed profile
+  7. Perform basic connectivity test
+  8. Disable profile and switch to another profile
+  9. Delete the test profile
+  10. Verify profile removal from eUICC
+
+observations:
+  - "Profile download initiated successfully with activation code scan"
+  - "Installation progress displayed real-time status updates"
+  - "Profile appeared in device settings within 30 seconds of installation"
+  - "Network connectivity established immediately after profile enable"
+  - "Profile switching completed without device reboot"
+  - "Profile deletion removed all associated credentials and data"
+  - "No residual files or configurations remained after deletion"
+
+acceptance_criteria:
+  - "Profile download and installation must complete within 2 minutes"
+  - "Profile must be usable for network connectivity immediately after enable"
+  - "Profile switching must occur without requiring device restart"
+  - "Profile deletion must completely remove all profile data"
+  - "All operations must be performed without user intervention beyond initial trigger"

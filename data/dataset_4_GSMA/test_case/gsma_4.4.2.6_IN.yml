@@ -1,0 +1,27 @@
+type: inspection
+requirement: "XXX400"
+id: '4.2.2.6 IN_eUICC_Security_Compliance'
+description: 'Inspection of eUICC implementation to verify compliance with security requirements and cryptographic standards.'
+inspection_method: 'Code review, configuration audit, and documentation verification'
+
+checklist:
+  - "Verify cryptographic algorithms comply with GSMA SGP.22 specification"
+  - "Confirm secure channel protocol implementation follows TLS 1.2 or higher"
+  - "Check certificate chain validation includes proper root CA verification"
+  - "Validate private keys are stored in secure element with no external access"
+  - "Review authentication mechanisms for SM-DP+ and SM-DS communication"
+  - "Inspect error handling to ensure no sensitive information leakage"
+  - "Verify secure boot implementation and firmware signature validation"
+  - "Check memory protection mechanisms prevent unauthorized access"
+  - "Confirm audit logging captures all security-relevant events"
+  - "Review source code for common vulnerabilities (buffer overflow, injection, etc.)"
+  - "Validate random number generator meets cryptographic quality standards"
+  - "Check compliance with side-channel attack mitigation requirements"
+
+acceptance_criteria:
+  - "All cryptographic algorithms must be from approved list in GSMA specifications"
+  - "No cryptographic keys shall be stored in plaintext or insufficiently protected memory"
+  - "Certificate validation must reject expired, revoked, or untrusted certificates"
+  - "All security-critical operations must be logged with timestamp and result"
+  - "Code review must reveal no critical or high-severity security vulnerabilities"
+  - "Implementation must pass static analysis security scanning tools"
