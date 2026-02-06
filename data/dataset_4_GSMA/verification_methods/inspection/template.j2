@@ -1,0 +1,23 @@
+## Inspection: {{ id }}
+
+**Requirement**: {{ requirement }}
+
+## Description
+
+{{ description }}
+
+## Inspection Method
+
+{{ inspection_method }}
+
+## Checklist
+
+{% for item in checklist %}
+- {{ item }}
+{% endfor %}
+
+## Acceptance Criteria
+
+{% for criterion in acceptance_criteria %}
+- {{ criterion }}
+{% endfor %}
