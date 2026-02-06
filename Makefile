@@ -35,7 +35,7 @@ test-e2e:
 	./target/release/test-plan-doc-gen \
 	--output ./data/dataset_4_GSMA/output.actual.md \
 	--container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
-	--test-case ./data/dataset_4_GSMA/verification_methods/test/schema.json ./data/dataset_4_GSMA/verification_methods/test/template.j2 ./data/dataset_4_GSMA/test_case/*yml \
+	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml \
 	3>log_3.log
 	diff ./data/dataset_4_GSMA/output.actual.md ./data/dataset_4_GSMA/output.expected.md
 .PHONY: test-e2e

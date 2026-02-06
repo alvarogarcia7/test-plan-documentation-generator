@@ -44,12 +44,19 @@ fn test_e2e_basic_yaml_rendering() {
     // Create dummy schema files (not used in logic)
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file_path = dir.path().join("tc_file.json");
-    File::create(&tc_file_path).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     let status = Command::new(get_binary_path())
         .arg("--container")
@@ -57,8 +64,7 @@ fn test_e2e_basic_yaml_rendering() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
@@ -96,12 +102,19 @@ fn test_e2e_stdout_output() {
     // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file_path = dir.path().join("tc_file.json");
-    File::create(&tc_file_path).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     let output = Command::new(get_binary_path())
         .arg("--container")
@@ -109,8 +122,7 @@ fn test_e2e_stdout_output() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
         .output()
         .expect("failed to run binary");
@@ -154,12 +166,19 @@ fn test_e2e_complex_yaml_structure() {
     // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file_path = dir.path().join("tc_file.json");
-    File::create(&tc_file_path).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     let status = Command::new(get_binary_path())
         .arg("--container")
@@ -167,8 +186,7 @@ fn test_e2e_complex_yaml_structure() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
@@ -200,16 +218,23 @@ fn test_e2e_multiple_test_case_files() {
     // Create dummy files including multiple test case files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file1 = dir.path().join("tc_file1.json");
-    File::create(&tc_file1).unwrap();
-    let tc_file2 = dir.path().join("tc_file2.json");
-    File::create(&tc_file2).unwrap();
-    let tc_file3 = dir.path().join("tc_file3.json");
-    File::create(&tc_file3).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case files with type field
+    let tc_file1 = dir.path().join("tc_file1.yaml");
+    std::fs::write(&tc_file1, "type: test\n").unwrap();
+    let tc_file2 = dir.path().join("tc_file2.yaml");
+    std::fs::write(&tc_file2, "type: test\n").unwrap();
+    let tc_file3 = dir.path().join("tc_file3.yaml");
+    std::fs::write(&tc_file3, "type: test\n").unwrap();
 
     let status = Command::new(get_binary_path())
         .arg("--container")
@@ -217,8 +242,7 @@ fn test_e2e_multiple_test_case_files() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg(tc_file2.to_str().unwrap())
         .arg(tc_file3.to_str().unwrap())
@@ -251,12 +275,19 @@ fn test_e2e_empty_yaml() {
     // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file_path = dir.path().join("tc_file.json");
-    File::create(&tc_file_path).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     let status = Command::new(get_binary_path())
         .arg("--container")
@@ -264,8 +295,7 @@ fn test_e2e_empty_yaml() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
@@ -299,12 +329,19 @@ fn test_e2e_template_with_filters() {
     // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
-    let tc_schema_path = dir.path().join("tc_schema.json");
+
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
-    File::create(&tc_template_path).unwrap();
-    let tc_file_path = dir.path().join("tc_file.json");
-    File::create(&tc_file_path).unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     let status = Command::new(get_binary_path())
         .arg("--container")
@@ -312,8 +349,7 @@ fn test_e2e_template_with_filters() {
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
         .arg("-o")
         .arg(output_path.to_str().unwrap())
@@ -336,9 +372,8 @@ fn test_e2e_invalid_container_payload_existing_lines() {
     let template_path = "data/dataset_4_GSMA/container/template.j2";
     let data_path = "data/dataset_4_GSMA/container/data.yml";
 
-    let tc_schema_path = "data/dataset_4_GSMA/verification_methods/test/schema.json";
-    let tc_template_path = "data/dataset_4_GSMA/verification_methods/test/template.j2";
-    let tc_data_path = "data/dataset_4_GSMA/test_case/invalid_payload.yml";
+    let vm_dir = "data/dataset_4_GSMA/verification_methods";
+    let tc_data_path = "data/dataset_4_GSMA/test_case/invalid/invalid_payload.yml";
 
     // Build and run the binary
     let bin = get_binary_path();
@@ -359,8 +394,7 @@ fn test_e2e_invalid_container_payload_existing_lines() {
         .arg(template_path)
         .arg(data_path)
         .arg("--test-case")
-        .arg(tc_schema_path)
-        .arg(tc_template_path)
+        .arg(vm_dir)
         .arg(tc_data_path)
         .arg("-o")
         .arg(output_path);
@@ -421,13 +455,18 @@ fn test_e2e_invalid_container_payload() {
     let data_path = dir.path().join("data.yml");
     std::fs::write(&data_path, "age: 30\n").unwrap();
 
-    // Create minimal dummy test-case args (schema, template, file)
-    let tc_schema_path = dir.path().join("tc_schema.json");
+    // Create verification methods directory structure
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
     std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = dir.path().join("tc_template.tera");
+    let tc_template_path = test_type_dir.join("template.j2");
     std::fs::write(&tc_template_path, "").unwrap();
+
+    // Create test case file with type field
     let tc_file_path = dir.path().join("tc_file.yml");
-    std::fs::write(&tc_file_path, "{}").unwrap();
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
 
     // Build and run the binary
     let bin = get_binary_path();
@@ -446,8 +485,7 @@ fn test_e2e_invalid_container_payload() {
         .arg(template_path.to_str().unwrap())
         .arg(data_path.to_str().unwrap())
         .arg("--test-case")
-        .arg(tc_schema_path.to_str().unwrap())
-        .arg(tc_template_path.to_str().unwrap())
+        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap());
 
     unsafe {
@@ -493,9 +531,8 @@ fn test_e2e_dataset_4_gsma() {
     let container_template = "./data/dataset_4_GSMA/container/template.j2";
     let container_file = "./data/dataset_4_GSMA/container/data.yml";
 
-    // Test-case schema and template
-    let tc_schema = "./data/dataset_4_GSMA/verification_methods/test/schema.json";
-    let tc_template = "./data/dataset_4_GSMA/verification_methods/test/template.j2";
+    // Verification methods directory
+    let vm_dir = "./data/dataset_4_GSMA/verification_methods";
 
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
     let tc_files = sorted_test_case_files(tc_dir);
@@ -506,7 +543,7 @@ fn test_e2e_dataset_4_gsma() {
         .arg(container_schema)
         .arg(container_template)
         .arg(container_file);
-    cmd.arg("--test-case").arg(tc_schema).arg(tc_template);
+    cmd.arg("--test-case").arg(vm_dir);
     for f in &tc_files {
         cmd.arg(f);
     }
@@ -560,9 +597,8 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     let container_template = "./data/dataset_4_GSMA/container/template.j2";
     let container_file = "./data/dataset_4_GSMA/container/data.yml";
 
-    // Test-case schema and template
-    let tc_schema = "./data/dataset_4_GSMA/verification_methods/test/schema.json";
-    let tc_template = "./data/dataset_4_GSMA/verification_methods/test/template.j2";
+    // Verification methods directory
+    let vm_dir = "./data/dataset_4_GSMA/verification_methods";
 
     // Expand all .yml files under the test_case directory
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
@@ -574,7 +610,7 @@ fn test_e2e_dataset_4_gsma_target_debug() {
         .arg(container_schema)
         .arg(container_template)
         .arg(container_file);
-    cmd.arg("--test-case").arg(tc_schema).arg(tc_template);
+    cmd.arg("--test-case").arg(vm_dir);
     for f in &tc_files {
         cmd.arg(f);
     }

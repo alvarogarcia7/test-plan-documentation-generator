@@ -3,6 +3,7 @@ use clap::Parser;
 use jsonschema::JSONSchema;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::os::unix::io::FromRawFd;
@@ -23,8 +24,8 @@ struct Args {
     #[arg(long = "container", value_names = ["CONTAINER_SCHEMA", "CONTAINER_TEMPLATE", "CONTAINER_FILE"], num_args = 3, required = true)]
     container: Vec<PathBuf>,
 
-    /// Test case schema and files
-    #[arg(long = "test-case", value_names = ["TEST_CASE_SCHEMA", "TEST_CASE_TEMPLATE", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 3.., required = true)]
+    /// Test case verification methods directory and files
+    #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required = true)]
     test_case: Vec<PathBuf>,
 }
 
@@ -68,32 +69,30 @@ fn main() -> Result<()> {
     let container_template = &args.container[1];
     let container_file = &args.container[2];
 
-    // Parse test case arguments
-    let test_case_schema = &args.test_case[0];
-    let test_case_template = if args.test_case.len() > 1 {
-        Some(&args.test_case[1])
+    // Parse test case arguments - first is verification methods directory
+    let verification_methods_dir = &args.test_case[0];
+    let test_case_files = if args.test_case.len() > 1 {
+        &args.test_case[1..]
     } else {
         usage(1)
     };
-    let test_case_file = if args.test_case.len() > 2 {
-        Some(&args.test_case[2])
-    } else {
-        usage(1)
-    };
-    let rest_test_case_files = if args.test_case.len() > 3 {
-        &args.test_case[3..]
-    } else {
-        &[]
-    };
+
+    // Verify verification methods directory exists
+    if !verification_methods_dir.exists() || !verification_methods_dir.is_dir() {
+        let message = format!(
+            "Error: Verification methods directory does not exist or is not a directory: {}",
+            verification_methods_dir.display()
+        );
+        log_fd3!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
 
     // Verify that all received files exist
     let mut missing_files = Vec::new();
     let all_files = [
         vec![container_schema, container_template, container_file],
-        vec![test_case_schema],
-        test_case_template.iter().copied().collect::<Vec<_>>(),
-        test_case_file.iter().copied().collect::<Vec<_>>(),
-        rest_test_case_files.iter().collect::<Vec<_>>(),
+        test_case_files.iter().collect::<Vec<_>>(),
     ]
     .concat();
     log_fd3!("Checking file existence...");
@@ -111,90 +110,160 @@ fn main() -> Result<()> {
     }
     log_fd3!("All files exist, proceeding.");
 
-    // --- Render all test-case files into a temporary `output.md` ---
-    // Read and compile the test-case template
-    let test_case_template_path = test_case_template.expect("test_case_template must exist");
-    log_fd3!(
-        "Loading test-case template from: {}",
-        test_case_template_path.display()
-    );
-    let tc_template_str = fs::read_to_string(test_case_template_path)?;
-    let mut tc_tera = Tera::default();
-    tc_tera.add_raw_template("tc_template", &tc_template_str)?;
-
-    // Collect all test case files (the first is test_case_file, the rest follow)
-    let mut tc_files: Vec<&PathBuf> = Vec::new();
-    if let Some(p) = test_case_file {
-        tc_files.push(p);
-    }
-    for p in rest_test_case_files {
-        tc_files.push(p);
-    }
-
-    for file in &tc_files {
-        log_fd3!("Validating test-case file: {}", file.display());
-
-        log_fd3!(
-            "\tLoading test-case data for validation from: {}",
-            file.display()
-        );
+    // First pass: read all YAML files to get their types and validate they can be loaded
+    let mut file_types: HashMap<PathBuf, String> = HashMap::new();
+    for file in test_case_files {
+        log_fd3!("Reading type from file: {}", file.display());
         let content = fs::read_to_string(file)?;
-        let yaml_val: YamlValue =
-            serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
-        let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
+        let yaml_val: YamlValue = serde_yaml::from_str(&content)?;
 
-        let validation_result: Result<(), Vec<String>> =
-            validate_json_schema(test_case_schema, &json_value);
-        match validation_result {
-            Ok(_) => {
-                log_fd3!("\tValidation successful.");
+        // Extract the type field
+        let type_value = if let YamlValue::Mapping(ref map) = yaml_val {
+            map.iter()
+                .find(|(k, _)| k.as_str() == Some("type"))
+                .and_then(|(_, v)| v.as_str())
+        } else {
+            None
+        };
+
+        let type_str = type_value.ok_or_else(|| {
+            anyhow::anyhow!("File {} does not have a 'type' field", file.display())
+        })?;
+
+        log_fd3!("File {} has type: {}", file.display(), type_str);
+        file_types.insert(file.clone(), type_str.to_string());
+    }
+
+    // Build a map of type -> (schema_path, template_path)
+    let mut type_resources: HashMap<String, (PathBuf, PathBuf)> = HashMap::new();
+    for type_name in file_types.values() {
+        if !type_resources.contains_key(type_name) {
+            let type_dir = verification_methods_dir.join(type_name);
+            let schema_path = type_dir.join("schema.json");
+            let template_path = type_dir.join("template.j2");
+
+            // Verify these files exist
+            if !schema_path.exists() {
+                let message = format!(
+                    "Error: Schema file does not exist: {}",
+                    schema_path.display()
+                );
+                log_fd3!("{}", message);
+                eprintln!("{}", message);
+                exit(2);
             }
-            Err(errors) => {
-                log_fd3!("\tValidation failed.");
-                for error in errors {
-                    log_fd3!("\tValidation error: {}", error);
-                }
-                usage(3);
+            if !template_path.exists() {
+                let message = format!(
+                    "Error: Template file does not exist: {}",
+                    template_path.display()
+                );
+                log_fd3!("{}", message);
+                eprintln!("{}", message);
+                exit(2);
             }
+
+            log_fd3!(
+                "Type '{}' uses schema: {} and template: {}",
+                type_name,
+                schema_path.display(),
+                template_path.display()
+            );
+            type_resources.insert(type_name.clone(), (schema_path, template_path));
         }
     }
-    log_fd3!("All test-case files validated successfully");
+
+    // --- Validate and render all test-case files ---
+    // Group files by type to efficiently load templates
+    let mut files_by_type: HashMap<String, Vec<&PathBuf>> = HashMap::new();
+    for (file, type_name) in &file_types {
+        files_by_type
+            .entry(type_name.clone())
+            .or_default()
+            .push(file);
+    }
+
+    // Sort files within each type to ensure deterministic output order
+    for files in files_by_type.values_mut() {
+        files.sort();
+    }
 
     let mut concatenated = String::new();
     let mut first = true;
-    for file in &tc_files {
-        log_fd3!("Loading test-case data from: {}", file.display());
-        let content = fs::read_to_string(file)?;
-        // Try to parse as YAML; if parsing fails, treat it as empty context
-        let yaml_val: YamlValue =
-            serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
 
-        // Build Tera context from YAML mapping (if applicable)
-        let mut tc_context = Context::new();
-        if let YamlValue::Mapping(map) = &yaml_val {
-            for (key, value) in map {
-                if let Some(key_str) = key.as_str() {
-                    let json_str = serde_json::to_string(value)?;
-                    let json_value: JsonValue = serde_json::from_str(&json_str)?;
-                    tc_context.insert(key_str, &json_value);
+    // Sort type names to ensure deterministic output order
+    let mut sorted_types: Vec<_> = files_by_type.keys().collect();
+    sorted_types.sort();
+
+    for type_name in sorted_types {
+        let files = &files_by_type[type_name];
+        let (schema_path, template_path) = &type_resources[type_name];
+
+        log_fd3!("Processing files of type '{}'", type_name);
+
+        // Load template once per type
+        let template_str = fs::read_to_string(template_path)?;
+        let mut tera = Tera::default();
+        tera.add_raw_template("tc_template", &template_str)?;
+
+        // Process each file of this type
+        for file in files {
+            log_fd3!("Validating test-case file: {}", file.display());
+
+            log_fd3!(
+                "\tLoading test-case data for validation from: {}",
+                file.display()
+            );
+            let content = fs::read_to_string(file)?;
+            let yaml_val: YamlValue =
+                serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
+            let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
+
+            let validation_result: Result<(), Vec<String>> =
+                validate_json_schema(schema_path, &json_value);
+            match validation_result {
+                Ok(_) => {
+                    log_fd3!("\tValidation successful.");
+                }
+                Err(errors) => {
+                    log_fd3!("\tValidation failed.");
+                    for error in errors {
+                        log_fd3!("\tValidation error: {}", error);
+                    }
+                    usage(3);
                 }
             }
-        }
 
-        // Also insert the whole data under `data`
-        let json_value_full: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
-        tc_context.insert("data", &json_value_full);
+            // Render the file
+            log_fd3!("Loading test-case data from: {}", file.display());
 
-        // Render
-        log_fd3!("Rendering test-case template for: {}", file.display());
-        let rendered = tc_tera.render("tc_template", &tc_context)?;
-        if !first {
-            concatenated.push_str("\n\n");
+            // Build Tera context from YAML mapping (if applicable)
+            let mut tc_context = Context::new();
+            if let YamlValue::Mapping(map) = &yaml_val {
+                for (key, value) in map {
+                    if let Some(key_str) = key.as_str() {
+                        let json_str = serde_json::to_string(value)?;
+                        let json_value: JsonValue = serde_json::from_str(&json_str)?;
+                        tc_context.insert(key_str, &json_value);
+                    }
+                }
+            }
+
+            // Also insert the whole data under `data`
+            let json_value_full: JsonValue =
+                serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
+            tc_context.insert("data", &json_value_full);
+
+            // Render
+            log_fd3!("Rendering test-case template for: {}", file.display());
+            let rendered = tera.render("tc_template", &tc_context)?;
+            if !first {
+                concatenated.push_str("\n\n");
+            }
+            first = false;
+            concatenated.push_str(&rendered);
         }
-        first = false;
-        concatenated.push_str(&rendered);
     }
-    log_fd3!("Rendering test-case files: {:?}", tc_files);
+    log_fd3!("Rendering test-case files completed");
 
     // Create a unique temporary directory under the OS temp dir and write output.md
     let unique = format!(
@@ -418,15 +487,14 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
         assert!(args.is_ok());
         let args = args.unwrap();
         assert_eq!(args.container.len(), 3);
-        assert_eq!(args.test_case.len(), 3);
+        assert_eq!(args.test_case.len(), 2);
         assert!(args.output.is_none());
     }
 
@@ -441,8 +509,7 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -463,8 +530,7 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -483,8 +549,7 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
             "test2.json",
             "test3.json",
@@ -492,7 +557,7 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.test_case.len(), 5); // schema + template + 3 files
+        assert_eq!(args.test_case.len(), 4);
     }
 
     #[test]
@@ -504,8 +569,7 @@ mod tests {
             "container_template.tera",
             "container_data.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -525,18 +589,16 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
             "test2.json",
         ]);
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.test_case[0], PathBuf::from("tc_schema.json"));
-        assert_eq!(args.test_case[1], PathBuf::from("tc_template.tera"));
-        assert_eq!(args.test_case[2], PathBuf::from("test1.json"));
-        assert_eq!(args.test_case[3], PathBuf::from("test2.json"));
+        assert_eq!(args.test_case[0], PathBuf::from("verification_methods"));
+        assert_eq!(args.test_case[1], PathBuf::from("test1.json"));
+        assert_eq!(args.test_case[2], PathBuf::from("test2.json"));
     }
 
     #[test]
@@ -544,8 +606,7 @@ mod tests {
         let args = Args::try_parse_from([
             "test-plan-doc-gen",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -573,8 +634,7 @@ mod tests {
             "schema.json",
             "template.tera",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -590,8 +650,7 @@ mod tests {
             "template.tera",
             "container.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
         ]);
 
         assert!(args.is_err());
@@ -607,8 +666,7 @@ mod tests {
             "container.json",
             "extra.json",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
         ]);
 
@@ -620,8 +678,7 @@ mod tests {
         let args = Args::try_parse_from([
             "test-plan-doc-gen",
             "--test-case",
-            "tc_schema.json",
-            "tc_template.tera",
+            "verification_methods",
             "test1.json",
             "-o",
             "output.md",
@@ -635,7 +692,7 @@ mod tests {
         let args = args.unwrap();
         assert!(args.output.is_some());
         assert_eq!(args.container.len(), 3);
-        assert_eq!(args.test_case.len(), 3);
+        assert_eq!(args.test_case.len(), 2);
     }
 
     #[test]
@@ -658,15 +715,14 @@ mod tests {
             "my template.tera",
             "my container.json",
             "--test-case",
-            "tc schema.json",
-            "tc template.tera",
+            "verification methods",
             "test 1.json",
         ]);
 
         assert!(args.is_ok());
         let args = args.unwrap();
         assert_eq!(args.container[0], PathBuf::from("my schema.json"));
-        assert_eq!(args.test_case[2], PathBuf::from("test 1.json"));
+        assert_eq!(args.test_case[1], PathBuf::from("test 1.json"));
     }
 
     #[test]
@@ -678,15 +734,14 @@ mod tests {
             "../templates/container.tera",
             "data/container.json",
             "--test-case",
-            "./schemas/tc.json",
-            "../templates/tc.tera",
+            "./verification_methods",
             "data/test1.json",
         ]);
 
         assert!(args.is_ok());
         let args = args.unwrap();
         assert_eq!(args.container[0], PathBuf::from("./schemas/container.json"));
-        assert_eq!(args.test_case[1], PathBuf::from("../templates/tc.tera"));
+        assert_eq!(args.test_case[0], PathBuf::from("./verification_methods"));
     }
 
     #[test]
@@ -698,13 +753,16 @@ mod tests {
             "/usr/local/template.tera",
             "/usr/local/container.json",
             "--test-case",
-            "/usr/local/tc_schema.json",
-            "/usr/local/tc_template.tera",
+            "/usr/local/verification_methods",
             "/usr/local/test1.json",
         ]);
 
         assert!(args.is_ok());
         let args = args.unwrap();
         assert_eq!(args.container[0], PathBuf::from("/usr/local/schema.json"));
+        assert_eq!(
+            args.test_case[0],
+            PathBuf::from("/usr/local/verification_methods")
+        );
     }
 }
