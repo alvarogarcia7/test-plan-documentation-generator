@@ -336,8 +336,8 @@ fn test_e2e_invalid_container_payload_existing_lines() {
     let template_path = "data/dataset_4_GSMA/container/template.j2";
     let data_path = "data/dataset_4_GSMA/container/data.yml";
 
-    let tc_schema_path = "data/dataset_4_GSMA/test_case/schema.json";
-    let tc_template_path = "data/dataset_4_GSMA/test_case/template.j2";
+    let tc_schema_path = "data/dataset_4_GSMA/verification_methods/test/schema.json";
+    let tc_template_path = "data/dataset_4_GSMA/verification_methods/test/template.j2";
     let tc_data_path = "data/dataset_4_GSMA/test_case/invalid_payload.yml";
 
     // Build and run the binary
@@ -494,8 +494,8 @@ fn test_e2e_dataset_4_gsma() {
     let container_file = "./data/dataset_4_GSMA/container/data.yml";
 
     // Test-case schema and template
-    let tc_schema = "./data/dataset_4_GSMA/test_case/schema.json";
-    let tc_template = "./data/dataset_4_GSMA/test_case/template.j2";
+    let tc_schema = "./data/dataset_4_GSMA/verification_methods/test/schema.json";
+    let tc_template = "./data/dataset_4_GSMA/verification_methods/test/template.j2";
 
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
     let tc_files = sorted_test_case_files(tc_dir);
@@ -561,8 +561,8 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     let container_file = "./data/dataset_4_GSMA/container/data.yml";
 
     // Test-case schema and template
-    let tc_schema = "./data/dataset_4_GSMA/test_case/schema.json";
-    let tc_template = "./data/dataset_4_GSMA/test_case/template.j2";
+    let tc_schema = "./data/dataset_4_GSMA/verification_methods/test/schema.json";
+    let tc_template = "./data/dataset_4_GSMA/verification_methods/test/template.j2";
 
     // Expand all .yml files under the test_case directory
     let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
