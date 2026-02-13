@@ -1,0 +1,23 @@
+== Demonstration: {{ id }}
+
+*Requirement*: {{ requirement }}
+
+== Description
+
+{{ description }}
+
+== Procedure
+
+{{ procedure }}
+
+== Observations
+
+{% for observation in observations %}
+* {{ observation }}
+{% endfor %}
+
+== Acceptance Criteria
+
+{% for criterion in acceptance_criteria %}
+* {{ criterion }}
+{% endfor %}

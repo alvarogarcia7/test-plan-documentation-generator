@@ -1,0 +1,48 @@
+== Analysis: {{ id }}
+
+*Requirement*: {{ requirement }}
+
+== Description
+
+{{ description }}
+
+== Method
+
+{{ method }}
+
+== Calculations
+
+{% for calc in calculations %}
+=== {{ calc.name }}
+
+*Formula*: {{ calc.formula }}
+
+{% if calc.parameters %}
+*Parameters*:
+{% for param, desc in calc.parameters %}
+* *{{ param }}*: {{ desc }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+
+== Models
+
+[cols="1,1,1", options="header"]
+|===
+| Model Name
+| Type
+| Description
+
+{% for model in models -%}
+| {{ model.name }}
+| {{ model.type }}
+| {{ model.description }}
+
+{% endfor %}
+|===
+
+== Acceptance Criteria
+
+{% for criterion in acceptance_criteria %}
+* {{ criterion }}
+{% endfor %}
