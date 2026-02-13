@@ -1,3 +1,4 @@
+type: result
 test_case_id: '4.2.2.6 IN_eUICC_Security_Compliance'
 description: 'Inspection of eUICC implementation to verify compliance with security requirements and cryptographic standards.'
 sequences:

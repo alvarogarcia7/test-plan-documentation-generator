@@ -1,3 +1,4 @@
+type: result
 test_case_id: '4.2.2.4 AN_eUICC_Performance_Analysis'
 description: 'Analysis of eUICC performance under various load conditions to verify system requirements.'
 sequences:

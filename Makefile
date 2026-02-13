@@ -40,6 +40,21 @@ test-e2e:
 	diff ./data/dataset_4_GSMA/output.actual.md ./data/dataset_4_GSMA/output.expected.md
 .PHONY: test-e2e
 
+test-e2e-asciidoc:
+	./target/release/test-plan-doc-gen \
+	--format asciidoc \
+	--output ./data/dataset_4_GSMA/test_plan_output.expected.adoc \
+	--container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template_asciidoc.adoc ./data/dataset_4_GSMA/container/data.yml \
+	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.6_IN.yml \
+	3>log_3.log
+	./target/release/test-plan-doc-gen \
+	--format asciidoc \
+	--output ./data/dataset_4_GSMA/test_results_output.expected.adoc \
+	--container ./data/dataset_4_GSMA/test_results/container_schema.json ./data/dataset_4_GSMA/test_results/container_template_asciidoc.adoc ./data/dataset_4_GSMA/test_results/container_data.yml \
+	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.6_IN.yml \
+	3>log_3.log
+.PHONY: test-e2e-asciidoc
+
 fmt:
 	cargo fmt
 .PHONY: fmt

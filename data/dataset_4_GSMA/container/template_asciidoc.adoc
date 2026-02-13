@@ -49,7 +49,7 @@ document SHALL be interpreted as described in RFC 2119 [20].
 
 = Test Plan
 
-{{ test_cases_adoc }}
+{{ test_cases_md }}
 
 <<<
 

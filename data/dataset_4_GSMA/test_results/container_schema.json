@@ -21,7 +21,7 @@
       "type": "array",
       "description": "Array of test case verification results",
       "items": {
-        "$ref": "../../../schemas/verification_schema.json"
+        "type": "object"
       }
     },
     "metadata": {
