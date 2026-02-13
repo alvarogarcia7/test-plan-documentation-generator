@@ -2,21 +2,21 @@
 
 *Requirement*: {{ requirement }}
 
-== Description
+=== Description
 
 {{ description }}
 
-== Procedure
+=== Procedure
 
 {{ procedure }}
 
-== Observations
+=== Observations
 
 {% for observation in observations %}
 * {{ observation }}
 {% endfor %}
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
 * {{ criterion }}

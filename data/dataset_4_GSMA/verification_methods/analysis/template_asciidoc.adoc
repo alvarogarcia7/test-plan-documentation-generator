@@ -2,15 +2,15 @@
 
 *Requirement*: {{ requirement }}
 
-== Description
+=== Description
 
 {{ description }}
 
-== Method
+=== Method
 
 {{ method }}
 
-== Calculations
+=== Calculations
 
 {% for calc in calculations %}
 === {{ calc.name }}
@@ -25,7 +25,7 @@
 {% endif %}
 {% endfor %}
 
-== Models
+=== Models
 
 [cols="1,1,1", options="header"]
 |===
@@ -41,7 +41,7 @@
 {% endfor %}
 |===
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
 * {{ criterion }}

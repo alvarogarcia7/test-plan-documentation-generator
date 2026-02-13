@@ -53,15 +53,15 @@ document SHALL be interpreted as described in RFC 2119 [20].
 
 *Requirement*: XXX200
 
-== Description
+=== Description
 
 Analysis of eUICC performance under various load conditions to verify system requirements.
 
-== Method
+=== Method
 
 Statistical analysis and mathematical modeling
 
-== Calculations
+=== Calculations
 
 
 === Maximum throughput
@@ -95,7 +95,7 @@ Statistical analysis and mathematical modeling
 
 
 
-== Models
+=== Models
 
 [cols="1,1,1", options="header"]
 |===
@@ -118,7 +118,7 @@ Statistical analysis and mathematical modeling
 
 |===
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 
 * Maximum throughput must exceed 1000 operations per second
@@ -135,11 +135,11 @@ Statistical analysis and mathematical modeling
 
 *Requirement*: XXX300
 
-== Description
+=== Description
 
 Demonstration of profile download, installation, and lifecycle management operations on a live eUICC device.
 
-== Procedure
+=== Procedure
 
 1. Power on the device with eUICC installed
 2. Establish secure connection to SM-DP+ server
@@ -153,7 +153,7 @@ Demonstration of profile download, installation, and lifecycle management operat
 10. Verify profile removal from eUICC
 
 
-== Observations
+=== Observations
 
 
 * Profile download initiated successfully with activation code scan
@@ -171,7 +171,7 @@ Demonstration of profile download, installation, and lifecycle management operat
 * No residual files or configurations remained after deletion
 
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 
 * Profile download and installation must complete within 2 minutes
@@ -190,15 +190,15 @@ Demonstration of profile download, installation, and lifecycle management operat
 
 *Requirement*: XXX400
 
-== Description
+=== Description
 
 Inspection of eUICC implementation to verify compliance with security requirements and cryptographic standards.
 
-== Inspection Method
+=== Inspection Method
 
 Code review, configuration audit, and documentation verification
 
-== Checklist
+=== Checklist
 
 
 * Verify cryptographic algorithms comply with GSMA SGP.22 specification
@@ -226,7 +226,7 @@ Code review, configuration audit, and documentation verification
 * Check compliance with side-channel attack mitigation requirements
 
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 
 * All cryptographic algorithms must be from approved list in GSMA specifications
@@ -249,12 +249,12 @@ Code review, configuration audit, and documentation verification
 
 *Item*: 1
 
-== Description
+=== Description
 
 Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
 
 
-== General Initial Conditions
+=== General Initial Conditions
 
 [cols="1,1", options="header"]
 |===
@@ -266,7 +266,7 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 |===
 
 
-== Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
+=== Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
@@ -292,7 +292,7 @@ when the profile is in the operational state and PPR1 is currently set.
 
 |===
 
-== Test Sequence 2 Test Sequence #02 Nominal: Unset PPPR2 and update icon
+=== Test Sequence 2 Test Sequence #02 Nominal: Unset PPPR2 and update icon
 
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.
@@ -326,12 +326,12 @@ icon type values from a Profile.
 
 *Item*: 1
 
-== Description
+=== Description
 
 Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
 
 
-== General Initial Conditions
+=== General Initial Conditions
 
 [cols="1,1", options="header"]
 |===
@@ -343,7 +343,7 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 |===
 
 
-== Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
+=== Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
@@ -369,7 +369,7 @@ when the profile is in the operational state and PPR1 is currently set.
 
 |===
 
-== Test Sequence 2 Test Sequence #02 Nominal: Unset PPPR2 and update icon
+=== Test Sequence 2 Test Sequence #02 Nominal: Unset PPPR2 and update icon
 
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.

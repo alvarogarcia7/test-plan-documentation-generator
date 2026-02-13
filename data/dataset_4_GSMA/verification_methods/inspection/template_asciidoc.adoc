@@ -2,21 +2,21 @@
 
 *Requirement*: {{ requirement }}
 
-== Description
+=== Description
 
 {{ description }}
 
-== Inspection Method
+=== Inspection Method
 
 {{ inspection_method }}
 
-== Checklist
+=== Checklist
 
 {% for item in checklist %}
 * {{ item }}
 {% endfor %}
 
-== Acceptance Criteria
+=== Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
 * {{ criterion }}

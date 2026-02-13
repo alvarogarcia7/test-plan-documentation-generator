@@ -4,12 +4,12 @@
 
 *Item*: {{ item }}
 
-== Description
+=== Description
 
 {{ description }}
 
 
-== General Initial Conditions
+=== General Initial Conditions
 
 [cols="1,1", options="header"]
 |===
@@ -24,7 +24,7 @@
 |===
 
 {% for ts in test_sequences %}
-== Test Sequence {{ ts.id }} {{ ts.name }}
+=== Test Sequence {{ ts.id }} {{ ts.name }}
 
 {{ ts.description }}
 
