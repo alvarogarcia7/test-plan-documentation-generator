@@ -27,6 +27,10 @@ struct Args {
     /// Test case verification methods directory and files
     #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required = true)]
     test_case: Vec<PathBuf>,
+
+    /// Output format (markdown or asciidoc)
+    #[arg(long = "format", default_value = "markdown", value_parser = ["markdown", "asciidoc"])]
+    format: String,
 }
 
 #[cfg(test)]
@@ -51,6 +55,14 @@ macro_rules! log_fd3 {
         let _ = writeln!(file, $($arg)*);
         std::mem::forget(file); // Prevent closing fd 3
     }};
+}
+
+fn get_template_suffix(format: &str) -> &str {
+    match format {
+        "markdown" => ".j2",
+        "asciidoc" => "_asciidoc.adoc",
+        _ => ".j2",
+    }
 }
 
 fn main() -> Result<()> {
@@ -135,12 +147,14 @@ fn main() -> Result<()> {
     }
 
     // Build a map of type -> (schema_path, template_path)
+    let template_suffix = get_template_suffix(&args.format);
     let mut type_resources: HashMap<String, (PathBuf, PathBuf)> = HashMap::new();
     for type_name in file_types.values() {
         if !type_resources.contains_key(type_name) {
             let type_dir = verification_methods_dir.join(type_name);
             let schema_path = type_dir.join("schema.json");
-            let template_path = type_dir.join("template.j2");
+            let template_filename = format!("template{}", template_suffix);
+            let template_path = type_dir.join(&template_filename);
 
             // Verify these files exist
             if !schema_path.exists() {
