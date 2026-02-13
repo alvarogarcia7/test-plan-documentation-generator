@@ -1,0 +1,46 @@
+== Test Case: {{ id }}
+
+*Requirement*: {{ requirement }}
+
+*Item*: {{ item }}
+
+=== Description
+
+{{ description }}
+
+
+=== General Initial Conditions
+
+[cols="1,1", options="header"]
+|===
+| Entity
+| Description of the general initial condition
+
+{% for k,v in initial_conditions -%}
+| {{ k }}
+| {{ v }}
+
+{%- endfor %}
+|===
+
+{% for ts in test_sequences %}
+=== Test Sequence {{ ts.id }} {{ ts.name }}
+
+{{ ts.description }}
+
+[cols="1,1,1,1", options="header"]
+|===
+| Step Number
+| Action
+| Expected Result
+| Expected Output
+
+{% for step in ts.steps -%}
+| {{ step.step }}
+| {{ step.description }}
+| {{ step.expected.result }}
+| {{ step.expected.output }}
+
+{% endfor %}
+|===
+{% endfor %}
