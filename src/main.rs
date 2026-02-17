@@ -889,4 +889,296 @@ mod tests {
             PathBuf::from("/usr/local/verification_methods")
         );
     }
+
+    #[test]
+    fn test_requirement_aggregation_logic() {
+        let template_str = r#"requirements_with_detail:
+{%- set reqs = ["XXX100", "XXX200", "XXX300", "XXX400"] %}
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+  - requirement: {{ req }}
+    items:
+{%- for item in filtered %}
+      - item: {% if item.item %}{{ item.item }}{% else %}null{% endif %}
+        tc: {% if item.tc %}{{ item.tc }}{% else %}null{% endif %}
+        id: {{ item.test_case_id }}
+        pass: {% if item.overall_pass %}true{% else %}false{% endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+status_per_requirement:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+  - requirement: {{ req }}
+    pass: {% if all_pass %}true{% else %}false{% endif %}
+{%- endif %}
+{%- endfor %}
+requirements_by_status:
+  pass:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+{%- if all_pass %}
+    - {{ req }}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+  fail:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+{%- if not all_pass %}
+    - {{ req }}
+{%- endif %}
+{%- endif %}
+{%- endfor %}"#;
+
+        let test_data = serde_json::json!([
+            {
+                "requirement": "XXX100",
+                "item": 1,
+                "tc": 4,
+                "test_case_id": "TC-100-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX100",
+                "item": 2,
+                "tc": 5,
+                "test_case_id": "TC-100-2",
+                "overall_pass": false
+            },
+            {
+                "requirement": "XXX200",
+                "test_case_id": "TC-200-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX300",
+                "item": 1,
+                "tc": 1,
+                "test_case_id": "TC-300-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX300",
+                "item": 2,
+                "tc": 2,
+                "test_case_id": "TC-300-2",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX400",
+                "test_case_id": "TC-400-1",
+                "overall_pass": false
+            }
+        ]);
+
+        let mut context = Context::new();
+        context.insert("test_results", &test_data);
+
+        let rendered = render_template(template_str, &context).expect("Failed to render template");
+
+        let parsed: YamlValue =
+            serde_yaml::from_str(&rendered).expect("Failed to parse YAML output");
+        let parsed_map = parsed.as_mapping().expect("Expected YAML mapping");
+
+        let requirements_with_detail = parsed_map
+            .get(YamlValue::String("requirements_with_detail".to_string()))
+            .expect("Missing requirements_with_detail")
+            .as_sequence()
+            .expect("Expected sequence");
+
+        assert_eq!(requirements_with_detail.len(), 4);
+
+        let req100 = requirements_with_detail[0]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req100.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX100".to_string()))
+        );
+        let req100_items = req100
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req100_items.len(), 2);
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("item".to_string())),
+            Some(&YamlValue::Number(1.into()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("tc".to_string())),
+            Some(&YamlValue::Number(4.into()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("id".to_string())),
+            Some(&YamlValue::String("TC-100-1".to_string()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+        assert_eq!(
+            req100_items[1]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let req200 = requirements_with_detail[1]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req200.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX200".to_string()))
+        );
+        let req200_items = req200
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req200_items.len(), 1);
+        assert_eq!(
+            req200_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("item".to_string())),
+            Some(&YamlValue::Null)
+        );
+        assert_eq!(
+            req200_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let req300 = requirements_with_detail[2]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req300.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX300".to_string()))
+        );
+        let req300_items = req300
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req300_items.len(), 2);
+        assert_eq!(
+            req300_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+        assert_eq!(
+            req300_items[1]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status_per_requirement = parsed_map
+            .get(YamlValue::String("status_per_requirement".to_string()))
+            .expect("Missing status_per_requirement")
+            .as_sequence()
+            .expect("Expected sequence");
+
+        assert_eq!(status_per_requirement.len(), 4);
+
+        let status100 = status_per_requirement[0]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status100.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX100".to_string()))
+        );
+        assert_eq!(
+            status100.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let status200 = status_per_requirement[1]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status200.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX200".to_string()))
+        );
+        assert_eq!(
+            status200.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status300 = status_per_requirement[2]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status300.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX300".to_string()))
+        );
+        assert_eq!(
+            status300.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status400 = status_per_requirement[3]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status400.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX400".to_string()))
+        );
+        assert_eq!(
+            status400.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let requirements_by_status = parsed_map
+            .get(YamlValue::String("requirements_by_status".to_string()))
+            .expect("Missing requirements_by_status")
+            .as_mapping()
+            .expect("Expected mapping");
+
+        let pass_reqs = requirements_by_status
+            .get(YamlValue::String("pass".to_string()))
+            .expect("Missing pass")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(pass_reqs.len(), 2);
+        assert_eq!(pass_reqs[0], YamlValue::String("XXX200".to_string()));
+        assert_eq!(pass_reqs[1], YamlValue::String("XXX300".to_string()));
+
+        let fail_reqs = requirements_by_status
+            .get(YamlValue::String("fail".to_string()))
+            .expect("Missing fail")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(fail_reqs.len(), 2);
+        assert_eq!(fail_reqs[0], YamlValue::String("XXX100".to_string()));
+        assert_eq!(fail_reqs[1], YamlValue::String("XXX400".to_string()));
+    }
 }
