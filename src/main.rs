@@ -351,6 +351,38 @@ fn main() -> Result<()> {
         &output_md_path.to_string_lossy().to_string(),
     );
 
+    // Load and render requirement_aggregation_template.adoc
+    let req_agg_template_path =
+        verification_methods_dir.join("requirement_aggregation_template.adoc");
+    if req_agg_template_path.exists() {
+        log_fd3!(
+            "Loading requirement aggregation template from: {}",
+            req_agg_template_path.display()
+        );
+        let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
+        let mut req_tera = Tera::default();
+        req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
+
+        log_fd3!("Rendering requirement aggregation template...");
+        match req_tera.render("req_agg_template", &context) {
+            Ok(requirements_summary) => {
+                context.insert("requirements_summary_adoc", &requirements_summary);
+                log_fd3!("Requirements summary rendered and added to context");
+            }
+            Err(e) => {
+                log_fd3!(
+                    "Warning: Failed to render requirement aggregation template: {}",
+                    e
+                );
+            }
+        }
+    } else {
+        log_fd3!(
+            "Warning: requirement_aggregation_template.adoc not found at {}",
+            req_agg_template_path.display()
+        );
+    }
+
     // Read the template file
     let template_str = fs::read_to_string(container_template)?;
     let mut tera = Tera::default();
