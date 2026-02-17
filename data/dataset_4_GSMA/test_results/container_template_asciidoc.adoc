@@ -125,6 +125,12 @@ No test cases were executed or results are inconclusive.
 
 <<<
 
+== Requirements Summary
+
+{{ requirements_summary_adoc }}
+
+<<<
+
 [discrete]
 == Copyright Notice
 

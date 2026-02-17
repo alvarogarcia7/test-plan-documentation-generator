@@ -249,3 +249,32 @@ metadata:
   total_test_cases: 5
   passed_test_cases: 3
   failed_test_cases: 2
+requirements_summary_adoc: |-
+  [cols="1,2,1,1", options="header"]
+  |===
+  | Requirement ID
+  | Test Cases
+  | Status
+  | Pass Rate
+  
+  | XXX100
+  | 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata, 4.2.2.3 ANOTHER ONE
+  | PARTIAL
+  | 50% (1/2)
+  
+  | XXX200
+  | 4.2.2.4 AN_eUICC_Performance_Analysis
+  | PASS
+  | 100% (1/1)
+  
+  | XXX300
+  | 4.2.2.5 DM_eUICC_Profile_Management
+  | PASS
+  | 100% (1/1)
+  
+  | XXX400
+  | 4.2.2.6 IN_eUICC_Security_Compliance
+  | FAIL
+  | 0% (0/1)
+  
+  |===
