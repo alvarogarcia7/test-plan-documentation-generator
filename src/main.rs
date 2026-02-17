@@ -226,11 +226,8 @@ fn main() -> Result<()> {
         // Process each file of this type
         for file in files {
             log_fd3!("Validating test-case file: {}", file.display());
+            log_fd3!("\tAgainst schema: {}", schema_path.display());
 
-            log_fd3!(
-                "\tLoading test-case data for validation from: {}",
-                file.display()
-            );
             let content = fs::read_to_string(file)?;
             let yaml_val: YamlValue =
                 serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
@@ -243,11 +240,19 @@ fn main() -> Result<()> {
                     log_fd3!("\tValidation successful.");
                 }
                 Err(errors) => {
-                    log_fd3!("\tValidation failed.");
-                    for error in errors {
-                        log_fd3!("\tValidation error: {}", error);
+                    let message = format!(
+                        "Error: Validation failed for file: {}\nAgainst schema: {}",
+                        file.display(),
+                        schema_path.display()
+                    );
+                    log_fd3!("{}", message);
+                    eprintln!("{}", message);
+                    for error in &errors {
+                        let error_msg = format!("  - {}", error);
+                        log_fd3!("{}", error_msg);
+                        eprintln!("{}", error_msg);
                     }
-                    usage(3);
+                    exit(3);
                 }
             }
 
@@ -313,18 +318,81 @@ fn main() -> Result<()> {
     let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
 
     // Validate against container schema
+    log_fd3!("Validating container file: {}", container_file.display());
+    log_fd3!("\tAgainst schema: {}", container_schema.display());
     let validation_result: Result<(), Vec<String>> =
         validate_json_schema(container_schema, &json_value);
     match validation_result {
         Ok(_) => {
-            log_fd3!("Validation successful.");
+            log_fd3!("\tValidation successful.");
         }
         Err(errors) => {
-            log_fd3!("Validation failed.");
-            for error in errors {
-                log_fd3!("Validation error: {}", error);
+            let message = format!(
+                "Error: Validation failed for file: {}\nAgainst schema: {}",
+                container_file.display(),
+                container_schema.display()
+            );
+            log_fd3!("{}", message);
+            eprintln!("{}", message);
+            for error in &errors {
+                let error_msg = format!("  - {}", error);
+                log_fd3!("{}", error_msg);
+                eprintln!("{}", error_msg);
             }
-            usage(3);
+            exit(3);
+        }
+    }
+
+    // Validate individual test_results entries against verification_schema.json
+    if let Some(test_results) = json_value.get("test_results") {
+        if let Some(test_results_array) = test_results.as_array() {
+            log_fd3!(
+                "Validating {} test result entries in container file",
+                test_results_array.len()
+            );
+
+            // Find verification_schema.json in the schemas directory
+            let verification_schema_path = PathBuf::from("schemas/verification_schema.json");
+            if verification_schema_path.exists() {
+                log_fd3!(
+                    "\tUsing verification schema: {}",
+                    verification_schema_path.display()
+                );
+
+                for (index, test_result) in test_results_array.iter().enumerate() {
+                    log_fd3!("\tValidating test result entry #{}", index + 1);
+                    let validation_result =
+                        validate_json_schema(&verification_schema_path, test_result);
+                    match validation_result {
+                        Ok(_) => {
+                            log_fd3!("\t\tValidation successful for entry #{}", index + 1);
+                        }
+                        Err(errors) => {
+                            let default_id = format!("entry #{}", index + 1);
+                            let test_case_id = test_result
+                                .get("test_case_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or(&default_id);
+                            let message = format!(
+                                "Error: Validation failed for test result entry: {}\nIn file: {}\nAgainst schema: {}",
+                                test_case_id,
+                                container_file.display(),
+                                verification_schema_path.display()
+                            );
+                            log_fd3!("{}", message);
+                            eprintln!("{}", message);
+                            for error in &errors {
+                                let error_msg = format!("  - {}", error);
+                                log_fd3!("{}", error_msg);
+                                eprintln!("{}", error_msg);
+                            }
+                            exit(3);
+                        }
+                    }
+                }
+            } else {
+                log_fd3!("\tWarning: verification_schema.json not found at {}, skipping test result validation", verification_schema_path.display());
+            }
         }
     }
 
@@ -417,12 +485,13 @@ fn validate_json_schema(
     let schema_str = match schema_str {
         Ok(s) => s,
         Err(e) => {
-            log_fd3!(
-                "\tFailed to read schema file {}: {}",
+            let error_msg = format!(
+                "Failed to read schema file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on read error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
     let schema_str_2 = schema_str;
@@ -430,12 +499,13 @@ fn validate_json_schema(
     let schema_json = match schema_json {
         Ok(s) => s,
         Err(e) => {
-            log_fd3!(
+            let error_msg = format!(
                 "Failed to parse schema file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on parse error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
     // JSONSchema::compile requires the schema to live for 'static because the
@@ -448,24 +518,28 @@ fn validate_json_schema(
     let compiled2 = match compiled {
         Ok(c) => c,
         Err(e) => {
-            log_fd3!(
-                "\tFailed to compile schema from file {}: {}",
+            let error_msg = format!(
+                "Failed to compile schema from file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on compile error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
-    log_fd3!("\tValidating payload file against schema...");
-    match compiled2.validate(payload) {
-        Ok(_) => log_fd3!("\tSchema validation: VALID"),
+    log_fd3!("\tValidating payload against schema...");
+    let validation_result = compiled2.validate(payload);
+    match validation_result {
+        Ok(_) => {
+            log_fd3!("\tSchema validation: VALID");
+            Ok(())
+        }
         Err(errors) => {
             log_fd3!("\tSchema validation: INVALID");
-            return Err(errors.into_iter().map(|e| e.to_string()).collect());
+            let error_messages: Vec<String> = errors.into_iter().map(|e| e.to_string()).collect();
+            Err(error_messages)
         }
     }
-    log_fd3!("\tValidation successful.");
-    Ok(())
 }
 
 fn usage(ret_code: i32) -> ! {
