@@ -712,34 +712,52 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 == Requirements Summary
 
-[cols="1,2,1,1", options="header"]
-|===
-| Requirement ID
-| Test Cases
-| Status
-| Pass Rate
+requirements_with_detail:
+  - requirement: XXX100
+    items:
+      - item: 1
+        tc: 4
+        id: 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata
+        pass: true
+      - item: 1
+        tc: 4
+        id: 4.2.2.3 ANOTHER ONE
+        pass: false
+  - requirement: XXX200
+    items:
+      - item: null
+        tc: null
+        id: 4.2.2.4 AN_eUICC_Performance_Analysis
+        pass: true
+  - requirement: XXX300
+    items:
+      - item: null
+        tc: null
+        id: 4.2.2.5 DM_eUICC_Profile_Management
+        pass: true
+  - requirement: XXX400
+    items:
+      - item: null
+        tc: null
+        id: 4.2.2.6 IN_eUICC_Security_Compliance
+        pass: false
+status_per_requirement:
+  - requirement: XXX100
+    pass: false
+  - requirement: XXX200
+    pass: true
+  - requirement: XXX300
+    pass: true
+  - requirement: XXX400
+    pass: false
+requirements_by_status:
+  pass:
+    - XXX200
+    - XXX300
+  fail:
+    - XXX100
+    - XXX400
 
-| XXX100
-| 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata, 4.2.2.3 ANOTHER ONE
-| PARTIAL
-| 50% (1/2)
-
-| XXX200
-| 4.2.2.4 AN_eUICC_Performance_Analysis
-| PASS
-| 100% (1/1)
-
-| XXX300
-| 4.2.2.5 DM_eUICC_Profile_Management
-| PASS
-| 100% (1/1)
-
-| XXX400
-| 4.2.2.6 IN_eUICC_Security_Compliance
-| FAIL
-| 0% (0/1)
-
-|===
 
 <<<
 
