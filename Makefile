@@ -30,6 +30,7 @@ test: build
 	cargo test --release --all-features --tests
 	$(MAKE) test-e2e
 	$(MAKE) test-e2e-asciidoc
+	echo "All steps in test passing"
 .PHONY: test
 
 test-e2e:
