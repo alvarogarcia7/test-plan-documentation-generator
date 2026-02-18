@@ -362,6 +362,7 @@ fn test_e2e_template_with_filters() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_e2e_invalid_container_payload_existing_lines() {
     // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");
@@ -432,6 +433,7 @@ fn test_e2e_invalid_container_payload_existing_lines() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_e2e_invalid_container_payload() {
     // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");

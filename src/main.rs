@@ -5,9 +5,7 @@ use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
 use std::collections::HashMap;
 use std::fs;
-use std::fs::File;
-use std::os::unix::io::FromRawFd;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::exit;
 use tera::Context;
 use tera::Tera;
@@ -41,19 +39,19 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
-// Helper to get a File for fd 3 (do not close on drop)
-fn log_file() -> File {
-    // SAFETY: We must not close fd 3, so we use into_raw_fd to avoid double-close.
-    unsafe { File::from_raw_fd(3) }
-}
-
-// Logging macro
+// Logging macro - logs to file descriptor 3 if available (Unix-like systems)
 macro_rules! log_fd3 {
     ($($arg:tt)*) => {{
-        use std::io::Write;
-        let mut file = log_file();
-        let _ = writeln!(file, $($arg)*);
-        std::mem::forget(file); // Prevent closing fd 3
+        #[cfg(unix)]
+        {
+            use std::io::Write;
+            use std::os::unix::io::FromRawFd;
+            unsafe {
+                let mut file = std::fs::File::from_raw_fd(3);
+                let _ = writeln!(file, $($arg)*);
+                std::mem::forget(file);
+            }
+        }
     }};
 }
 
@@ -86,7 +84,10 @@ fn main() -> Result<()> {
     let test_case_files = if args.test_case.len() > 1 {
         &args.test_case[1..]
     } else {
-        usage(1)
+        usage(
+            "At least one test case file must be provided after the verification methods directory",
+            1,
+        )
     };
 
     // Verify verification methods directory exists
@@ -114,10 +115,13 @@ fn main() -> Result<()> {
         }
     }
     if !missing_files.is_empty() {
-        let message = "Error: The following files do not exist:\n{}";
         let missing_files_as_str = missing_files.join("\n");
-        log_fd3!("{} {}", message, missing_files_as_str);
-        eprintln!("{} {}", message, missing_files_as_str);
+        let message = format!(
+            "Error: The following files do not exist:\n{}",
+            missing_files_as_str
+        );
+        log_fd3!("{}", message);
+        eprintln!("{}", message);
         exit(2);
     }
     log_fd3!("All files exist, proceeding.");
@@ -229,8 +233,7 @@ fn main() -> Result<()> {
             log_fd3!("\tAgainst schema: {}", schema_path.display());
 
             let content = fs::read_to_string(file)?;
-            let yaml_val: YamlValue =
-                serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
+            let yaml_val: YamlValue = serde_yaml::from_str(&content)?;
             let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_val)?)?;
 
             let validation_result: Result<(), Vec<String>> =
@@ -289,6 +292,8 @@ fn main() -> Result<()> {
     log_fd3!("Rendering test-case files completed");
 
     // Create a unique temporary directory under the OS temp dir and write output.md
+    // Note: The temporary directory is not cleaned up by this process, but the OS
+    // will handle cleanup of temp directories according to system policies
     let unique = format!(
         "test-plan-doc-gen-{}",
         std::time::SystemTime::now()
@@ -420,9 +425,13 @@ fn main() -> Result<()> {
         &output_md_path.to_string_lossy().to_string(),
     );
 
-    // Load and render requirement_aggregation_template.adoc
-    let req_agg_template_path =
-        verification_methods_dir.join("requirement_aggregation_template.adoc");
+    // Load and render requirement aggregation template (format-specific)
+    let req_agg_filename = match args.format.as_str() {
+        "asciidoc" => "requirement_aggregation_template.adoc",
+        "markdown" => "requirement_aggregation_template.j2",
+        _ => "requirement_aggregation_template.adoc",
+    };
+    let req_agg_template_path = verification_methods_dir.join(req_agg_filename);
     if req_agg_template_path.exists() {
         log_fd3!(
             "Loading requirement aggregation template from: {}",
@@ -435,8 +444,16 @@ fn main() -> Result<()> {
         log_fd3!("Rendering requirement aggregation template...");
         match req_tera.render("req_agg_template", &context) {
             Ok(requirements_summary) => {
-                context.insert("requirements_summary_adoc", &requirements_summary);
-                log_fd3!("Requirements summary rendered and added to context");
+                let context_key = match args.format.as_str() {
+                    "asciidoc" => "requirements_summary_adoc",
+                    "markdown" => "requirements_summary_md",
+                    _ => "requirements_summary",
+                };
+                context.insert(context_key, &requirements_summary);
+                log_fd3!(
+                    "Requirements summary rendered and added to context as '{}'",
+                    context_key
+                );
             }
             Err(e) => {
                 log_fd3!(
@@ -447,7 +464,7 @@ fn main() -> Result<()> {
         }
     } else {
         log_fd3!(
-            "Warning: requirement_aggregation_template.adoc not found at {}",
+            "Requirement aggregation template not found at {}, skipping",
             req_agg_template_path.display()
         );
     }
@@ -479,11 +496,10 @@ fn main() -> Result<()> {
 }
 
 fn validate_json_schema(
-    schema_path: &PathBuf,
+    schema_path: &Path,
     payload: &serde_json::Value,
 ) -> Result<(), Vec<String>> {
-    let schema_str = fs::read_to_string(schema_path);
-    let schema_str = match schema_str {
+    let schema_str = match fs::read_to_string(schema_path) {
         Ok(s) => s,
         Err(e) => {
             let error_msg = format!(
@@ -495,8 +511,7 @@ fn validate_json_schema(
             return Err(vec![error_msg]);
         }
     };
-    let schema_str_2 = schema_str;
-    let schema_json = serde_json::from_str(&schema_str_2);
+    let schema_json = serde_json::from_str(&schema_str);
     let schema_json = match schema_json {
         Ok(s) => s,
         Err(e) => {
@@ -515,8 +530,7 @@ fn validate_json_schema(
     // lived CLI process.
     let schema_box = Box::new(schema_json);
     let schema_static: &'static JsonValue = Box::leak(schema_box);
-    let compiled = JSONSchema::compile(schema_static);
-    let compiled2 = match compiled {
+    let compiled = match JSONSchema::compile(schema_static) {
         Ok(c) => c,
         Err(e) => {
             let error_msg = format!(
@@ -529,7 +543,7 @@ fn validate_json_schema(
         }
     };
     log_fd3!("\tValidating payload against schema...");
-    let validation_result = compiled2.validate(payload);
+    let validation_result = compiled.validate(payload);
     match validation_result {
         Ok(_) => {
             log_fd3!("\tSchema validation: VALID");
@@ -543,8 +557,9 @@ fn validate_json_schema(
     }
 }
 
-fn usage(ret_code: i32) -> ! {
-    log_fd3!("Wrong usage? Returning status code {}", ret_code);
+fn usage(message: &str, ret_code: i32) -> ! {
+    log_fd3!("{}", message);
+    eprintln!("Error: {}", message);
     exit(ret_code)
 }
 
@@ -889,6 +904,89 @@ mod tests {
             args.test_case[0],
             PathBuf::from("/usr/local/verification_methods")
         );
+    }
+
+    #[test]
+    fn test_parse_format_default_value() {
+        let args = Args::try_parse_from([
+            "test-plan-doc-gen",
+            "--container",
+            "schema.json",
+            "template.tera",
+            "container.json",
+            "--test-case",
+            "verification_methods",
+            "test1.json",
+        ]);
+
+        assert!(args.is_ok());
+        let args = args.unwrap();
+        assert_eq!(args.format, "markdown");
+    }
+
+    #[test]
+    fn test_parse_format_markdown() {
+        let args = Args::try_parse_from([
+            "test-plan-doc-gen",
+            "--format",
+            "markdown",
+            "--container",
+            "schema.json",
+            "template.tera",
+            "container.json",
+            "--test-case",
+            "verification_methods",
+            "test1.json",
+        ]);
+
+        assert!(args.is_ok());
+        let args = args.unwrap();
+        assert_eq!(args.format, "markdown");
+    }
+
+    #[test]
+    fn test_parse_format_asciidoc() {
+        let args = Args::try_parse_from([
+            "test-plan-doc-gen",
+            "--format",
+            "asciidoc",
+            "--container",
+            "schema.json",
+            "template.tera",
+            "container.json",
+            "--test-case",
+            "verification_methods",
+            "test1.json",
+        ]);
+
+        assert!(args.is_ok());
+        let args = args.unwrap();
+        assert_eq!(args.format, "asciidoc");
+    }
+
+    #[test]
+    fn test_parse_format_invalid() {
+        let args = Args::try_parse_from([
+            "test-plan-doc-gen",
+            "--format",
+            "html",
+            "--container",
+            "schema.json",
+            "template.tera",
+            "container.json",
+            "--test-case",
+            "verification_methods",
+            "test1.json",
+        ]);
+
+        assert!(args.is_err());
+    }
+
+    #[test]
+    fn test_get_template_suffix() {
+        assert_eq!(get_template_suffix("markdown"), ".j2");
+        assert_eq!(get_template_suffix("asciidoc"), "_asciidoc.adoc");
+        assert_eq!(get_template_suffix("unknown"), ".j2");
     }
 
     #[test]
