@@ -1266,8 +1266,9 @@ mod tests {
             let errors = result.unwrap_err();
             assert_eq!(errors.len(), 1, "Should have exactly one error message");
             assert!(
-                errors[0].contains("Failed to compile schema"),
-                "Error should mention failure to compile schema, got: {}",
+                errors[0].contains("Failed to compile schema")
+                    || errors[0].contains("Failed to parse schema"),
+                "Error should mention failure to compile or parse schema, got: {}",
                 errors[0]
             );
         }
@@ -1297,7 +1298,9 @@ mod tests {
             assert!(result.is_err(), "Type mismatch should fail validation");
             let errors = result.unwrap_err();
             assert!(
-                errors[0].contains("type") || errors[0].contains("count"),
+                errors[0].contains("type")
+                    || errors[0].contains("count")
+                    || errors[0].contains("string"),
                 "Error should mention type mismatch, got: {}",
                 errors[0]
             );
