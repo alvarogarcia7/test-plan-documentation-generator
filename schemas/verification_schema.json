@@ -12,6 +12,18 @@
       "type": "string",
       "description": "Description of the test case"
     },
+    "requirement": {
+      "type": "string",
+      "description": "Requirement identifier for mapping test results back to requirements"
+    },
+    "item": {
+      "type": "integer",
+      "description": "Item number for mapping test results back to requirements"
+    },
+    "tc": {
+      "type": "integer",
+      "description": "Test case number for mapping test results back to requirements"
+    },
     "sequences": {
       "type": "array",
       "description": "Test sequence verification results",

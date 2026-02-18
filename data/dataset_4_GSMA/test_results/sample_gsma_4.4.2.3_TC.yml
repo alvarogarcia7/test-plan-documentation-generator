@@ -1,4 +1,7 @@
 type: result
+requirement: "XXX100"
+item: 1
+tc: 4
 test_case_id: '4.2.2.3 ANOTHER ONE'
 description: 'Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.'
 sequences:

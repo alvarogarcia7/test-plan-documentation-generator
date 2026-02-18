@@ -226,11 +226,8 @@ fn main() -> Result<()> {
         // Process each file of this type
         for file in files {
             log_fd3!("Validating test-case file: {}", file.display());
+            log_fd3!("\tAgainst schema: {}", schema_path.display());
 
-            log_fd3!(
-                "\tLoading test-case data for validation from: {}",
-                file.display()
-            );
             let content = fs::read_to_string(file)?;
             let yaml_val: YamlValue =
                 serde_yaml::from_str(&content).unwrap_or_else(|_| YamlValue::Null);
@@ -243,11 +240,19 @@ fn main() -> Result<()> {
                     log_fd3!("\tValidation successful.");
                 }
                 Err(errors) => {
-                    log_fd3!("\tValidation failed.");
-                    for error in errors {
-                        log_fd3!("\tValidation error: {}", error);
+                    let message = format!(
+                        "Error: Validation failed for file: {}\nAgainst schema: {}",
+                        file.display(),
+                        schema_path.display()
+                    );
+                    log_fd3!("{}", message);
+                    eprintln!("{}", message);
+                    for error in &errors {
+                        let error_msg = format!("  - {}", error);
+                        log_fd3!("{}", error_msg);
+                        eprintln!("{}", error_msg);
                     }
-                    usage(3);
+                    exit(3);
                 }
             }
 
@@ -313,18 +318,81 @@ fn main() -> Result<()> {
     let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
 
     // Validate against container schema
+    log_fd3!("Validating container file: {}", container_file.display());
+    log_fd3!("\tAgainst schema: {}", container_schema.display());
     let validation_result: Result<(), Vec<String>> =
         validate_json_schema(container_schema, &json_value);
     match validation_result {
         Ok(_) => {
-            log_fd3!("Validation successful.");
+            log_fd3!("\tValidation successful.");
         }
         Err(errors) => {
-            log_fd3!("Validation failed.");
-            for error in errors {
-                log_fd3!("Validation error: {}", error);
+            let message = format!(
+                "Error: Validation failed for file: {}\nAgainst schema: {}",
+                container_file.display(),
+                container_schema.display()
+            );
+            log_fd3!("{}", message);
+            eprintln!("{}", message);
+            for error in &errors {
+                let error_msg = format!("  - {}", error);
+                log_fd3!("{}", error_msg);
+                eprintln!("{}", error_msg);
             }
-            usage(3);
+            exit(3);
+        }
+    }
+
+    // Validate individual test_results entries against verification_schema.json
+    if let Some(test_results) = json_value.get("test_results") {
+        if let Some(test_results_array) = test_results.as_array() {
+            log_fd3!(
+                "Validating {} test result entries in container file",
+                test_results_array.len()
+            );
+
+            // Find verification_schema.json in the schemas directory
+            let verification_schema_path = PathBuf::from("schemas/verification_schema.json");
+            if verification_schema_path.exists() {
+                log_fd3!(
+                    "\tUsing verification schema: {}",
+                    verification_schema_path.display()
+                );
+
+                for (index, test_result) in test_results_array.iter().enumerate() {
+                    log_fd3!("\tValidating test result entry #{}", index + 1);
+                    let validation_result =
+                        validate_json_schema(&verification_schema_path, test_result);
+                    match validation_result {
+                        Ok(_) => {
+                            log_fd3!("\t\tValidation successful for entry #{}", index + 1);
+                        }
+                        Err(errors) => {
+                            let default_id = format!("entry #{}", index + 1);
+                            let test_case_id = test_result
+                                .get("test_case_id")
+                                .and_then(|v| v.as_str())
+                                .unwrap_or(&default_id);
+                            let message = format!(
+                                "Error: Validation failed for test result entry: {}\nIn file: {}\nAgainst schema: {}",
+                                test_case_id,
+                                container_file.display(),
+                                verification_schema_path.display()
+                            );
+                            log_fd3!("{}", message);
+                            eprintln!("{}", message);
+                            for error in &errors {
+                                let error_msg = format!("  - {}", error);
+                                log_fd3!("{}", error_msg);
+                                eprintln!("{}", error_msg);
+                            }
+                            exit(3);
+                        }
+                    }
+                }
+            } else {
+                log_fd3!("\tWarning: verification_schema.json not found at {}, skipping test result validation", verification_schema_path.display());
+            }
         }
     }
 
@@ -350,6 +418,38 @@ fn main() -> Result<()> {
         "test_cases_path",
         &output_md_path.to_string_lossy().to_string(),
     );
+
+    // Load and render requirement_aggregation_template.adoc
+    let req_agg_template_path =
+        verification_methods_dir.join("requirement_aggregation_template.adoc");
+    if req_agg_template_path.exists() {
+        log_fd3!(
+            "Loading requirement aggregation template from: {}",
+            req_agg_template_path.display()
+        );
+        let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
+        let mut req_tera = Tera::default();
+        req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
+
+        log_fd3!("Rendering requirement aggregation template...");
+        match req_tera.render("req_agg_template", &context) {
+            Ok(requirements_summary) => {
+                context.insert("requirements_summary_adoc", &requirements_summary);
+                log_fd3!("Requirements summary rendered and added to context");
+            }
+            Err(e) => {
+                log_fd3!(
+                    "Warning: Failed to render requirement aggregation template: {}",
+                    e
+                );
+            }
+        }
+    } else {
+        log_fd3!(
+            "Warning: requirement_aggregation_template.adoc not found at {}",
+            req_agg_template_path.display()
+        );
+    }
 
     // Read the template file
     let template_str = fs::read_to_string(container_template)?;
@@ -385,12 +485,13 @@ fn validate_json_schema(
     let schema_str = match schema_str {
         Ok(s) => s,
         Err(e) => {
-            log_fd3!(
-                "\tFailed to read schema file {}: {}",
+            let error_msg = format!(
+                "Failed to read schema file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on read error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
     let schema_str_2 = schema_str;
@@ -398,12 +499,13 @@ fn validate_json_schema(
     let schema_json = match schema_json {
         Ok(s) => s,
         Err(e) => {
-            log_fd3!(
+            let error_msg = format!(
                 "Failed to parse schema file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on parse error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
     // JSONSchema::compile requires the schema to live for 'static because the
@@ -416,24 +518,28 @@ fn validate_json_schema(
     let compiled2 = match compiled {
         Ok(c) => c,
         Err(e) => {
-            log_fd3!(
-                "\tFailed to compile schema from file {}: {}",
+            let error_msg = format!(
+                "Failed to compile schema from file {}: {}",
                 schema_path.display(),
                 e
             );
-            return Err(vec![]); // Return empty vector on compile error
+            log_fd3!("{}", error_msg);
+            return Err(vec![error_msg]);
         }
     };
-    log_fd3!("\tValidating payload file against schema...");
-    match compiled2.validate(payload) {
-        Ok(_) => log_fd3!("\tSchema validation: VALID"),
+    log_fd3!("\tValidating payload against schema...");
+    let validation_result = compiled2.validate(payload);
+    match validation_result {
+        Ok(_) => {
+            log_fd3!("\tSchema validation: VALID");
+            Ok(())
+        }
         Err(errors) => {
             log_fd3!("\tSchema validation: INVALID");
-            return Err(errors.into_iter().map(|e| e.to_string()).collect());
+            let error_messages: Vec<String> = errors.into_iter().map(|e| e.to_string()).collect();
+            Err(error_messages)
         }
     }
-    log_fd3!("\tValidation successful.");
-    Ok(())
 }
 
 fn usage(ret_code: i32) -> ! {
@@ -782,5 +888,297 @@ mod tests {
             args.test_case[0],
             PathBuf::from("/usr/local/verification_methods")
         );
+    }
+
+    #[test]
+    fn test_requirement_aggregation_logic() {
+        let template_str = r#"requirements_with_detail:
+{%- set reqs = ["XXX100", "XXX200", "XXX300", "XXX400"] %}
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+  - requirement: {{ req }}
+    items:
+{%- for item in filtered %}
+      - item: {% if item.item %}{{ item.item }}{% else %}null{% endif %}
+        tc: {% if item.tc %}{{ item.tc }}{% else %}null{% endif %}
+        id: {{ item.test_case_id }}
+        pass: {% if item.overall_pass %}true{% else %}false{% endif %}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+status_per_requirement:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+  - requirement: {{ req }}
+    pass: {% if all_pass %}true{% else %}false{% endif %}
+{%- endif %}
+{%- endfor %}
+requirements_by_status:
+  pass:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+{%- if all_pass %}
+    - {{ req }}
+{%- endif %}
+{%- endif %}
+{%- endfor %}
+  fail:
+{%- for req in reqs %}
+{%- set filtered = test_results | filter(attribute="requirement", value=req) %}
+{%- if filtered | length > 0 %}
+{%- set all_pass = filtered | filter(attribute="overall_pass", value=true) | length == filtered | length %}
+{%- if not all_pass %}
+    - {{ req }}
+{%- endif %}
+{%- endif %}
+{%- endfor %}"#;
+
+        let test_data = serde_json::json!([
+            {
+                "requirement": "XXX100",
+                "item": 1,
+                "tc": 4,
+                "test_case_id": "TC-100-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX100",
+                "item": 2,
+                "tc": 5,
+                "test_case_id": "TC-100-2",
+                "overall_pass": false
+            },
+            {
+                "requirement": "XXX200",
+                "test_case_id": "TC-200-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX300",
+                "item": 1,
+                "tc": 1,
+                "test_case_id": "TC-300-1",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX300",
+                "item": 2,
+                "tc": 2,
+                "test_case_id": "TC-300-2",
+                "overall_pass": true
+            },
+            {
+                "requirement": "XXX400",
+                "test_case_id": "TC-400-1",
+                "overall_pass": false
+            }
+        ]);
+
+        let mut context = Context::new();
+        context.insert("test_results", &test_data);
+
+        let rendered = render_template(template_str, &context).expect("Failed to render template");
+
+        let parsed: YamlValue =
+            serde_yaml::from_str(&rendered).expect("Failed to parse YAML output");
+        let parsed_map = parsed.as_mapping().expect("Expected YAML mapping");
+
+        let requirements_with_detail = parsed_map
+            .get(YamlValue::String("requirements_with_detail".to_string()))
+            .expect("Missing requirements_with_detail")
+            .as_sequence()
+            .expect("Expected sequence");
+
+        assert_eq!(requirements_with_detail.len(), 4);
+
+        let req100 = requirements_with_detail[0]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req100.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX100".to_string()))
+        );
+        let req100_items = req100
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req100_items.len(), 2);
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("item".to_string())),
+            Some(&YamlValue::Number(1.into()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("tc".to_string())),
+            Some(&YamlValue::Number(4.into()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("id".to_string())),
+            Some(&YamlValue::String("TC-100-1".to_string()))
+        );
+        assert_eq!(
+            req100_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+        assert_eq!(
+            req100_items[1]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let req200 = requirements_with_detail[1]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req200.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX200".to_string()))
+        );
+        let req200_items = req200
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req200_items.len(), 1);
+        assert_eq!(
+            req200_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("item".to_string())),
+            Some(&YamlValue::Null)
+        );
+        assert_eq!(
+            req200_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let req300 = requirements_with_detail[2]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            req300.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX300".to_string()))
+        );
+        let req300_items = req300
+            .get(YamlValue::String("items".to_string()))
+            .expect("Missing items")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(req300_items.len(), 2);
+        assert_eq!(
+            req300_items[0]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+        assert_eq!(
+            req300_items[1]
+                .as_mapping()
+                .unwrap()
+                .get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status_per_requirement = parsed_map
+            .get(YamlValue::String("status_per_requirement".to_string()))
+            .expect("Missing status_per_requirement")
+            .as_sequence()
+            .expect("Expected sequence");
+
+        assert_eq!(status_per_requirement.len(), 4);
+
+        let status100 = status_per_requirement[0]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status100.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX100".to_string()))
+        );
+        assert_eq!(
+            status100.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let status200 = status_per_requirement[1]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status200.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX200".to_string()))
+        );
+        assert_eq!(
+            status200.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status300 = status_per_requirement[2]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status300.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX300".to_string()))
+        );
+        assert_eq!(
+            status300.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(true))
+        );
+
+        let status400 = status_per_requirement[3]
+            .as_mapping()
+            .expect("Expected mapping");
+        assert_eq!(
+            status400.get(YamlValue::String("requirement".to_string())),
+            Some(&YamlValue::String("XXX400".to_string()))
+        );
+        assert_eq!(
+            status400.get(YamlValue::String("pass".to_string())),
+            Some(&YamlValue::Bool(false))
+        );
+
+        let requirements_by_status = parsed_map
+            .get(YamlValue::String("requirements_by_status".to_string()))
+            .expect("Missing requirements_by_status")
+            .as_mapping()
+            .expect("Expected mapping");
+
+        let pass_reqs = requirements_by_status
+            .get(YamlValue::String("pass".to_string()))
+            .expect("Missing pass")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(pass_reqs.len(), 2);
+        assert_eq!(pass_reqs[0], YamlValue::String("XXX200".to_string()));
+        assert_eq!(pass_reqs[1], YamlValue::String("XXX300".to_string()));
+
+        let fail_reqs = requirements_by_status
+            .get(YamlValue::String("fail".to_string()))
+            .expect("Missing fail")
+            .as_sequence()
+            .expect("Expected sequence");
+        assert_eq!(fail_reqs.len(), 2);
+        assert_eq!(fail_reqs[0], YamlValue::String("XXX100".to_string()));
+        assert_eq!(fail_reqs[1], YamlValue::String("XXX400".to_string()));
     }
 }
