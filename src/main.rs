@@ -989,6 +989,559 @@ mod tests {
         assert_eq!(get_template_suffix("unknown"), ".j2");
     }
 
+    mod test_schema_validation {
+        use super::*;
+        use std::fs;
+        use std::path::PathBuf;
+        use tempfile::TempDir;
+
+        fn create_temp_schema(dir: &TempDir, filename: &str, content: &str) -> PathBuf {
+            let path = dir.path().join(filename);
+            fs::write(&path, content).expect("Failed to write schema file");
+            path
+        }
+
+        #[test]
+        fn test_valid_test_case_schema_passes() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": ["test"]},
+                    "requirement": {"type": "string"},
+                    "item": {"type": "integer"},
+                    "tc": {"type": "integer"},
+                    "id": {"type": "string"},
+                    "description": {"type": "string"}
+                },
+                "required": ["type", "requirement", "item", "tc", "id", "description"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "type": "test",
+                "requirement": "XXX100",
+                "item": 1,
+                "tc": 4,
+                "id": "TC-001",
+                "description": "Test description"
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_ok(), "Valid payload should pass validation");
+        }
+
+        #[test]
+        fn test_invalid_test_case_schema_fails_with_error_message() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": ["test"]},
+                    "requirement": {"type": "string"},
+                    "item": {"type": "integer"},
+                    "tc": {"type": "integer"}
+                },
+                "required": ["type", "requirement", "item", "tc"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "type": "test",
+                "requirement": "XXX100",
+                "item": 1
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(
+                result.is_err(),
+                "Missing required field should fail validation"
+            );
+            let errors = result.unwrap_err();
+            assert!(!errors.is_empty(), "Should have at least one error message");
+            assert!(
+                errors[0].contains("tc") || errors[0].contains("required"),
+                "Error message should mention missing required field, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_valid_container_data_schema_passes() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "date": {"type": "string"},
+                    "product": {"type": "string"},
+                    "description": {"type": "string"}
+                },
+                "required": ["date", "product", "description"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "container_schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "date": "2024-03-15",
+                "product": "Test Product",
+                "description": "Test description"
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(
+                result.is_ok(),
+                "Valid container data should pass validation"
+            );
+        }
+
+        #[test]
+        fn test_invalid_container_data_schema_fails() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "date": {"type": "string"},
+                    "product": {"type": "string"}
+                },
+                "required": ["date", "product"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "container_schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "date": "2024-03-15",
+                "product": 12345
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Wrong type should fail validation");
+            let errors = result.unwrap_err();
+            assert!(
+                errors[0].contains("type")
+                    || errors[0].contains("string")
+                    || errors[0].contains("product"),
+                "Error message should mention type mismatch, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_valid_test_results_entry_passes() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                    "test_case_id": {"type": "string"},
+                    "description": {"type": "string"},
+                    "overall_pass": {"type": "boolean"},
+                    "total_steps": {"type": "integer", "minimum": 0},
+                    "passed_steps": {"type": "integer", "minimum": 0},
+                    "failed_steps": {"type": "integer", "minimum": 0},
+                    "not_executed_steps": {"type": "integer", "minimum": 0}
+                },
+                "required": ["test_case_id", "description", "overall_pass", "total_steps", "passed_steps", "failed_steps", "not_executed_steps"]
+            }"#;
+            let schema_path =
+                create_temp_schema(&temp_dir, "verification_schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "test_case_id": "TC-001",
+                "description": "Test case description",
+                "overall_pass": true,
+                "total_steps": 10,
+                "passed_steps": 10,
+                "failed_steps": 0,
+                "not_executed_steps": 0
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(
+                result.is_ok(),
+                "Valid test result entry should pass validation"
+            );
+        }
+
+        #[test]
+        fn test_invalid_test_results_entry_fails() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                    "test_case_id": {"type": "string"},
+                    "overall_pass": {"type": "boolean"},
+                    "total_steps": {"type": "integer", "minimum": 0}
+                },
+                "required": ["test_case_id", "overall_pass", "total_steps"]
+            }"#;
+            let schema_path =
+                create_temp_schema(&temp_dir, "verification_schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "test_case_id": "TC-001",
+                "overall_pass": true,
+                "total_steps": -5
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(
+                result.is_err(),
+                "Negative value for minimum constraint should fail"
+            );
+            let errors = result.unwrap_err();
+            assert!(
+                errors[0].contains("minimum")
+                    || errors[0].contains("total_steps")
+                    || errors[0].contains("-5"),
+                "Error message should mention minimum constraint violation, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_missing_schema_file_fails() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_path = temp_dir.path().join("nonexistent_schema.json");
+
+            let payload = serde_json::json!({"test": "data"});
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Missing schema file should fail");
+            let errors = result.unwrap_err();
+            assert_eq!(errors.len(), 1, "Should have exactly one error message");
+            assert!(
+                errors[0].contains("Failed to read schema file"),
+                "Error should mention failure to read schema file, got: {}",
+                errors[0]
+            );
+            assert!(
+                errors[0].contains("nonexistent_schema.json"),
+                "Error should mention the missing file name, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_malformed_json_schema_fails() {
+            let temp_dir = TempDir::new().unwrap();
+            let malformed_schema = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"
+                }
+            "#;
+            let schema_path =
+                create_temp_schema(&temp_dir, "malformed_schema.json", malformed_schema);
+
+            let payload = serde_json::json!({"name": "test"});
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Malformed JSON schema should fail");
+            let errors = result.unwrap_err();
+            assert_eq!(errors.len(), 1, "Should have exactly one error message");
+            assert!(
+                errors[0].contains("Failed to parse schema file"),
+                "Error should mention failure to parse schema, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_invalid_schema_compilation_fails() {
+            let temp_dir = TempDir::new().unwrap();
+            let invalid_schema = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "invalid_type_value"
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "invalid_schema.json", invalid_schema);
+
+            let payload = serde_json::json!({"test": "data"});
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Invalid schema should fail compilation");
+            let errors = result.unwrap_err();
+            assert_eq!(errors.len(), 1, "Should have exactly one error message");
+            assert!(
+                errors[0].contains("Failed to compile schema"),
+                "Error should mention failure to compile schema, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_invalid_yaml_payload_type_mismatch() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "id": {"type": "string"},
+                    "count": {"type": "integer"},
+                    "enabled": {"type": "boolean"}
+                },
+                "required": ["id", "count", "enabled"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "id": "test-id",
+                "count": "not-a-number",
+                "enabled": true
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Type mismatch should fail validation");
+            let errors = result.unwrap_err();
+            assert!(
+                errors[0].contains("type") || errors[0].contains("count"),
+                "Error should mention type mismatch, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_additional_properties_validation() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"}
+                },
+                "additionalProperties": false,
+                "required": ["name"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "name": "test",
+                "extra_field": "should not be allowed"
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(
+                result.is_err(),
+                "Additional properties should fail when not allowed"
+            );
+            let errors = result.unwrap_err();
+            assert!(
+                errors[0].contains("additional") || errors[0].contains("extra_field"),
+                "Error should mention additional properties, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_nested_object_validation() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "metadata": {
+                        "type": "object",
+                        "properties": {
+                            "version": {"type": "string"},
+                            "timestamp": {"type": "integer"}
+                        },
+                        "required": ["version", "timestamp"]
+                    }
+                },
+                "required": ["metadata"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let valid_payload = serde_json::json!({
+                "metadata": {
+                    "version": "1.0.0",
+                    "timestamp": 1234567890
+                }
+            });
+
+            let result = validate_json_schema(&schema_path, &valid_payload);
+            assert!(result.is_ok(), "Valid nested object should pass");
+
+            let invalid_payload = serde_json::json!({
+                "metadata": {
+                    "version": "1.0.0"
+                }
+            });
+
+            let result = validate_json_schema(&schema_path, &invalid_payload);
+            assert!(result.is_err(), "Missing required nested field should fail");
+        }
+
+        #[test]
+        fn test_array_validation() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "minItems": 1
+                    }
+                },
+                "required": ["items"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let valid_payload = serde_json::json!({
+                "items": ["item1", "item2", "item3"]
+            });
+
+            let result = validate_json_schema(&schema_path, &valid_payload);
+            assert!(result.is_ok(), "Valid array should pass");
+
+            let empty_array_payload = serde_json::json!({
+                "items": []
+            });
+
+            let result = validate_json_schema(&schema_path, &empty_array_payload);
+            assert!(
+                result.is_err(),
+                "Empty array should fail minItems constraint"
+            );
+
+            let wrong_type_payload = serde_json::json!({
+                "items": [1, 2, 3]
+            });
+
+            let result = validate_json_schema(&schema_path, &wrong_type_payload);
+            assert!(result.is_err(), "Array with wrong item type should fail");
+        }
+
+        #[test]
+        fn test_enum_validation() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "enum": ["pending", "approved", "rejected"]
+                    }
+                },
+                "required": ["status"]
+            }"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let valid_payload = serde_json::json!({
+                "status": "approved"
+            });
+
+            let result = validate_json_schema(&schema_path, &valid_payload);
+            assert!(result.is_ok(), "Valid enum value should pass");
+
+            let invalid_payload = serde_json::json!({
+                "status": "invalid_status"
+            });
+
+            let result = validate_json_schema(&schema_path, &invalid_payload);
+            assert!(result.is_err(), "Invalid enum value should fail");
+            let errors = result.unwrap_err();
+            assert!(
+                errors[0].contains("enum") || errors[0].contains("status"),
+                "Error should mention enum constraint, got: {}",
+                errors[0]
+            );
+        }
+
+        #[test]
+        fn test_multiple_validation_errors() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{"$schema": "http://json-schema.org/draft-04/schema#", "type": "object", "properties": {"name": {"type": "string"}, "age": {"type": "integer", "minimum": 0}, "email": {"type": "string"}}, "required": ["name", "age", "email"]}"#;
+            let schema_path = create_temp_schema(&temp_dir, "schema.json", schema_json);
+
+            let payload = serde_json::json!({
+                "name": 12345,
+                "age": -10
+            });
+
+            let result = validate_json_schema(&schema_path, &payload);
+            assert!(result.is_err(), "Multiple validation errors should fail");
+            let errors = result.unwrap_err();
+            assert!(
+                !errors.is_empty(),
+                "Should have at least one error message, got: {:?}",
+                errors
+            );
+        }
+
+        #[test]
+        fn test_complex_verification_schema_structure() {
+            let temp_dir = TempDir::new().unwrap();
+            let schema_json = r#"{
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "type": "object",
+                "properties": {
+                    "test_case_id": {"type": "string"},
+                    "description": {"type": "string"},
+                    "sequences": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "sequence_id": {"type": "integer"},
+                                "name": {"type": "string"},
+                                "all_steps_passed": {"type": "boolean"}
+                            },
+                            "required": ["sequence_id", "name", "all_steps_passed"]
+                        }
+                    },
+                    "overall_pass": {"type": "boolean"}
+                },
+                "required": ["test_case_id", "description", "sequences", "overall_pass"]
+            }"#;
+            let schema_path =
+                create_temp_schema(&temp_dir, "verification_schema.json", schema_json);
+
+            let valid_payload = serde_json::json!({
+                "test_case_id": "TC-001",
+                "description": "Test case",
+                "sequences": [
+                    {
+                        "sequence_id": 1,
+                        "name": "Sequence 1",
+                        "all_steps_passed": true
+                    },
+                    {
+                        "sequence_id": 2,
+                        "name": "Sequence 2",
+                        "all_steps_passed": false
+                    }
+                ],
+                "overall_pass": false
+            });
+
+            let result = validate_json_schema(&schema_path, &valid_payload);
+            assert!(result.is_ok(), "Valid complex structure should pass");
+
+            let invalid_payload = serde_json::json!({
+                "test_case_id": "TC-001",
+                "description": "Test case",
+                "sequences": [
+                    {
+                        "sequence_id": "not-a-number",
+                        "name": "Sequence 1",
+                        "all_steps_passed": true
+                    }
+                ],
+                "overall_pass": false
+            });
+
+            let result = validate_json_schema(&schema_path, &invalid_payload);
+            assert!(result.is_err(), "Invalid nested structure should fail");
+        }
+    }
+
     #[test]
     fn test_requirement_aggregation_logic() {
         let template_str = r#"requirements_with_detail:
