@@ -24,6 +24,9 @@ help:
 	@echo "  make clippy	  - Run clippy linter"
 	@echo "  make coverage	- Run code coverage and print report"
 	@echo "  make clean	   - Remove build artifacts"
+	@echo "  make install-sccache - Install sccache locally"
+	@echo "  make sccache-stats   - Show sccache statistics"
+	@echo "  make sccache-clean   - Clean sccache directories"
 .PHONY: help
 
 build:
@@ -101,9 +104,23 @@ coverage:
 
 clean:
 	cargo clean
+	rm -rf .sccache
 .PHONY: clean
 
 docker-build:
+	mkdir -p .sccache/host
 	docker build -t test:latest .
 .PHONY: docker-build
+
+install-sccache:
+	scripts/install-sccache.sh --local
+.PHONY: install-sccache
+
+sccache-stats:
+	sccache --show-stats
+.PHONY: sccache-stats
+
+sccache-clean:
+	rm -rf .sccache/host .sccache/docker
+.PHONY: sccache-clean
 
