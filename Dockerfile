@@ -40,9 +40,9 @@ RUN RUST_BACKTRACE=full cargo test
 RUN make test
 
 RUN ./target/release/test-plan-doc-gen \
-        --output ./data/dataset_4_GSMA/output.actual.md \
-        --container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
-        --test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.6_IN.yml
+    --output ./data/dataset_4_GSMA/output.actual.md \
+    --container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
+    --test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.6_IN.yml
 
 # Stage 3: runtime - Final lightweight image
 FROM debian:bookworm-slim AS runtime
