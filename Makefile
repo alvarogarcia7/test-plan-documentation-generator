@@ -6,8 +6,15 @@ install-prek-hooks:
 	prek install
 .PHONY: install-prek-hooks
 
+install-sccache:
+	@echo "Installing sccache..."
+	@chmod +x scripts/install-sccache.sh
+	@scripts/install-sccache.sh
+.PHONY: install-sccache
+
 help:
 	@echo "Available targets:"
+	@echo "  make install-sccache - Install sccache for build caching"
 	@echo "  make build	   - Build the project"
 	@echo "  make check	   - Check the project without building"
 	@echo "  make test		- Run tests"
@@ -17,6 +24,9 @@ help:
 	@echo "  make clippy	  - Run clippy linter"
 	@echo "  make coverage	- Run code coverage and print report"
 	@echo "  make clean	   - Remove build artifacts"
+	@echo "  make install-sccache - Install sccache locally"
+	@echo "  make sccache-stats   - Show sccache statistics"
+	@echo "  make sccache-clean   - Clean sccache directories"
 .PHONY: help
 
 build:
@@ -94,9 +104,23 @@ coverage:
 
 clean:
 	cargo clean
+	rm -rf .sccache
 .PHONY: clean
 
 docker-build:
+	mkdir -p .sccache/host
 	docker build -t test:latest .
 .PHONY: docker-build
+
+install-sccache:
+	scripts/install-sccache.sh --local
+.PHONY: install-sccache
+
+sccache-stats:
+	sccache --show-stats
+.PHONY: sccache-stats
+
+sccache-clean:
+	rm -rf .sccache/host .sccache/docker
+.PHONY: sccache-clean
 
