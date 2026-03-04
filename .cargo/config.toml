@@ -1,0 +1,17 @@
+# sccache configuration
+# 
+# To enable sccache compilation caching:
+#   Set RUSTC_WRAPPER=sccache environment variable
+#
+# Cache directory configuration:
+#   Local builds: Uses .sccache/host (default)
+#   Docker builds: Set SCCACHE_DIR=.sccache/docker environment variable
+#
+# Example usage:
+#   Local: RUSTC_WRAPPER=sccache cargo build
+#   Docker: RUSTC_WRAPPER=sccache SCCACHE_DIR=.sccache/docker cargo build
+
+[env]
+# Default cache directory for local builds
+# Can be overridden by setting SCCACHE_DIR environment variable (e.g., for Docker builds)
+SCCACHE_DIR = { value = ".sccache/host", force = false }
