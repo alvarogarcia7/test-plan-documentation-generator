@@ -3,6 +3,21 @@ FROM rust:1.92-bookworm AS deps
 
 WORKDIR /app
 
+# Install sccache
+COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
+COPY scripts/lib /tmp/scripts/lib/
+RUN chmod +x /tmp/scripts/install-sccache.sh && \
+    /tmp/scripts/install-sccache.sh --ci && \
+    rm -rf /tmp/scripts
+
+# Set sccache environment variables
+ENV RUSTC_WRAPPER=sccache
+ENV SCCACHE_DIR=/app/.sccache/docker
+
+# Create cache directory and copy host cache if it exists
+RUN mkdir -p /app/.sccache/docker
+COPY .sccache/host /app/.sccache/docker/ 2>/dev/null || true
+
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
 
@@ -13,14 +28,33 @@ RUN mkdir src && \
 # Build dependencies (this will be cached)
 RUN cargo build --release
 
+# Display cache statistics
+RUN sccache --show-stats
+
 # Stage 2: builder - Build the actual application
 FROM rust:1.92-bookworm AS builder
 
 WORKDIR /app
 
+# Install sccache
+COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
+COPY scripts/lib /tmp/scripts/lib/
+RUN chmod +x /tmp/scripts/install-sccache.sh && \
+    /tmp/scripts/install-sccache.sh --ci && \
+    rm -rf /tmp/scripts
+
+# Set sccache environment variables
+ENV RUSTC_WRAPPER=sccache
+ENV SCCACHE_DIR=/app/.sccache/docker
+
+# Create cache directory and copy host cache if it exists
+RUN mkdir -p /app/.sccache/docker
+COPY .sccache/host /app/.sccache/docker/ 2>/dev/null || true
+
 # Copy dependencies from deps stage
 COPY --from=deps /app/target target
 COPY --from=deps /usr/local/cargo /usr/local/cargo
+COPY --from=deps /app/.sccache/docker /app/.sccache/docker
 
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
@@ -35,9 +69,17 @@ COPY data ./data
 # Build the application against cached dependencies
 RUN cargo build --release
 
+# Display cache statistics
+RUN sccache --show-stats
+
 RUN RUST_BACKTRACE=full cargo test
 
 RUN make test
+
+RUN ./target/release/test-plan-doc-gen \
+        --output ./data/dataset_4_GSMA/output.actual.md \
+        --container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
+        --test-case ./data/dataset_4_GSMA/test_case/schema.json ./data/dataset_4_GSMA/test_case/template.j2 ./data/dataset_4_GSMA/test_case/*yml
 
 RUN ./target/release/test-plan-doc-gen \
     --output ./data/dataset_4_GSMA/output.actual.md \
