@@ -15,6 +15,7 @@ help:
 	@echo "  make fmt		 - Format code with rustfmt"
 	@echo "  make fmt-check   - Check code formatting without making changes"
 	@echo "  make clippy	  - Run clippy linter"
+	@echo "  make coverage	- Run code coverage and print report"
 	@echo "  make clean	   - Remove build artifacts"
 .PHONY: help
 
@@ -83,6 +84,13 @@ clippy:
 lint: fmt-check clippy
 	@echo "All linting checks passed!"
 .PHONY: lint
+
+coverage:
+	@echo "Running code coverage analysis..."
+	cargo tarpaulin --release --all-features --out Stdout --skip-clean --timeout 300
+	@echo ""
+	@echo "Coverage report generated!"
+.PHONY: coverage
 
 clean:
 	cargo clean

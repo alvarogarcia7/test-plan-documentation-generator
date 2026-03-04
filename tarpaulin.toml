@@ -1,0 +1,10 @@
+[package]
+all-features = true
+release = true
+timeout = "300s"
+follow-exec = true
+skip-clean = true
+out = ["Stdout"]
+
+[report]
+coveralls = false
