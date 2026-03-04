@@ -6,8 +6,15 @@ install-prek-hooks:
 	prek install
 .PHONY: install-prek-hooks
 
+install-sccache:
+	@echo "Installing sccache..."
+	@chmod +x scripts/install-sccache.sh
+	@scripts/install-sccache.sh
+.PHONY: install-sccache
+
 help:
 	@echo "Available targets:"
+	@echo "  make install-sccache - Install sccache for build caching"
 	@echo "  make build	   - Build the project"
 	@echo "  make check	   - Check the project without building"
 	@echo "  make test		- Run tests"
