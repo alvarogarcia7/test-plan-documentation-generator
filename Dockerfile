@@ -35,7 +35,7 @@ COPY data ./data
 # Build the application against cached dependencies
 RUN cargo build --release
 
-RUN RUST_BACKTRACE=1 cargo test
+RUN RUST_BACKTRACE=full cargo test
 
 RUN make test
 
