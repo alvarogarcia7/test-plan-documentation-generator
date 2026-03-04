@@ -42,14 +42,24 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
 // Logging macro - logs to file descriptor 3 if available (Unix-like systems)
 macro_rules! log_fd3 {
     ($($arg:tt)*) => {{
-        #[cfg(unix)]
+        // Skip logging in test mode to avoid FD conflicts
+        #[cfg(all(unix, not(test)))]
         {
             use std::io::Write;
             use std::os::unix::io::FromRawFd;
             unsafe {
-                let mut file = std::fs::File::from_raw_fd(3);
-                let _ = writeln!(file, $($arg)*);
-                std::mem::forget(file);
+                // Check if FD 3 is valid using fcntl
+                let fd = 3;
+                let flags = libc::fcntl(fd, libc::F_GETFD);
+                if flags != -1 {
+                    // FD 3 is valid, duplicate it to avoid taking ownership
+                    let dup_fd = libc::dup(fd);
+                    if dup_fd != -1 {
+                        let mut file = std::fs::File::from_raw_fd(dup_fd);
+                        let _ = writeln!(file, $($arg)*);
+                        // File will be closed when it goes out of scope
+                    }
+                }
             }
         }
     }};
@@ -68,8 +78,8 @@ fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
     // Log the raw arguments before parsing
-    let raw_args: Vec<String> = std::env::args().collect();
-    log_fd3!("Raw arguments: {:?}", raw_args);
+    let _raw_args: Vec<String> = std::env::args().collect();
+    log_fd3!("Raw arguments: {:?}", _raw_args);
 
     let args = Args::parse();
     log_fd3!("Parsed arguments: {:?}", args);
@@ -455,10 +465,10 @@ fn main() -> Result<()> {
                     context_key
                 );
             }
-            Err(e) => {
+            Err(_e) => {
                 log_fd3!(
                     "Warning: Failed to render requirement aggregation template: {}",
-                    e
+                    _e
                 );
             }
         }
