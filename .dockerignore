@@ -1,5 +1,8 @@
 # Build artifacts
-target/
+/target
+
+# Cache - allow host cache for Docker
+!.sccache/host/**
 
 # Test directories and files
 testcases/
