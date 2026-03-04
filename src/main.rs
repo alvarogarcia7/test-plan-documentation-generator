@@ -1298,9 +1298,9 @@ mod tests {
             assert!(result.is_err(), "Type mismatch should fail validation");
             let errors = result.unwrap_err();
             assert!(
-                errors[0].contains("type")
-                    || errors[0].contains("count")
-                    || errors[0].contains("string"),
+                errors[0].contains("integer")
+                    || errors[0].contains("is not of type")
+                    || errors[0].contains("not-a-number"),
                 "Error should mention type mismatch, got: {}",
                 errors[0]
             );
