@@ -17,3 +17,4 @@ lcov.info
 
 # sccache
 /.sccache/
+/.cargo/config.toml
