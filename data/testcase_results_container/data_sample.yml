@@ -1,0 +1,133 @@
+title: 'Sample Test Results Report - Q1 2024'
+project: 'Sample Project Testing'
+test_date: '2024-03-15T10:00:00Z'
+test_results:
+  - requirement: "REQ-001"
+    item: 1
+    tc: 1
+    test_case_id: 'TC-001 User Authentication'
+    description: 'Verify user authentication functionality with valid and invalid credentials.'
+    sequences:
+      - sequence_id: 1
+        name: "Valid Credentials Login"
+        step_results:
+          - Pass:
+              step: 1
+              description: "Navigate to login page"
+          - Pass:
+              step: 2
+              description: "Enter valid username and password"
+          - Pass:
+              step: 3
+              description: "Click login button"
+          - Pass:
+              step: 4
+              description: "Verify successful login and redirect to dashboard"
+        all_steps_passed: true
+      - sequence_id: 2
+        name: "Invalid Credentials Login"
+        step_results:
+          - Pass:
+              step: 5
+              description: "Navigate to login page"
+          - Pass:
+              step: 6
+              description: "Enter invalid username and password"
+          - Pass:
+              step: 7
+              description: "Click login button"
+          - Pass:
+              step: 8
+              description: "Verify error message is displayed"
+        all_steps_passed: true
+    total_steps: 8
+    passed_steps: 8
+    failed_steps: 0
+    not_executed_steps: 0
+    overall_pass: true
+  - requirement: "REQ-002"
+    item: 2
+    tc: 2
+    test_case_id: 'TC-002 Data Validation'
+    description: 'Verify input validation for user registration form.'
+    sequences:
+      - sequence_id: 1
+        name: "Email Format Validation"
+        step_results:
+          - Pass:
+              step: 1
+              description: "Navigate to registration page"
+          - Pass:
+              step: 2
+              description: "Enter valid email format"
+          - Fail:
+              step: 3
+              description: "Submit form and verify acceptance"
+              expected:
+                success: true
+                result: "Form submitted successfully"
+                output: "User registered with email confirmation sent"
+              actual_result: "Form validation error"
+              actual_output: "Email already exists in database"
+              reason: "Expected successful registration but email was already in use, indicating duplicate check failure"
+        all_steps_passed: false
+      - sequence_id: 2
+        name: "Password Strength Validation"
+        step_results:
+          - NotExecuted:
+              step: 4
+              description: "Enter weak password (less than 8 characters)"
+          - NotExecuted:
+              step: 5
+              description: "Verify password strength error message"
+        all_steps_passed: false
+    total_steps: 5
+    passed_steps: 2
+    failed_steps: 1
+    not_executed_steps: 2
+    overall_pass: false
+  - requirement: "REQ-003"
+    item: 3
+    tc: 3
+    test_case_id: 'TC-003 API Response Time'
+    description: 'Verify API endpoints meet performance requirements.'
+    sequences:
+      - sequence_id: 1
+        name: "GET Request Performance"
+        step_results:
+          - Pass:
+              step: 1
+              description: "Send GET request to /api/users endpoint"
+          - Pass:
+              step: 2
+              description: "Measure response time"
+          - Pass:
+              step: 3
+              description: "Verify response time is under 200ms"
+        all_steps_passed: true
+      - sequence_id: 2
+        name: "POST Request Performance"
+        step_results:
+          - Pass:
+              step: 4
+              description: "Send POST request to /api/users endpoint"
+          - Pass:
+              step: 5
+              description: "Measure response time"
+          - Pass:
+              step: 6
+              description: "Verify response time is under 300ms"
+        all_steps_passed: true
+    total_steps: 6
+    passed_steps: 6
+    failed_steps: 0
+    not_executed_steps: 0
+    overall_pass: true
+metadata:
+  environment: 'Test Environment - Staging'
+  platform: 'Ubuntu 22.04 LTS with Node.js v18.16.0'
+  executor: 'Automated Test Framework v1.2.3'
+  execution_duration: 145.8
+  total_test_cases: 3
+  passed_test_cases: 2
+  failed_test_cases: 1

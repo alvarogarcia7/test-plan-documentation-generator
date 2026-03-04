@@ -368,7 +368,7 @@ fn main() -> Result<()> {
 
             // Find verification_schema.json in the schemas directory
             let verification_schema_path =
-                PathBuf::from("data/dataset_4_GSMA/schemas/verification_schema.json");
+                PathBuf::from("../data/schemas/verification_schema.json");
             if verification_schema_path.exists() {
                 log_fd3!(
                     "\tUsing verification schema: {}",
