@@ -85,7 +85,7 @@ ci:
     - cargo --version
     - rustup component add rustfmt
     - rustup component add clippy
-  image: rust:latest
+  image: rust:1.92-bookworm
   stage: build
   script:
     - cargo fmt -- --check
