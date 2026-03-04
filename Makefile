@@ -46,11 +46,11 @@ test: build
 
 test-e2e:
 	./target/release/test-plan-doc-gen \
-	--output ./data/dataset_4_GSMA/output.actual.md \
-	--container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template.j2 ./data/dataset_4_GSMA/container/data.yml \
-	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.6_IN.yml \
+	--output ./data/output.actual.md \
+	--container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
+	--test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	3>log_3.log
-	diff ./data/dataset_4_GSMA/output.actual.md ./data/dataset_4_GSMA/output.expected.md
+	diff ./data/output.actual.md ./data/output.expected.md
 .PHONY: test-e2e
 
 test-e2e-asciidoc:
@@ -62,21 +62,21 @@ test-e2e-asciidoc:
 test-e2e-test-plan-asciidoc:
 	./target/release/test-plan-doc-gen \
 	--format asciidoc \
-	--output ./data/dataset_4_GSMA/test_plan_output.actual.adoc \
-	--container ./data/dataset_4_GSMA/container/schema.json ./data/dataset_4_GSMA/container/template_asciidoc.adoc ./data/dataset_4_GSMA/container/data.yml \
-	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_case/gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_case/gsma_4.4.2.6_IN.yml \
+	--output ./data/test_plan_output.actual.adoc \
+	--container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
+	--test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	3>log_3.log
-	diff ./data/dataset_4_GSMA/test_plan_output.actual.adoc ./data/dataset_4_GSMA/test_plan_output.expected.adoc
+	diff ./data/test_plan_output.actual.adoc ./data/test_plan_output.expected.adoc
 .PHONY: test-e2e-test-plan-asciidoc
 
 test-e2e-test-results-asciidoc:
 	./target/release/test-plan-doc-gen \
 	--format asciidoc \
-	--output ./data/dataset_4_GSMA/test_results_output.actual.adoc \
-	--container ./data/dataset_4_GSMA/test_results/container_schema.json ./data/dataset_4_GSMA/test_results/container_template_asciidoc.adoc ./data/dataset_4_GSMA/test_results/container_data.yml \
-	--test-case ./data/dataset_4_GSMA/verification_methods ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.2_TC.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.3_TC.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.4_AN.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.5_DM.yml ./data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.6_IN.yml \
+	--output ./data/test_results_output.actual.adoc \
+	--container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \
+	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
 	3>log_3.log
-	diff ./data/dataset_4_GSMA/test_results_output.actual.adoc ./data/dataset_4_GSMA/test_results_output.expected.adoc
+	diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 .PHONY: test-e2e-test-results-asciidoc
 
 fmt:

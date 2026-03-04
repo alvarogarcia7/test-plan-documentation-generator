@@ -1,8 +1,8 @@
 /target
-/data/dataset_4_GSMA/container/test_plan.md
-/data/dataset_4_GSMA/output.actual.md
-/data/dataset_4_GSMA/test_plan_output.actual.adoc
-/data/dataset_4_GSMA/test_results_output.actual.adoc
+/data/container/test_plan.md
+/data/output.actual.md
+/data/test_plan_output.actual.adoc
+/data/test_results_output.actual.adoc
 *.actual.md
 *.log
 

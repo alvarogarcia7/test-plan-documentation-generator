@@ -369,12 +369,12 @@ fn test_e2e_invalid_container_payload_existing_lines() {
 
     let dir = tempfile::tempdir().unwrap();
 
-    let schema_path = "data/dataset_4_GSMA/container/schema.json";
-    let template_path = "data/dataset_4_GSMA/container/template.j2";
-    let data_path = "data/dataset_4_GSMA/container/data.yml";
+    let schema_path = "data/container/schema.json";
+    let template_path = "data/container/template.j2";
+    let data_path = "data/container/data.yml";
 
-    let vm_dir = "data/dataset_4_GSMA/verification_methods";
-    let tc_data_path = "data/dataset_4_GSMA/test_case/invalid/invalid_payload.yml";
+    let vm_dir = "data/verification_methods";
+    let tc_data_path = "data/test_case/invalid/invalid_payload.yml";
 
     // Build and run the binary
     let bin = get_binary_path();
@@ -529,14 +529,14 @@ fn test_e2e_dataset_4_gsma() {
     let bin = get_binary_path();
 
     // Compose the fixed container args
-    let container_schema = "./data/dataset_4_GSMA/container/schema.json";
-    let container_template = "./data/dataset_4_GSMA/container/template.j2";
-    let container_file = "./data/dataset_4_GSMA/container/data.yml";
+    let container_schema = "./data/container/schema.json";
+    let container_template = "./data/container/template.j2";
+    let container_file = "./data/container/data.yml";
 
     // Verification methods directory
-    let vm_dir = "./data/dataset_4_GSMA/verification_methods";
+    let vm_dir = "./data/verification_methods";
 
-    let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
+    let tc_dir = std::path::Path::new("./data/test_case");
     let tc_files = sorted_test_case_files(tc_dir);
 
     // Build args vector
@@ -595,15 +595,15 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     }
 
     // Compose the fixed container args
-    let container_schema = "./data/dataset_4_GSMA/container/schema.json";
-    let container_template = "./data/dataset_4_GSMA/container/template.j2";
-    let container_file = "./data/dataset_4_GSMA/container/data.yml";
+    let container_schema = "./data/container/schema.json";
+    let container_template = "./data/container/template.j2";
+    let container_file = "./data/container/data.yml";
 
     // Verification methods directory
-    let vm_dir = "./data/dataset_4_GSMA/verification_methods";
+    let vm_dir = "./data/verification_methods";
 
     // Expand all .yml files under the test_case directory
-    let tc_dir = std::path::Path::new("./data/dataset_4_GSMA/test_case");
+    let tc_dir = std::path::Path::new("./data/test_case");
     let tc_files = sorted_test_case_files(tc_dir);
 
     // Build args vector and run
@@ -709,28 +709,28 @@ fn test_e2e_requirement_aggregation() {
 
     let result_template_path = result_vm_dir.join("template_asciidoc.adoc");
     std::fs::copy(
-        "data/dataset_4_GSMA/test_results/result_template_asciidoc.adoc",
+        "./data/test_results/result_template_asciidoc.adoc",
         &result_template_path,
     )
     .unwrap();
 
     let req_agg_template_path = vm_dir.join("requirement_aggregation_template.adoc");
     std::fs::copy(
-        "data/dataset_4_GSMA/test_results/requirement_aggregation_template.adoc",
+        "./data/test_results/requirement_aggregation_template.adoc",
         &req_agg_template_path,
     )
     .unwrap();
 
-    let container_schema = "data/dataset_4_GSMA/test_results/container_schema.json";
-    let container_template = "data/dataset_4_GSMA/test_results/container_template_asciidoc.adoc";
-    let container_data = "data/dataset_4_GSMA/test_results/container_data.yml";
+    let container_schema = "data/test_results/container_schema.json";
+    let container_template = "data/test_results/container_template_asciidoc.adoc";
+    let container_data = "data/test_results/container_data.yml";
 
     let tc_files = vec![
-        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.2_TC.yml",
-        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.3_TC.yml",
-        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.4_AN.yml",
-        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.5_DM.yml",
-        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.6_IN.yml",
+        "data/test_results/sample_gsma_4.4.2.2_TC.yml",
+        "data/test_results/sample_gsma_4.4.2.3_TC.yml",
+        "data/test_results/sample_gsma_4.4.2.4_AN.yml",
+        "data/test_results/sample_gsma_4.4.2.5_DM.yml",
+        "data/test_results/sample_gsma_4.4.2.6_IN.yml",
     ];
 
     let mut cmd = Command::new(get_binary_path());
