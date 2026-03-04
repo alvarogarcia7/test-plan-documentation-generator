@@ -362,6 +362,7 @@ fn test_e2e_template_with_filters() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_e2e_invalid_container_payload_existing_lines() {
     // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");
@@ -432,6 +433,7 @@ fn test_e2e_invalid_container_payload_existing_lines() {
 }
 
 #[test]
+#[cfg(unix)]
 fn test_e2e_invalid_container_payload() {
     // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");
@@ -689,4 +691,142 @@ fn sorted_test_case_files(tc_dir: &Path) -> Vec<String> {
 
     tc_files.sort();
     tc_files
+}
+
+#[test]
+fn test_e2e_requirement_aggregation() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.adoc");
+
+    let vm_dir = dir.path().join("vm");
+    let result_vm_dir = vm_dir.join("result");
+    std::fs::create_dir_all(&result_vm_dir).unwrap();
+
+    let result_schema_path = result_vm_dir.join("schema.json");
+    std::fs::write(&result_schema_path, "{}").unwrap();
+
+    let result_template_path = result_vm_dir.join("template_asciidoc.adoc");
+    std::fs::copy(
+        "data/dataset_4_GSMA/test_results/result_template_asciidoc.adoc",
+        &result_template_path,
+    )
+    .unwrap();
+
+    let req_agg_template_path = vm_dir.join("requirement_aggregation_template.adoc");
+    std::fs::copy(
+        "data/dataset_4_GSMA/test_results/requirement_aggregation_template.adoc",
+        &req_agg_template_path,
+    )
+    .unwrap();
+
+    let container_schema = "data/dataset_4_GSMA/test_results/container_schema.json";
+    let container_template = "data/dataset_4_GSMA/test_results/container_template_asciidoc.adoc";
+    let container_data = "data/dataset_4_GSMA/test_results/container_data.yml";
+
+    let tc_files = vec![
+        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.2_TC.yml",
+        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.3_TC.yml",
+        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.4_AN.yml",
+        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.5_DM.yml",
+        "data/dataset_4_GSMA/test_results/sample_gsma_4.4.2.6_IN.yml",
+    ];
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema)
+        .arg(container_template)
+        .arg(container_data);
+    cmd.arg("--test-case").arg(vm_dir.to_str().unwrap());
+    for tc_file in &tc_files {
+        cmd.arg(tc_file);
+    }
+    cmd.arg("--format")
+        .arg("asciidoc")
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).expect("failed to read output file");
+
+    assert!(
+        output.contains("== Requirements Summary"),
+        "output should contain Requirements Summary section"
+    );
+
+    assert!(
+        output.contains("requirements_with_detail:"),
+        "output should contain requirements_with_detail YAML section"
+    );
+
+    assert!(
+        output.contains("status_per_requirement:"),
+        "output should contain status_per_requirement YAML section"
+    );
+
+    assert!(
+        output.contains("requirements_by_status:"),
+        "output should contain requirements_by_status YAML section"
+    );
+
+    assert!(
+        output.contains("- requirement: XXX100"),
+        "output should contain requirement XXX100"
+    );
+
+    assert!(
+        output.contains("- requirement: XXX200"),
+        "output should contain requirement XXX200"
+    );
+
+    assert!(
+        output.contains("- requirement: XXX300"),
+        "output should contain requirement XXX300"
+    );
+
+    assert!(
+        output.contains("- requirement: XXX400"),
+        "output should contain requirement XXX400"
+    );
+
+    assert!(
+        output.contains("pass: true") && output.contains("pass: false"),
+        "output should contain both pass: true and pass: false entries"
+    );
+
+    let req_with_detail_start = output
+        .find("requirements_with_detail:")
+        .expect("requirements_with_detail should be present");
+    let status_per_req_start = output
+        .find("status_per_requirement:")
+        .expect("status_per_requirement should be present");
+    let req_by_status_start = output
+        .find("requirements_by_status:")
+        .expect("requirements_by_status should be present");
+
+    assert!(
+        req_with_detail_start < status_per_req_start,
+        "requirements_with_detail should come before status_per_requirement"
+    );
+    assert!(
+        status_per_req_start < req_by_status_start,
+        "status_per_requirement should come before requirements_by_status"
+    );
+
+    let pass_section_start =
+        req_by_status_start + output[req_by_status_start..].find("pass:").unwrap();
+    let fail_section_start =
+        req_by_status_start + output[req_by_status_start..].find("fail:").unwrap();
+
+    assert!(
+        pass_section_start < fail_section_start,
+        "pass section should come before fail section in requirements_by_status"
+    );
+
+    assert_snapshot!("e2e_requirement_aggregation", normalize(&output));
 }
