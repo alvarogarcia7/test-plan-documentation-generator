@@ -1305,14 +1305,30 @@ mod tests {
             });
 
             let result = validate_json_schema(&schema_path, &payload);
-            assert!(result.is_err(), "Type mismatch should fail validation");
+
+            assert!(
+                result.is_err(),
+                "Expected validation to fail due to type mismatch: 'count' field received string \"not-a-number\" but schema requires integer"
+            );
+
             let errors = result.unwrap_err();
             assert!(
-                errors[0].contains("integer")
-                    || errors[0].contains("is not of type")
-                    || errors[0].contains("not-a-number"),
-                "Error should mention type mismatch, got: {}",
-                errors[0]
+                !errors.is_empty(),
+                "Expected at least one validation error to be returned"
+            );
+
+            let error_message = &errors[0];
+            let has_type_error = error_message.contains("integer")
+                || error_message.contains("is not of type")
+                || error_message.contains("not-a-number");
+
+            assert!(
+                has_type_error,
+                "Expected error message to indicate type mismatch for 'count' field.\n\
+                 Expected: message should contain 'integer', 'is not of type', or 'not-a-number'\n\
+                 Actual error message: '{}'\n\
+                 Full error list: {:?}",
+                error_message, errors
             );
         }
 
