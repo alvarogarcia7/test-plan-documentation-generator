@@ -1655,6 +1655,7 @@ dependencies = [
  "insta",
  "jsonschema",
  "libc",
+ "regex",
  "serde_json",
  "serde_yaml",
  "tempfile",
