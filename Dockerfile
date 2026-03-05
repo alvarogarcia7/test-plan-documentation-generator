@@ -37,8 +37,11 @@ RUN cargo build --release
 # Display cache statistics
 RUN sccache --show-stats
 
-### Stage 2: builder - Build the actual application
-##FROM rust:1.92-bookworm AS builder
+# Remove dummy artifacts to ensure clean build in next stage
+RUN rm -rf src
+
+# Stage 2: builder - Build the actual application
+FROM rust:1.92-bookworm AS builder
 #
 #WORKDIR /app
 #
