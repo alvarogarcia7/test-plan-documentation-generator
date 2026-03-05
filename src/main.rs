@@ -128,9 +128,16 @@ impl Filter for StripFilter {
     }
 }
 
+fn register_custom_filters(tera: &mut Tera) {
+    tera.register_filter("replace", ReplaceFilter);
+    tera.register_filter("replace_regex", ReplaceRegexFilter);
+    tera.register_filter("strip", StripFilter);
+}
+
 #[cfg(test)]
 fn render_template(template_str: &str, context: &tera::Context) -> Result<String> {
     let mut tera = Tera::default();
+    register_custom_filters(&mut tera);
     tera.add_raw_template("template", template_str)?;
     let rendered = tera.render("template", context)?;
     Ok(rendered)
@@ -332,6 +339,7 @@ fn main() -> Result<()> {
         // Load template once per type
         let template_str = fs::read_to_string(template_path)?;
         let mut tera = Tera::default();
+        register_custom_filters(&mut tera);
         tera.add_raw_template("tc_template", &template_str)?;
 
         // Process each file of this type
@@ -546,6 +554,7 @@ fn main() -> Result<()> {
         );
         let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
         let mut req_tera = Tera::default();
+        register_custom_filters(&mut req_tera);
         req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
 
         log_fd3!("Rendering requirement aggregation template...");
@@ -579,6 +588,7 @@ fn main() -> Result<()> {
     // Read the template file
     let template_str = fs::read_to_string(container_template)?;
     let mut tera = Tera::default();
+    register_custom_filters(&mut tera);
     tera.add_raw_template("template", &template_str)?;
 
     // Render the template
