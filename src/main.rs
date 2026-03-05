@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::exit;
 use tera::Context;
 use tera::Tera;
+use tera::{Filter, Value};
 
 #[derive(Parser, Debug)]
 #[command(name = "test-plan-doc-gen")]
@@ -29,6 +30,102 @@ struct Args {
     /// Output format (markdown or asciidoc)
     #[arg(long = "format", default_value = "markdown", value_parser = ["markdown", "asciidoc"])]
     format: String,
+}
+
+#[allow(dead_code)]
+struct ReplaceFilter;
+
+impl Filter for ReplaceFilter {
+    fn filter(&self, value: &Value, args: &HashMap<String, Value>) -> tera::Result<Value> {
+        let s = value
+            .as_str()
+            .ok_or_else(|| tera::Error::msg("Filter 'replace' received a non-string value"))?;
+
+        let old = args
+            .get("old")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Filter 'replace' requires 'old' argument"))?;
+
+        let new = args
+            .get("new")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Filter 'replace' requires 'new' argument"))?;
+
+        let times = args.get("times").and_then(|v| v.as_u64());
+
+        let result = if let Some(n) = times {
+            let mut result = s.to_string();
+            let mut count = 0;
+            while count < n {
+                if let Some(pos) = result.find(old) {
+                    result.replace_range(pos..pos + old.len(), new);
+                    count += 1;
+                } else {
+                    break;
+                }
+            }
+            result
+        } else {
+            s.replace(old, new)
+        };
+
+        Ok(Value::String(result))
+    }
+}
+
+#[allow(dead_code)]
+struct ReplaceRegexFilter;
+
+impl Filter for ReplaceRegexFilter {
+    fn filter(&self, value: &Value, args: &HashMap<String, Value>) -> tera::Result<Value> {
+        let s = value.as_str().ok_or_else(|| {
+            tera::Error::msg("Filter 'replace_regex' received a non-string value")
+        })?;
+
+        let old = args
+            .get("old")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Filter 'replace_regex' requires 'old' argument"))?;
+
+        let new = args
+            .get("new")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Filter 'replace_regex' requires 'new' argument"))?;
+
+        let regex = regex::Regex::new(old)
+            .map_err(|e| tera::Error::msg(format!("Invalid regex pattern: {}", e)))?;
+
+        let times = args.get("times").and_then(|v| v.as_u64());
+
+        let result = if let Some(n) = times {
+            let mut result = s.to_string();
+            for _ in 0..n {
+                if regex.is_match(&result) {
+                    result = regex.replace(&result, new).to_string();
+                } else {
+                    break;
+                }
+            }
+            result
+        } else {
+            regex.replace_all(s, new).to_string()
+        };
+
+        Ok(Value::String(result))
+    }
+}
+
+#[allow(dead_code)]
+struct StripFilter;
+
+impl Filter for StripFilter {
+    fn filter(&self, value: &Value, _args: &HashMap<String, Value>) -> tera::Result<Value> {
+        let s = value
+            .as_str()
+            .ok_or_else(|| tera::Error::msg("Filter 'strip' received a non-string value"))?;
+
+        Ok(Value::String(s.trim().to_string()))
+    }
 }
 
 #[cfg(test)]
