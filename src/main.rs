@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use jsonschema::JSONSchema;
+use regex::Regex;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
 use std::collections::HashMap;
@@ -92,7 +93,7 @@ impl Filter for ReplaceRegexFilter {
             .and_then(|v| v.as_str())
             .ok_or_else(|| tera::Error::msg("Filter 'replace_regex' requires 'new' argument"))?;
 
-        let regex = regex::Regex::new(old)
+        let regex = Regex::new(old)
             .map_err(|e| tera::Error::msg(format!("Invalid regex pattern: {}", e)))?;
 
         let times = args.get("times").and_then(|v| v.as_u64());
@@ -2739,5 +2740,617 @@ requirements_by_status:
             .expect("Expected sequence");
         assert_eq!(fail_reqs.len(), 1);
         assert_eq!(fail_reqs[0], YamlValue::String("XXX200".to_string()));
+    }
+
+    mod test_replace_filter {
+        use super::*;
+
+        #[test]
+        fn test_replace_basic_string_replacement() {
+            let template = "{{ text | replace(old='world', new='universe') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello universe");
+        }
+
+        #[test]
+        fn test_replace_multiple_occurrences() {
+            let template = "{{ text | replace(old='a', new='x') }}";
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "bxnxnx");
+        }
+
+        #[test]
+        fn test_replace_with_times_parameter() {
+            let template = "{{ text | replace(old='a', new='x', times=2) }}";
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "bxnxna");
+        }
+
+        #[test]
+        fn test_replace_with_times_one() {
+            let template = "{{ text | replace(old='o', new='0', times=1) }}";
+            let mut context = Context::new();
+            context.insert("text", "foo bar boo");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "f0o bar boo");
+        }
+
+        #[test]
+        fn test_replace_times_exceeds_occurrences() {
+            let template = "{{ text | replace(old='a', new='x', times=10) }}";
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "bxnxnx");
+        }
+
+        #[test]
+        fn test_replace_times_zero() {
+            let template = "{{ text | replace(old='a', new='x', times=0) }}";
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "banana");
+        }
+
+        #[test]
+        fn test_replace_no_match() {
+            let template = "{{ text | replace(old='xyz', new='abc') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello world");
+        }
+
+        #[test]
+        fn test_replace_empty_string() {
+            let template = "{{ text | replace(old='x', new='y') }}";
+            let mut context = Context::new();
+            context.insert("text", "");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_replace_with_empty_old() {
+            let template = "{{ text | replace(old='', new='x') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "xhxexlxlxox");
+        }
+
+        #[test]
+        fn test_replace_with_empty_new() {
+            let template = "{{ text | replace(old='l', new='') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "heo");
+        }
+
+        #[test]
+        fn test_replace_missing_old_argument() {
+            let template = "{{ text | replace(new='world') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_missing_new_argument() {
+            let template = "{{ text | replace(old='hello') }}";
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_missing_both_arguments() {
+            let template = "{{ text | replace() }}";
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_non_string_input() {
+            let template = "{{ num | replace(old='1', new='2') }}";
+            let mut context = Context::new();
+            context.insert("num", &123);
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_multiline_text() {
+            let template = "{{ text | replace(old='line', new='LINE') }}";
+            let mut context = Context::new();
+            context.insert("text", "first line\nsecond line\nthird line");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "first LINE\nsecond LINE\nthird LINE");
+        }
+
+        #[test]
+        fn test_replace_special_characters() {
+            let template = "{{ text | replace(old='$', new='USD') }}";
+            let mut context = Context::new();
+            context.insert("text", "Price: $100");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Price: USD100");
+        }
+    }
+
+    mod test_replace_regex_filter {
+        use super::*;
+
+        #[test]
+        fn test_replace_regex_basic_pattern() {
+            let template = r#"{{ text | replace_regex(old='\d+', new='NUM') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "I have 3 apples and 5 oranges");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "I have NUM apples and NUM oranges");
+        }
+
+        #[test]
+        fn test_replace_regex_word_boundary() {
+            let template = r#"{{ text | replace_regex(old='\bcat\b', new='dog') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "The cat and the catalog");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "The dog and the catalog");
+        }
+
+        #[test]
+        fn test_replace_regex_with_capture_groups() {
+            let template = r#"{{ text | replace_regex(old='(\w+)@(\w+)', new='$2:$1') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "Email: user@domain");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Email: domain:user");
+        }
+
+        #[test]
+        fn test_replace_regex_with_times_parameter() {
+            let template = r#"{{ text | replace_regex(old='\d+', new='X', times=2) }}"#;
+            let mut context = Context::new();
+            context.insert("text", "1 and 2 and 3 and 4");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "X and X and 3 and 4");
+        }
+
+        #[test]
+        fn test_replace_regex_times_one() {
+            let template = r#"{{ text | replace_regex(old='[aeiou]', new='*', times=1) }}"#;
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "h*llo world");
+        }
+
+        #[test]
+        fn test_replace_regex_times_zero() {
+            let template = r#"{{ text | replace_regex(old='\d+', new='X', times=0) }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test 123");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "test 123");
+        }
+
+        #[test]
+        fn test_replace_regex_times_exceeds_matches() {
+            let template = r#"{{ text | replace_regex(old='a', new='X', times=10) }}"#;
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "bXnXnX");
+        }
+
+        #[test]
+        fn test_replace_regex_character_class() {
+            let template = r#"{{ text | replace_regex(old='[aeiou]', new='*') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "h*ll* w*rld");
+        }
+
+        #[test]
+        fn test_replace_regex_case_sensitive() {
+            let template = r#"{{ text | replace_regex(old='hello', new='hi') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "Hello hello HELLO");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Hello hi HELLO");
+        }
+
+        #[test]
+        fn test_replace_regex_case_insensitive() {
+            let template = r#"{{ text | replace_regex(old='(?i)hello', new='hi') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "Hello hello HELLO");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hi hi hi");
+        }
+
+        #[test]
+        fn test_replace_regex_multiline_pattern() {
+            let template = r#"{{ text | replace_regex(old='^line', new='LINE') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "line one\nline two\nline three");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "LINE one\nline two\nline three");
+        }
+
+        #[test]
+        fn test_replace_regex_dot_matches_any() {
+            let template = r#"{{ text | replace_regex(old='c.t', new='dog') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "cat cut cot");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "dog dog dog");
+        }
+
+        #[test]
+        fn test_replace_regex_quantifiers() {
+            let template = r#"{{ text | replace_regex(old='a+', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "a aa aaa b");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "X X X b");
+        }
+
+        #[test]
+        fn test_replace_regex_no_match() {
+            let template = r#"{{ text | replace_regex(old='\d+', new='NUM') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "no numbers here");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "no numbers here");
+        }
+
+        #[test]
+        fn test_replace_regex_empty_string() {
+            let template = r#"{{ text | replace_regex(old='\d+', new='NUM') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_replace_regex_invalid_pattern() {
+            let template = r#"{{ text | replace_regex(old='[', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_regex_complex_invalid_pattern() {
+            let template = r#"{{ text | replace_regex(old='(?P<', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_regex_missing_old_argument() {
+            let template = r#"{{ text | replace_regex(new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_regex_missing_new_argument() {
+            let template = r#"{{ text | replace_regex(old='test') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test");
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_regex_non_string_input() {
+            let template = r#"{{ num | replace_regex(old='\d+', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("num", &123);
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_replace_regex_backslash_escaping() {
+            let template = r#"{{ text | replace_regex(old='\\', new='/') }}"#;
+            let mut context = Context::new();
+            context.insert("text", r"C:\Users\test");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "C:/Users/test");
+        }
+
+        #[test]
+        fn test_replace_regex_alternation() {
+            let template = r#"{{ text | replace_regex(old='cat|dog', new='animal') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "I have a cat and a dog");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "I have a animal and a animal");
+        }
+
+        #[test]
+        fn test_replace_regex_start_end_anchors() {
+            let template = r#"{{ text | replace_regex(old='^test$', new='TEST') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "test");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "TEST");
+        }
+
+        #[test]
+        fn test_replace_regex_unicode_characters() {
+            let template = r#"{{ text | replace_regex(old='[α-ω]', new='*') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "αβγδε");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "*****");
+        }
+    }
+
+    mod test_strip_filter {
+        use super::*;
+
+        #[test]
+        fn test_strip_leading_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "   hello");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_trailing_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "hello   ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_both_leading_and_trailing_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "   hello   ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_tabs() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "\t\thello\t\t");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_newlines() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "\n\nhello\n\n");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_mixed_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", " \t\n hello world \n\t ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello world");
+        }
+
+        #[test]
+        fn test_strip_preserves_internal_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "   hello    world   ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello    world");
+        }
+
+        #[test]
+        fn test_strip_no_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "hello");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_empty_string() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_strip_only_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "   \t\n   ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_strip_single_space() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", " ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_strip_non_string_input() {
+            let template = "{{ num | strip }}";
+            let mut context = Context::new();
+            context.insert("num", &123);
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_strip_boolean_input() {
+            let template = "{{ value | strip }}";
+            let mut context = Context::new();
+            context.insert("value", &true);
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_strip_array_input() {
+            let template = "{{ items | strip }}";
+            let mut context = Context::new();
+            context.insert("items", &vec!["a", "b", "c"]);
+
+            let result = render_template(template, &context);
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_strip_multiline_text() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "\n  line one\n  line two  \n");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "line one\n  line two");
+        }
+
+        #[test]
+        fn test_strip_carriage_return() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "\r\nhello\r\n");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_unicode_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "\u{00A0}hello\u{00A0}");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello");
+        }
+
+        #[test]
+        fn test_strip_special_characters_preserved() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "  !@#$%^&*()  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "!@#$%^&*()");
+        }
+
+        #[test]
+        fn test_strip_numbers_preserved() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "  12345  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "12345");
+        }
+
+        #[test]
+        fn test_strip_in_template_flow() {
+            let template = "Start|{{ text | strip }}|End";
+            let mut context = Context::new();
+            context.insert("text", "  content  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Start|content|End");
+        }
     }
 }
