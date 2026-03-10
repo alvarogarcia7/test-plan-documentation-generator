@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-test-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+    
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+    
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-build-target-
+    
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Check formatting
+      run: cargo fmt -- --check
+    
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+    
+    - name: Check project
+      run: cargo check
+    
+    - name: Build project
+      run: cargo build --release
+    
+    - name: Run unit tests
+      run: cargo test --release --all-features --tests
+    
+    - name: Run E2E test (markdown)
+      run: |
+        ./target/release/test-plan-doc-gen \
+          --output ./data/output.actual.md \
+          --container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
+          --test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+          3>log_3.log
+        diff ./data/output.actual.md ./data/output.expected.md
+    
+    - name: Run E2E test (asciidoc test plan)
+      run: |
+        ./target/release/test-plan-doc-gen \
+          --format asciidoc \
+          --output ./data/test_plan_output.actual.adoc \
+          --container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
+          --test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+          3>log_3.log
+        diff ./data/test_plan_output.actual.adoc ./data/test_plan_output.expected.adoc
+    
+    - name: Run E2E test (asciidoc test results)
+      run: |
+        ./target/release/test-plan-doc-gen \
+          --format asciidoc \
+          --output ./data/test_results_output.actual.adoc \
+          --container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \
+          --test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
+          3>log_3.log
+        diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
+    
+    - name: Build Docker image
+      run: |
+        mkdir -p .sccache/host
+        docker build -t test:latest .
