@@ -33,7 +33,6 @@ struct Args {
     format: String,
 }
 
-#[allow(dead_code)]
 struct ReplaceFilter;
 
 impl Filter for ReplaceFilter {
@@ -74,7 +73,6 @@ impl Filter for ReplaceFilter {
     }
 }
 
-#[allow(dead_code)]
 struct ReplaceRegexFilter;
 
 impl Filter for ReplaceRegexFilter {
@@ -116,7 +114,6 @@ impl Filter for ReplaceRegexFilter {
     }
 }
 
-#[allow(dead_code)]
 struct StripFilter;
 
 impl Filter for StripFilter {
