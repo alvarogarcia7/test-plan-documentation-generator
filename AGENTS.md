@@ -5,9 +5,16 @@
 # No setup required - Rust toolchain is the only dependency
 cargo build --release        # Build the project
 make lint                    # Run fmt-check + clippy
-make test                    # Run unit tests + E2E test
+make test                    # Run unit tests + E2E test (REQUIRED)
+make docker-build            # Build Docker image (REQUIRED)
 # No dev server - this is a CLI tool
 ```
+
+## Validation Requirements
+Before opening a PR, you MUST ensure:
+1. `make test` passes - all unit tests and E2E tests must succeed
+2. `make docker-build` passes - Docker image must build successfully
+3. CI/CD build is passing in GitLab/GitHub - verify pipeline status before submitting PR
 
 ## Commands
 

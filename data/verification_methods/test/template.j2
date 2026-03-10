@@ -1,12 +1,14 @@
-## Test Case: {{ id }}
+## Test Case: {{ id | strip }}
 
-**Requirement**: {{ requirement }}
+**Requirement**: {{ requirement | strip }}
 
 **Item**: {{ item }}
 
+**Sanitized Test ID**: {{ id | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+
 ## Description
 
-{{ description }}
+{{ description | strip }}
 
 
 ## General Initial Conditions
@@ -18,13 +20,13 @@
 {%- endfor %}
 
 {% for ts in test_sequences %}
-## Test Sequence {{ ts.id }} {{ ts.name }}
+## Test Sequence {{ ts.id }} {{ ts.name | strip }}
 
-{{ ts.description }}
+{{ ts.description | strip }}
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
 {% for step in ts.steps -%}
-| {{ step.step }} | {{ step.description }} | {{ step.expected.result }} | {{ step.expected.output }} |
+| {{ step.step }} | {{ step.description | replace(old="MTD_", new="") | strip }} | {{ step.expected.result | strip }} | {{ step.expected.output | strip }} |
 {% endfor %}
 {% endfor %}

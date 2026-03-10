@@ -830,3 +830,130 @@ fn test_e2e_requirement_aggregation() {
 
     assert_snapshot!("e2e_requirement_aggregation", normalize(&output));
 }
+
+#[test]
+fn test_e2e_custom_tera_filters() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let yaml_path = dir.path().join("data.yaml");
+    let template_path = dir.path().join("template.tera");
+    let output_path = dir.path().join("output.txt");
+
+    let mut yaml_file = File::create(&yaml_path).unwrap();
+    writeln!(yaml_file, "text_with_whitespace: \"  hello world  \"").unwrap();
+    writeln!(yaml_file, "text_with_patterns: \"foo bar foo baz foo\"").unwrap();
+    writeln!(yaml_file, "text_with_regex: \"test123abc456def789\"").unwrap();
+    writeln!(yaml_file, "multiline_text: |").unwrap();
+    writeln!(yaml_file, "  Line with spaces  ").unwrap();
+    writeln!(yaml_file, "  Another line  ").unwrap();
+    writeln!(yaml_file, "complex_pattern: \"AAA-BBB-CCC AAA-DDD-EEE\"").unwrap();
+
+    let fixture_template_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/custom_filters_template.tera");
+    std::fs::copy(&fixture_template_path, &template_path).unwrap();
+
+    let schema_path = dir.path().join("schema.json");
+    std::fs::write(&schema_path, "{}").unwrap();
+
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
+    std::fs::write(&tc_schema_path, "{}").unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    std::fs::write(&tc_template_path, "").unwrap();
+
+    let tc_file_path = dir.path().join("tc_file.yaml");
+    std::fs::write(&tc_file_path, "type: test\n").unwrap();
+
+    let status = Command::new(get_binary_path())
+        .arg("--container")
+        .arg(schema_path.to_str().unwrap())
+        .arg(template_path.to_str().unwrap())
+        .arg(yaml_path.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file_path.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.to_str().unwrap())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+
+    assert!(output_path.exists(), "Output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("# Custom Filter Tests"),
+        "output should contain title"
+    );
+
+    assert!(
+        output.contains("Original: '  hello world  '"),
+        "output should contain original text with whitespace"
+    );
+    assert!(
+        output.contains("Stripped: 'hello world'"),
+        "output should contain stripped text"
+    );
+
+    assert!(
+        output.contains("Original: foo bar foo baz foo"),
+        "output should contain original pattern text"
+    );
+    assert!(
+        output.contains("Replace all 'foo' with 'bar': bar bar bar baz bar"),
+        "output should show all occurrences replaced"
+    );
+    assert!(
+        output.contains("Replace first 'foo' with 'qux': qux bar foo baz foo"),
+        "output should show first occurrence replaced"
+    );
+    assert!(
+        output.contains("Replace two 'foo' with 'xyz': xyz bar xyz baz foo"),
+        "output should show two occurrences replaced"
+    );
+
+    assert!(
+        output.contains("Original: test123abc456def789"),
+        "output should contain original regex text"
+    );
+    assert!(
+        output.contains("Remove all digits: testabcdef"),
+        "output should show digits removed"
+    );
+    assert!(
+        output.contains("Replace digits with '#': test#abc#def#"),
+        "output should show digits replaced with #"
+    );
+    assert!(
+        output.contains("Replace first digit sequence: testNUMabc456def789"),
+        "output should show first digit sequence replaced"
+    );
+    assert!(
+        output.contains("Replace letters with '*': *123*456*789"),
+        "output should show letters replaced with asterisks"
+    );
+
+    assert!(
+        output.contains("Strip then replace: 'goodbye world'"),
+        "output should show chained strip then replace"
+    );
+    assert!(
+        output.contains("Replace then strip: 'hello universe'"),
+        "output should show chained replace then strip"
+    );
+    assert!(
+        output.contains("Complex chain: XXX XXX"),
+        "output should show complex filter chain"
+    );
+
+    assert!(
+        output.contains("Multiline stripped:"),
+        "output should contain multiline strip section"
+    );
+
+    assert_snapshot!("e2e_custom_tera_filters", normalize(&output));
+}

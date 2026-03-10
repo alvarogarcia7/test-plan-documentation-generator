@@ -1,0 +1,26 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+# Custom Filter Tests
+## Strip Filter
+Original: '  hello world  '
+Stripped: 'hello world'
+## Replace Filter
+Original: foo bar foo baz foo
+Replace all 'foo' with 'bar': bar bar bar baz bar
+Replace first 'foo' with 'qux': qux bar foo baz foo
+Replace two 'foo' with 'xyz': xyz bar xyz baz foo
+## Replace Regex Filter
+Original: test123abc456def789
+Remove all digits: testabcdef
+Replace digits with '#': test#abc#def#
+Replace first digit sequence: testNUMabc456def789
+Replace letters with '*': *123*456*789
+## Chained Filters
+Strip then replace: 'goodbye world'
+Replace then strip: 'hello universe'
+Complex chain: XXX XXX
+## Multiline Strip
+Multiline stripped: 'Line with spaces  
+Another line'

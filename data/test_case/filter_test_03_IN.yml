@@ -1,0 +1,20 @@
+type: inspection
+requirement: "  REQ-FILTER-003  "
+id: '  IN.Filter.Test.03: Replace & Normalize Special Chars  '
+description: '  Inspection case showing combined use of replace and replace_regex filters to normalize ID formats. First, the replace filter converts spaces to dashes, then replace_regex removes all non-alphanumeric characters except dashes, creating clean, filesystem-safe identifiers.  '
+inspection_method: '  Visual inspection of code and documentation with   extra   whitespace   that   needs   normalization.  '
+
+checklist:
+  - '  Verify all functions are properly documented.  '
+  - '  Check for coding standard compliance.  '
+  - '  Ensure proper error handling is implemented.  '
+  - '  Validate input sanitization mechanisms.  '
+  - '  Confirm test IDs are properly formatted.  '
+  - '  Review whitespace handling in output.  '
+
+acceptance_criteria:
+  - '  All checklist items must be satisfied.  '
+  - '  No critical issues found during inspection.  '
+  - '  Code review comments addressed.  '
+  - '  Test identifiers follow naming conventions.  '
+  - '  Documentation formatting is consistent.  '

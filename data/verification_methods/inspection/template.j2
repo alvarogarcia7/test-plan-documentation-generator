@@ -1,23 +1,25 @@
-## Inspection: {{ id }}
+## Inspection: {{ id | strip }}
 
-**Requirement**: {{ requirement }}
+**Requirement**: {{ requirement | strip }}
+
+**Normalized ID**: {{ id | replace(old=" ", new="-") | replace_regex(old="[^a-zA-Z0-9-]", new="") }}
 
 ## Description
 
-{{ description }}
+{{ description | strip }}
 
 ## Inspection Method
 
-{{ inspection_method }}
+{{ inspection_method | strip }}
 
 ## Checklist
 
 {% for item in checklist %}
-- {{ item }}
+- {{ item | strip }}
 {% endfor %}
 
 ## Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
-- {{ criterion }}
+- {{ criterion | strip }}
 {% endfor %}

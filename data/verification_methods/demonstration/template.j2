@@ -1,23 +1,25 @@
-## Demonstration: {{ id }}
+## Demonstration: {{ id | strip }}
 
-**Requirement**: {{ requirement }}
+**Requirement**: {{ requirement | strip }}
+
+**Clean ID**: {{ id | replace(old="Demo_", new="") | strip }}
 
 ## Description
 
-{{ description }}
+{{ description | strip }}
 
 ## Procedure
 
-{{ procedure }}
+{{ procedure | replace_regex(old="\\s+", new=" ") | strip }}
 
 ## Observations
 
 {% for observation in observations %}
-- {{ observation }}
+- {{ observation | strip }}
 {% endfor %}
 
 ## Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
-- {{ criterion }}
+- {{ criterion | strip }}
 {% endfor %}
