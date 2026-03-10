@@ -1,26 +1,28 @@
-== Analysis: {{ id }}
+== Analysis: {{ id | strip }}
 
-*Requirement*: {{ requirement }}
+*Requirement*: {{ requirement | strip }}
+
+*Sanitized ID*: {{ id | replace_regex(old="\\s+", new="_") }}
 
 === Description
 
-{{ description }}
+{{ description | strip }}
 
 === Method
 
-{{ method }}
+{{ method | strip }}
 
 === Calculations
 
 {% for calc in calculations %}
-=== {{ calc.name }}
+==== {{ calc.name | strip }}
 
-*Formula*: {{ calc.formula }}
+*Formula*: {{ calc.formula | strip }}
 
 {% if calc.parameters %}
 *Parameters*:
 {% for param, desc in calc.parameters %}
-* *{{ param }}*: {{ desc }}
+* *{{ param | strip }}*: {{ desc | strip }}
 {% endfor %}
 {% endif %}
 {% endfor %}
@@ -34,9 +36,9 @@
 | Description
 
 {% for model in models -%}
-| {{ model.name }}
-| {{ model.type }}
-| {{ model.description }}
+| {{ model.name | strip }}
+| {{ model.type | strip }}
+| {{ model.description | replace_regex(old="\\s+", new=" ") | strip }}
 
 {% endfor %}
 |===
@@ -44,5 +46,5 @@
 === Acceptance Criteria
 
 {% for criterion in acceptance_criteria %}
-* {{ criterion }}
+* {{ criterion | strip }}
 {% endfor %}

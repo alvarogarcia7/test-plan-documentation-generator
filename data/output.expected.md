@@ -374,7 +374,9 @@ This test case demonstrates the strip filter removing leading/trailing whitespac
 
 | **Entity** | **Description of the general initial condition** |
 | ------------- | --------- |
-| eUICC | [  Profile is in enabled state.  ,   All prerequisites are met.  ,   Network connectivity established.  ] |
+| eUICC |   The test profile is loaded with extra whitespace.   |
+| eUICC |   Initial state: eUICC is operational.   |
+
 
 
 ## Test Sequence 1 Nominal Flow: Whitespace Normalization Test
@@ -383,6 +385,15 @@ This sequence verifies that the system correctly processes commands
 and the filters properly sanitize test IDs (converting dots, colons, 
 and dashes to underscores) and normalize whitespace (stripping leading/trailing
 spaces) in the generated test plan documentation.
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| eUICC |   System is ready for testing.   |
+
+
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
@@ -410,13 +421,23 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 
 | **Entity** | **Description of the general initial condition** |
 | ------------- | --------- |
-| eUICC | [The PROFILE_OPERATIONAL1 is Enabled., The PROFILE_OPERATIONAL2 is Enabled.] |
+| eUICC | The profile The PROFILE_OPERATIONAL1 with #METADATA_WITH_PPRS_AND_ICON is loaded on the eUICC. |
+
 
 
 ## Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| eUICC | The PROFILE_OPERATIONAL3 is Enabled. |
+
+
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
@@ -428,6 +449,15 @@ when the profile is in the operational state and PPR1 is currently set.
 
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| eUICC | The PROFILE_OPERATIONAL3 is Enabled. |
+
+
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
@@ -454,13 +484,23 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 
 | **Entity** | **Description of the general initial condition** |
 | ------------- | --------- |
-| eUICC | [The PROFILE_OPERATIONAL1 is Enabled., The PROFILE_OPERATIONAL2 is Enabled.] |
+| eUICC | The profile The PROFILE_OPERATIONAL1 with #METADATA_WITH_PPRS_AND_ICON is loaded on the eUICC. |
+
 
 
 ## Test Sequence 1 Test Sequence #01 Nominal: Unset PPR1
 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| eUICC | The PROFILE_OPERATIONAL3 is Enabled. |
+
+
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
@@ -472,6 +512,15 @@ when the profile is in the operational state and PPR1 is currently set.
 
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| eUICC | The PROFILE_OPERATIONAL3 is Enabled. |
+
+
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
