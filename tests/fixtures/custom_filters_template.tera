@@ -1,0 +1,26 @@
+# Custom Filter Tests
+
+## Strip Filter
+Original: '{{ text_with_whitespace }}'
+Stripped: '{{ text_with_whitespace | strip }}'
+
+## Replace Filter
+Original: {{ text_with_patterns }}
+Replace all 'foo' with 'bar': {{ text_with_patterns | replace(old="foo", new="bar") }}
+Replace first 'foo' with 'qux': {{ text_with_patterns | replace(old="foo", new="qux", times=1) }}
+Replace two 'foo' with 'xyz': {{ text_with_patterns | replace(old="foo", new="xyz", times=2) }}
+
+## Replace Regex Filter
+Original: {{ text_with_regex }}
+Remove all digits: {{ text_with_regex | replace_regex(old="[0-9]+", new="") }}
+Replace digits with '#': {{ text_with_regex | replace_regex(old="[0-9]+", new="#") }}
+Replace first digit sequence: {{ text_with_regex | replace_regex(old="[0-9]+", new="NUM", times=1) }}
+Replace letters with '*': {{ text_with_regex | replace_regex(old="[a-z]+", new="*") }}
+
+## Chained Filters
+Strip then replace: '{{ text_with_whitespace | strip | replace(old="hello", new="goodbye") }}'
+Replace then strip: '{{ text_with_whitespace | replace(old="world", new="universe") | strip }}'
+Complex chain: {{ complex_pattern | replace(old="AAA", new="XXX") | replace_regex(old="-[A-Z]+", new="") | strip }}
+
+## Multiline Strip
+Multiline stripped: '{{ multiline_text | strip }}'

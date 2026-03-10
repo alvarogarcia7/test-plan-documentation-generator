@@ -849,81 +849,9 @@ fn test_e2e_custom_tera_filters() {
     writeln!(yaml_file, "  Another line  ").unwrap();
     writeln!(yaml_file, "complex_pattern: \"AAA-BBB-CCC AAA-DDD-EEE\"").unwrap();
 
-    let mut template_file = File::create(&template_path).unwrap();
-    writeln!(template_file, "# Custom Filter Tests").unwrap();
-    writeln!(template_file).unwrap();
-    writeln!(template_file, "## Strip Filter").unwrap();
-    writeln!(template_file, "Original: '{{{{ text_with_whitespace }}}}'").unwrap();
-    writeln!(
-        template_file,
-        "Stripped: '{{{{ text_with_whitespace | strip }}}}'"
-    )
-    .unwrap();
-    writeln!(template_file).unwrap();
-    writeln!(template_file, "## Replace Filter").unwrap();
-    writeln!(template_file, "Original: {{{{ text_with_patterns }}}}").unwrap();
-    writeln!(
-        template_file,
-        "Replace all 'foo' with 'bar': {{{{ text_with_patterns | replace(old=\"foo\", new=\"bar\") }}}}"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace first 'foo' with 'qux': {{{{ text_with_patterns | replace(old=\"foo\", new=\"qux\", times=1) }}}}"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace two 'foo' with 'xyz': {{{{ text_with_patterns | replace(old=\"foo\", new=\"xyz\", times=2) }}}}"
-    )
-    .unwrap();
-    writeln!(template_file).unwrap();
-    writeln!(template_file, "## Replace Regex Filter").unwrap();
-    writeln!(template_file, "Original: {{{{ text_with_regex }}}}").unwrap();
-    writeln!(
-        template_file,
-        "Remove all digits: {{{{ text_with_regex | replace_regex(old=\"[0-9]+\", new=\"\") }}}}"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace digits with '#': {{{{ text_with_regex | replace_regex(old=\"[0-9]+\", new=\"#\") }}}}"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace first digit sequence: {{{{ text_with_regex | replace_regex(old=\"[0-9]+\", new=\"NUM\", times=1) }}}}"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace letters with '*': {{{{ text_with_regex | replace_regex(old=\"[a-z]+\", new=\"*\") }}}}"
-    )
-    .unwrap();
-    writeln!(template_file).unwrap();
-    writeln!(template_file, "## Chained Filters").unwrap();
-    writeln!(
-        template_file,
-        "Strip then replace: '{{{{ text_with_whitespace | strip | replace(old=\"hello\", new=\"goodbye\") }}}}'"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Replace then strip: '{{{{ text_with_whitespace | replace(old=\"world\", new=\"universe\") | strip }}}}'"
-    )
-    .unwrap();
-    writeln!(
-        template_file,
-        "Complex chain: {{{{ complex_pattern | replace(old=\"AAA\", new=\"XXX\") | replace_regex(old=\"-[A-Z]+\", new=\"\") | strip }}}}"
-    )
-    .unwrap();
-    writeln!(template_file).unwrap();
-    writeln!(template_file, "## Multiline Strip").unwrap();
-    writeln!(
-        template_file,
-        "Multiline stripped: '{{{{ multiline_text | strip }}}}'"
-    )
-    .unwrap();
+    let fixture_template_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/custom_filters_template.tera");
+    std::fs::copy(&fixture_template_path, &template_path).unwrap();
 
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
