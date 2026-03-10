@@ -1,0 +1,34 @@
+type: analysis
+requirement: "  REQ-FILTER-002  "
+id: '  AN.Filter.Test_02: Normalize Multiple Spaces  '
+description: '  Analysis case demonstrating replace_regex filter for normalizing   multiple   spaces   in requirements text, and strip filter for cleaning up field values. The replace_regex filter uses \\s+ pattern to collapse multiple whitespace characters into single spaces.  '
+method: '  Statistical analysis    with   multiple    spaces    between    words   that   should    be    normalized.  '
+
+calculations:
+  - name: '  Power Consumption   Calculation  '
+    formula: '  P = V * I  '
+    parameters:
+      V: '  Voltage in volts  '
+      I: '  Current in amperes  '
+  - name: '  Efficiency   Ratio   Calculation  '
+    formula: '  E = (P_out / P_in) * 100  '
+    parameters:
+      P_out: '  Output power in watts  '
+      P_in: '  Input power in watts  '
+
+models:
+  - name: '  Linear   Regression   Model  '
+    type: '  Statistical  '
+    description: '  This   model   uses    linear    regression   with   multiple    spaces   that    need    normalization.  '
+  - name: '  Neural   Network  '
+    type: '  Machine Learning  '
+    description: '  Deep   learning    model   for    pattern    recognition   with    excessive    spacing.  '
+  - name: '  Decision   Tree   Classifier  '
+    type: '  Classification  '
+    description: '  Tree-based   model   for    categorical    predictions   with    irregular    whitespace.  '
+
+acceptance_criteria:
+  - '  The model accuracy must exceed 95%.  '
+  - '  Processing time should be less than 100ms.  '
+  - '  All edge cases must be handled correctly.  '
+  - '  Documentation must have normalized spacing.  '

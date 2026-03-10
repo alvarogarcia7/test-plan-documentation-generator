@@ -1,0 +1,19 @@
+type: demonstration
+requirement: "  REQ-FILTER-004  "
+id: '  Demo_Filter_Test_04_Prefix_Removal  '
+description: '  Demonstration case showing the replace filter removing common prefixes (like "Demo_") from IDs to create cleaner display names, and replace_regex filter normalizing excessive whitespace in procedure descriptions.  '
+procedure: '  Execute   the   demonstration    scenario   with   multiple   spaces    in   procedure    text   that    should    be    collapsed    to    single    spaces.  '
+
+observations:
+  - '  System responds correctly to all inputs.  '
+  - '  No unexpected behavior observed.  '
+  - '  Performance meets requirements.  '
+  - '  Filter processing does not impact execution time.  '
+  - '  Documentation output is clean and readable.  '
+
+acceptance_criteria:
+  - '  Demonstration completes without errors.  '
+  - '  All features work as expected.  '
+  - '  User feedback is positive.  '
+  - '  Output formatting meets quality standards.  '
+  - '  ID prefixes are properly removed.  '

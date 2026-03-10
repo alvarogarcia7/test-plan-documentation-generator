@@ -1,0 +1,50 @@
+type: test
+requirement: "REQ-FILTER-001  "
+item: 1
+tc: 1
+id: '  TC.Filter.Test-01: Strip & Sanitize IDs  '
+description: '  This test case demonstrates the strip filter removing leading/trailing whitespace from test documentation, and the replace_regex filter sanitizing test IDs by converting special characters to underscores.  '
+
+general_initial_conditions:
+  eUICC:
+    - "  The test profile is loaded with extra whitespace.  "
+    - "  Initial state: eUICC is operational.  "
+
+initial_conditions:
+  eUICC:
+    - "  Profile is in enabled state.  "
+    - "  All prerequisites are met.  "
+    - "  Network connectivity established.  "
+
+test_sequences:
+  - id: 1
+    name: "  Nominal Flow: Whitespace Normalization Test  "
+    description: |
+                   This sequence verifies that the system correctly processes commands
+                   and the filters properly sanitize test IDs (converting dots, colons, 
+                   and dashes to underscores) and normalize whitespace (stripping leading/trailing
+                   spaces) in the generated test plan documentation.
+    initial_conditions:
+      eUICC:
+        - "  System is ready for testing.  "
+    steps:
+      - step: 1
+        manual: True
+        description: "MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#TEST_DATA, TRUE))"
+        command: ssh
+        expected:
+          success: True
+          result: "  SW=0x9000  "
+          output: "  Operation completed successfully.  "
+      - step: 2
+        description: "MTD_FETCH_RESPONSE('XX')"
+        command: ssh
+        expected:
+          result: "MTD_CHECK_SMS_POR(0x9000)"
+          output: "  Response received successfully.  "
+      - step: 3
+        description: "MTD_VERIFY_PROFILE_STATE(ENABLED)"
+        command: ssh
+        expected:
+          result: "  Profile state verified  "
+          output: "  State matches expected value.  "
