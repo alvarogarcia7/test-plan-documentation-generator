@@ -2901,6 +2901,46 @@ requirements_by_status:
             let result = render_template(template, &context).expect("Failed to render");
             assert_eq!(result, "Price: USD100");
         }
+
+        #[test]
+        fn test_replace_long_string() {
+            let template = "{{ text | replace(old='old', new='new') }}";
+            let mut context = Context::new();
+            context.insert("text", "old old old old old");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "new new new new new");
+        }
+
+        #[test]
+        fn test_replace_unicode_characters() {
+            let template = "{{ text | replace(old='café', new='coffee') }}";
+            let mut context = Context::new();
+            context.insert("text", "I like café");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "I like coffee");
+        }
+
+        #[test]
+        fn test_replace_substring_at_start() {
+            let template = "{{ text | replace(old='Hello', new='Hi') }}";
+            let mut context = Context::new();
+            context.insert("text", "Hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Hi world");
+        }
+
+        #[test]
+        fn test_replace_substring_at_end() {
+            let template = "{{ text | replace(old='world', new='universe') }}";
+            let mut context = Context::new();
+            context.insert("text", "Hello world");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "Hello universe");
+        }
     }
 
     mod test_replace_regex_filter {
@@ -3145,6 +3185,26 @@ requirements_by_status:
             let result = render_template(template, &context).expect("Failed to render");
             assert_eq!(result, "*****");
         }
+
+        #[test]
+        fn test_replace_regex_greedy_quantifier() {
+            let template = r#"{{ text | replace_regex(old='a.*b', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "a foo b bar b");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "X");
+        }
+
+        #[test]
+        fn test_replace_regex_lazy_quantifier() {
+            let template = r#"{{ text | replace_regex(old='a.*?b', new='X') }}"#;
+            let mut context = Context::new();
+            context.insert("text", "a foo b bar b");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "X bX");
+        }
     }
 
     mod test_strip_filter {
@@ -3348,6 +3408,16 @@ requirements_by_status:
 
             let result = render_template(template, &context).expect("Failed to render");
             assert_eq!(result, "Start|content|End");
+        }
+
+        #[test]
+        fn test_strip_long_whitespace() {
+            let template = "{{ text | strip }}";
+            let mut context = Context::new();
+            context.insert("text", "          hello world          ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(result, "hello world");
         }
     }
 }
