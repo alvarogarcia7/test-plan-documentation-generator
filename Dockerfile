@@ -8,7 +8,11 @@ COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
 COPY scripts/lib /tmp/scripts/lib/
 RUN chmod +x /tmp/scripts/install-sccache.sh && \
     /tmp/scripts/install-sccache.sh --ci && \
-    rm -rf /tmp/scripts \
+    rm -rf /tmp/scripts && \
+    cp $HOME/.cargo/bin/sccache /usr/bin/sccache
+
+RUN whereis sccache
+RUN sccache --version
 
 RUN $HOME/.cargo/bin/sccache --version
 ENV HOME="/root"
@@ -16,16 +20,31 @@ ENV PATH="$PATH:$HOME/.cargo/bin"
 
 RUN sccache --version
 
-# Set sccache environment variables
-ENV RUSTC_WRAPPER=sccache
-ENV SCCACHE_DIR=/app/.sccache/docker
-
 # Create cache directory and copy host cache if it exists
 RUN mkdir -p /app/.sccache/docker
-COPY .sccache/host /app/.sccache/docker/
+#COPY .sccache/host /app/.sccache/docker/
+
+# Set sccache environment variables
+ENV RUSTC_WRAPPER=$HOME/.cargo/bin/sccache
+ENV SCCACHE_DIR=/app/.sccache/docker
 
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
+
+#WORKDIR /app
+#
+# Install sccache
+COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
+COPY scripts/lib /tmp/scripts/lib/
+RUN chmod +x /tmp/scripts/install-sccache.sh && \
+    /tmp/scripts/install-sccache.sh --ci && \
+    rm -rf /tmp/scripts
+
+RUN $HOME/.cargo/bin/sccache --version
+ENV HOME="/root"
+ENV PATH="$PATH:$HOME/.cargo/bin"
+
+RUN $HOME/.cargo/bin/sccache --version
 
 # Create dummy src/main.rs to build dependencies
 RUN mkdir src && \
@@ -41,7 +60,7 @@ RUN sccache --show-stats
 RUN rm -rf src
 
 # Stage 2: builder - Build the actual application
-FROM rust:1.92-bookworm AS builder
+#FROM rust:1.92-bookworm AS builder
 #
 #WORKDIR /app
 #
