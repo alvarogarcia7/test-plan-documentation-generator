@@ -42,6 +42,14 @@ jobs:
       with:
         components: rustfmt, clippy
     
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.9
+    
+    - name: Configure sccache
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+    
     - name: Check formatting
       run: cargo fmt -- --check
     
@@ -90,3 +98,6 @@ jobs:
       run: |
         mkdir -p .sccache/host
         docker build -t test:latest .
+    
+    - name: Show sccache stats
+      run: sccache --show-stats
