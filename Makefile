@@ -48,7 +48,7 @@ test-e2e:
 	./target/release/tpdg \
 	--output ./data/output.actual.md \
 	--container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
-	--test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	3>log_3.log
 	diff ./data/output.actual.md ./data/output.expected.md
 .PHONY: test-e2e
@@ -64,7 +64,7 @@ test-e2e-test-plan-asciidoc:
 	--format asciidoc \
 	--output ./data/test_plan_output.actual.adoc \
 	--container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
-	--test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	3>log_3.log
 	diff ./data/test_plan_output.actual.adoc ./data/test_plan_output.expected.adoc
 .PHONY: test-e2e-test-plan-asciidoc

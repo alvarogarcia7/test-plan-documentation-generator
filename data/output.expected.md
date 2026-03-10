@@ -18,6 +18,72 @@ document SHALL be interpreted as described in RFC 2119 [20].
 
 # Test Plan
 
+## Analysis: AN.Filter.Test_02: Normalize Multiple Spaces
+
+**Requirement**: REQ-FILTER-002
+
+**Sanitized ID**:   AN.Filter.Test_02: Normalize Multiple Spaces  
+
+## Description
+
+Analysis case demonstrating replace_regex filter for normalizing   multiple   spaces   in requirements text, and strip filter for cleaning up field values. The replace_regex filter uses \\s+ pattern to collapse multiple whitespace characters into single spaces.
+
+## Method
+
+Statistical analysis    with   multiple    spaces    between    words   that   should    be    normalized.
+
+## Calculations
+
+
+### Power Consumption   Calculation
+
+**Formula**: P = V * I
+
+
+**Parameters**:
+
+- **I**: Current in amperes
+
+- **V**: Voltage in volts
+
+
+
+### Efficiency   Ratio   Calculation
+
+**Formula**: E = (P_out / P_in) * 100
+
+
+**Parameters**:
+
+- **P_in**: Input power in watts
+
+- **P_out**: Output power in watts
+
+
+
+
+## Models
+
+| **Model Name** | **Type** | **Description** |
+| -------------- | -------- | --------------- |
+| Linear   Regression   Model | Statistical | This   model   uses    linear    regression   with   multiple    spaces   that    need    normalization. |
+| Neural   Network | Machine Learning | Deep   learning    model   for    pattern    recognition   with    excessive    spacing. |
+| Decision   Tree   Classifier | Classification | Tree-based   model   for    categorical    predictions   with    irregular    whitespace. |
+
+
+## Acceptance Criteria
+
+
+- The model accuracy must exceed 95%.
+
+- Processing time should be less than 100ms.
+
+- All edge cases must be handled correctly.
+
+- Documentation must have normalized spacing.
+
+
+
 ## Analysis: 4.2.2.4 AN_eUICC_Performance_Analysis
 
 **Requirement**: XXX200
@@ -88,6 +154,49 @@ Statistical analysis and mathematical modeling
 
 
 
+## Demonstration: Demo_Filter_Test_04_Prefix_Removal
+
+**Requirement**: REQ-FILTER-004
+
+**Clean ID**: Filter_Test_04_Prefix_Removal
+
+## Description
+
+Demonstration case showing the replace filter removing common prefixes (like "Demo_") from IDs to create cleaner display names, and replace_regex filter normalizing excessive whitespace in procedure descriptions.
+
+## Procedure
+
+Execute   the   demonstration    scenario   with   multiple   spaces    in   procedure    text   that    should    be    collapsed    to    single    spaces.
+
+## Observations
+
+
+- System responds correctly to all inputs.
+
+- No unexpected behavior observed.
+
+- Performance meets requirements.
+
+- Filter processing does not impact execution time.
+
+- Documentation output is clean and readable.
+
+
+## Acceptance Criteria
+
+
+- Demonstration completes without errors.
+
+- All features work as expected.
+
+- User feedback is positive.
+
+- Output formatting meets quality standards.
+
+- ID prefixes are properly removed.
+
+
+
 ## Demonstration: 4.2.2.5 DM_eUICC_Profile_Management
 
 **Requirement**: XXX300
@@ -141,6 +250,51 @@ Demonstration of profile download, installation, and lifecycle management operat
 - Profile deletion must completely remove all profile data
 
 - All operations must be performed without user intervention beyond initial trigger
+
+
+
+## Inspection: IN.Filter.Test.03: Replace & Normalize Special Chars
+
+**Requirement**: REQ-FILTER-003
+
+**Normalized ID**: --INFilterTest03-Replace--Normalize-Special-Chars--
+
+## Description
+
+Inspection case showing combined use of replace and replace_regex filters to normalize ID formats. First, the replace filter converts spaces to dashes, then replace_regex removes all non-alphanumeric characters except dashes, creating clean, filesystem-safe identifiers.
+
+## Inspection Method
+
+Visual inspection of code and documentation with   extra   whitespace   that   needs   normalization.
+
+## Checklist
+
+
+- Verify all functions are properly documented.
+
+- Check for coding standard compliance.
+
+- Ensure proper error handling is implemented.
+
+- Validate input sanitization mechanisms.
+
+- Confirm test IDs are properly formatted.
+
+- Review whitespace handling in output.
+
+
+## Acceptance Criteria
+
+
+- All checklist items must be satisfied.
+
+- No critical issues found during inspection.
+
+- Code review comments addressed.
+
+- Test identifiers follow naming conventions.
+
+- Documentation formatting is consistent.
 
 
 
@@ -200,6 +354,42 @@ Code review, configuration audit, and documentation verification
 - Code review must reveal no critical or high-severity security vulnerabilities
 
 - Implementation must pass static analysis security scanning tools
+
+
+
+## Test Case: TC.Filter.Test-01: Strip & Sanitize IDs
+
+**Requirement**: REQ-FILTER-001
+
+**Item**: 1
+
+**Sanitized Test ID**: __TC_Filter_Test_01__Strip___Sanitize_IDs__
+
+## Description
+
+This test case demonstrates the strip filter removing leading/trailing whitespace from test documentation, and the replace_regex filter sanitizing test IDs by converting special characters to underscores.
+
+
+## General Initial Conditions
+
+| **Entity** | **Description of the general initial condition** |
+| ------------- | --------- |
+| eUICC | [  Profile is in enabled state.  ,   All prerequisites are met.  ,   Network connectivity established.  ] |
+
+
+## Test Sequence 1 Nominal Flow: Whitespace Normalization Test
+
+This sequence verifies that the system correctly processes commands
+and the filters properly sanitize test IDs (converting dots, colons, 
+and dashes to underscores) and normalize whitespace (stripping leading/trailing
+spaces) in the generated test plan documentation.
+
+| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
+| --------------- | ---------- | ------------------- | --------------------|
+| 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#TEST_DATA, TRUE)) | SW=0x9000 | Operation completed successfully. |
+| 2 | FETCH_RESPONSE('XX') | MTD_CHECK_SMS_POR(0x9000) | Response received successfully. |
+| 3 | VERIFY_PROFILE_STATE(ENABLED) | Profile state verified | State matches expected value. |
+
 
 
 
