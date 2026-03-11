@@ -62,7 +62,7 @@ glab ci view --web
 export GITLAB_TOKEN="your-token-here"
 
 # Get your project ID (replace with your actual project path)
-export PROJECT_ID="username/test-plan-doc-gen"
+export PROJECT_ID="username/tpdg"
 
 # Check pipeline status
 curl --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
@@ -107,7 +107,7 @@ After the Rust version fix, all pipeline jobs should succeed:
 
 ### ✅ test-image-app job
 - Runs the app image
-- Verifies `test-plan-doc-gen --help` works
+- Verifies `tpdg --help` works
 
 ### ✅ test-image-builder job
 - Verifies the builder image environment
@@ -137,7 +137,7 @@ After the Rust version fix, all pipeline jobs should succeed:
 4. **Local Docker build test:**
    ```bash
    docker build -t test:local .
-   docker run test:local test-plan-doc-gen --help
+   docker run test:local tpdg --help
    ```
 
 ## Summary

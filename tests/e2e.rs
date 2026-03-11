@@ -20,7 +20,7 @@ fn get_binary_path() -> PathBuf {
     if path.ends_with("deps") {
         path.pop();
     }
-    path.push("test-plan-doc-gen");
+    path.push("tpdg");
     path
 }
 
@@ -555,7 +555,7 @@ fn test_e2e_dataset_4_gsma() {
     cmd.arg("-o").arg(report_path.as_os_str());
 
     // Execute
-    let status = cmd.status().expect("failed to execute test-plan-doc-gen");
+    let status = cmd.status().expect("failed to execute tpdg");
     assert!(status.success(), "binary exited with non-zero status");
 
     // Verify report.md was created and is not empty
@@ -584,7 +584,7 @@ fn test_e2e_dataset_4_gsma() {
 fn test_e2e_dataset_4_gsma_target_debug() {
     std::env::set_var("INSTA_UPDATE", "auto");
     // Run the same scenario but invoking the explicit binary path under target/debug
-    let bin_path = std::path::Path::new("target/debug/test-plan-doc-gen");
+    let bin_path = std::path::Path::new("target/debug/tpdg");
     if !bin_path.exists() {
         // Skip the test if that binary isn't built in this environment.
         eprintln!(
@@ -625,9 +625,7 @@ fn test_e2e_dataset_4_gsma_target_debug() {
     let cwd = std::env::current_dir().expect("can't get current dir");
     cmd.current_dir(&cwd);
 
-    let status = cmd
-        .status()
-        .expect("failed to execute target/debug/test-plan-doc-gen");
+    let status = cmd.status().expect("failed to execute target/debug/tpdg");
     assert!(
         status.success(),
         "binary exited with non-zero status: {:?}",

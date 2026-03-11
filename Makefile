@@ -45,7 +45,7 @@ test: build
 .PHONY: test
 
 test-e2e:
-	./target/release/test-plan-doc-gen \
+	./target/release/tpdg \
 	--output ./data/output.actual.md \
 	--container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
 	--test-case ./data/verification_methods ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
@@ -60,7 +60,7 @@ test-e2e-asciidoc:
 
 
 test-e2e-test-plan-asciidoc:
-	./target/release/test-plan-doc-gen \
+	./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/test_plan_output.actual.adoc \
 	--container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
@@ -70,7 +70,7 @@ test-e2e-test-plan-asciidoc:
 .PHONY: test-e2e-test-plan-asciidoc
 
 test-e2e-test-results-asciidoc:
-	./target/release/test-plan-doc-gen \
+	./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/test_results_output.actual.adoc \
 	--container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \

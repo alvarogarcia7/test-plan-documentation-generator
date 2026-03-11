@@ -33,8 +33,8 @@ build-image:
     - docker push     ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA}
     - docker push     ${CI_REGISTRY_IMAGE}:app_latest
     # Test
-    - docker run      ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} test-plan-doc-gen --help
-    - docker run      ${CI_REGISTRY_IMAGE}:app_latest        test-plan-doc-gen --help
+    - docker run      ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} tpdg --help
+    - docker run      ${CI_REGISTRY_IMAGE}:app_latest        tpdg --help
   artifacts:
     reports:
       dotenv: build.env
@@ -50,7 +50,7 @@ test-image-app:
       artifacts: true
   script:
     - uname -a 
-    - test-plan-doc-gen --help
+    - tpdg --help
   tags:
     - dind-amd
 
@@ -94,7 +94,7 @@ ci:
     - cargo test --release --verbose
   artifacts:
     paths:
-      - target/release/test-plan-doc-gen
+      - target/release/tpdg
     expire_in: 1 day
   coverage: '/(\d+\.\d+)% coverage/'
   allow_failure: false

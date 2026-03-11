@@ -127,11 +127,11 @@ RUN make test-e2e-asciidoc
 #WORKDIR /app
 #
 ## Copy binaries from builder
-#COPY --from=builder /app/target/release/test-plan-doc-gen /usr/local/bin/test-plan-doc-gen
+#COPY --from=builder /app/target/release/tpdg /usr/local/bin/tpdg
 #
 #
 ## Copy data directory
 #COPY data ./data
 
 # Set default command
-CMD ["test-plan-doc-gen"]
+CMD ["tpdg"]

@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.crypto.tii.ae/b3/hardware-kms/test-plan-documentation-generator.git
+git remote add origin https://gitlab.crypto.tii.ae/b3/hardware-kms/tpdg.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.crypto.tii.ae/b3/hardware-kms/test-plan-documentation-generator/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.crypto.tii.ae/b3/hardware-kms/tpdg/-/settings/integrations)
 
 ## Collaborate with your team
 
