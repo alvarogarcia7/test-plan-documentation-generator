@@ -22,3 +22,9 @@ lcov.info
 
 # Backlog.md
 /node_modules/
+
+# Release artifacts
+release_notes.md
+*.tar.gz
+*.zip
+artifacts/

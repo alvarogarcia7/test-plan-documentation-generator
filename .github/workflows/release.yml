@@ -1,0 +1,298 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+env:
+  CARGO_TERM_COLOR: always
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-binaries:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact_name: test-plan-doc-gen
+            asset_name: test-plan-doc-gen-linux-x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            artifact_name: test-plan-doc-gen
+            asset_name: test-plan-doc-gen-linux-arm64
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            artifact_name: test-plan-doc-gen
+            asset_name: test-plan-doc-gen-macos-x64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            artifact_name: test-plan-doc-gen
+            asset_name: test-plan-doc-gen-macos-arm64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            artifact_name: test-plan-doc-gen.exe
+            asset_name: test-plan-doc-gen-windows-x64.exe
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Install cross-compilation tools (Linux ARM64)
+      if: matrix.target == 'aarch64-unknown-linux-gnu'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.target }}-cargo-build-
+
+    - name: Setup sccache
+      uses: mozilla-actions/sccache-action@v0.0.9
+
+    - name: Configure sccache
+      shell: bash
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+
+    - name: Build binary
+      shell: bash
+      run: |
+        if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+          export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+        fi
+        cargo build --release --target ${{ matrix.target }}
+
+    - name: Strip binary (Unix)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        if [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        elif [ "${{ runner.os }}" = "macOS" ]; then
+          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        else
+          strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+        fi
+
+    - name: Create archive (Unix)
+      if: matrix.os != 'windows-latest'
+      shell: bash
+      run: |
+        cd target/${{ matrix.target }}/release
+        tar czf ../../../${{ matrix.asset_name }}.tar.gz ${{ matrix.artifact_name }}
+
+    - name: Create archive (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        cd target/${{ matrix.target }}/release
+        Compress-Archive -Path ${{ matrix.artifact_name }} -DestinationPath ../../../${{ matrix.asset_name }}.zip
+
+    - name: Upload binary artifact (Unix)
+      if: matrix.os != 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.asset_name }}
+        path: ${{ matrix.asset_name }}.tar.gz
+
+    - name: Upload binary artifact (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.asset_name }}
+        path: ${{ matrix.asset_name }}.zip
+
+  create-release:
+    name: Create GitHub Release
+    needs: build-binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Extract version from tag
+        VERSION="${GITHUB_REF#refs/tags/}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        
+        # Get previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        # Generate release notes
+        echo "# Release $VERSION" > release_notes.md
+        echo "" >> release_notes.md
+        
+        if [ -n "$PREVIOUS_TAG" ]; then
+          echo "## Changes since $PREVIOUS_TAG" >> release_notes.md
+          echo "" >> release_notes.md
+          
+          # Group commits by type
+          echo "### Features" >> release_notes.md
+          git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --grep="^feat" >> release_notes.md || true
+          echo "" >> release_notes.md
+          
+          echo "### Bug Fixes" >> release_notes.md
+          git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --grep="^fix" >> release_notes.md || true
+          echo "" >> release_notes.md
+          
+          echo "### Documentation" >> release_notes.md
+          git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --grep="^docs" >> release_notes.md || true
+          echo "" >> release_notes.md
+          
+          echo "### Other Changes" >> release_notes.md
+          git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s (%h)" --invert-grep --grep="^feat" --grep="^fix" --grep="^docs" >> release_notes.md || true
+          echo "" >> release_notes.md
+        else
+          echo "## All Changes" >> release_notes.md
+          echo "" >> release_notes.md
+          git log --pretty=format:"- %s (%h)" >> release_notes.md
+          echo "" >> release_notes.md
+        fi
+        
+        echo "" >> release_notes.md
+        echo "## Downloads" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Binaries" >> release_notes.md
+        echo "- **Linux x64**: \`test-plan-doc-gen-linux-x64.tar.gz\`" >> release_notes.md
+        echo "- **Linux ARM64**: \`test-plan-doc-gen-linux-arm64.tar.gz\`" >> release_notes.md
+        echo "- **macOS x64**: \`test-plan-doc-gen-macos-x64.tar.gz\`" >> release_notes.md
+        echo "- **macOS ARM64**: \`test-plan-doc-gen-macos-arm64.tar.gz\`" >> release_notes.md
+        echo "- **Windows x64**: \`test-plan-doc-gen-windows-x64.exe.zip\`" >> release_notes.md
+        echo "" >> release_notes.md
+        echo "### Docker Images" >> release_notes.md
+        echo "\`\`\`bash" >> release_notes.md
+        echo "docker pull ghcr.io/${{ github.repository }}:$VERSION" >> release_notes.md
+        echo "docker pull ghcr.io/${{ github.repository }}:latest" >> release_notes.md
+        echo "\`\`\`" >> release_notes.md
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display artifact structure
+      run: ls -R artifacts/
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: Release ${{ steps.release_notes.outputs.version }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+        files: |
+          artifacts/test-plan-doc-gen-linux-x64/*.tar.gz
+          artifacts/test-plan-doc-gen-linux-arm64/*.tar.gz
+          artifacts/test-plan-doc-gen-macos-x64/*.tar.gz
+          artifacts/test-plan-doc-gen-macos-arm64/*.tar.gz
+          artifacts/test-plan-doc-gen-windows-x64.exe/*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-and-push-docker:
+    name: Build and Push Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract version from tag
+      id: extract_version
+      run: |
+        VERSION="${GITHUB_REF#refs/tags/}"
+        VERSION_NO_V="${VERSION#v}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version_no_v=$VERSION_NO_V" >> $GITHUB_OUTPUT
+
+    - name: Extract metadata for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=raw,value=latest
+
+    - name: Create sccache directory
+      run: mkdir -p .sccache/host
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
+
+    - name: Generate Docker image summary
+      run: |
+        echo "### Docker Images Published :rocket:" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Registry**: \`${{ env.REGISTRY }}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Tags**:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Pull Command**:" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+        echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.extract_version.outputs.version_no_v }}" >> $GITHUB_STEP_SUMMARY
+        echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
