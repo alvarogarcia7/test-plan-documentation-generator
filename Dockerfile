@@ -75,7 +75,7 @@ RUN make test-e2e
 RUN make test-e2e-asciidoc
 
 # Install program
-RUN cp target/release/test-plan-doc-gen /usr/local/bin/test-plan-doc-gen
+RUN cp target/release/tpdg /usr/local/bin/tpdg
 
 # Set default command
-CMD ["test-plan-doc-gen"]
+CMD ["tpdg"]
