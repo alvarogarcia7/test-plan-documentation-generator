@@ -14,6 +14,7 @@ tarpaulin-report.html
 *.profraw
 lcov.info
 /target/coverage/
+/coverage/
 
 # sccache
 /.sccache/
