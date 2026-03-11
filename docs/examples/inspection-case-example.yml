@@ -1,0 +1,337 @@
+# ============================================================================
+# ANNOTATED INSPECTION CASE EXAMPLE
+# ============================================================================
+# This example demonstrates a complete inspection verification method case
+# with detailed annotations explaining each field and common patterns.
+#
+# Schema: data/verification_methods/inspection/schema.json
+# Template: data/verification_methods/inspection/template.j2
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Must be exactly "inspection" for inspection verification method.
+type: inspection
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this inspection to a specific requirement being verified.
+requirement: "XXX400"
+
+# ----------------------------------------------------------------------------
+# INSPECTION IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this inspection case.
+# Typically includes hierarchical numbering and descriptive suffix.
+id: '4.2.2.6 IN_eUICC_Security_Compliance'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of what this inspection verifies and its purpose.
+# Explains the scope and objectives of the inspection activity.
+# Can be multi-line. Use strip filter in templates: {{ description | strip }}
+description: |
+  This inspection verifies that the eUICC implementation complies with
+  all security requirements specified in GSMA SGP.22 and related standards.
+  The inspection covers cryptographic implementations, secure communication
+  protocols, key management, authentication mechanisms, and general security
+  best practices through code review, configuration audit, and documentation
+  verification.
+
+# ----------------------------------------------------------------------------
+# INSPECTION METHOD (Required)
+# ----------------------------------------------------------------------------
+# Description of the methods and techniques used to perform the inspection.
+# Explains how the inspection will be conducted and what tools/processes
+# will be used.
+inspection_method: |
+  Multi-faceted inspection approach combining:
+  
+  1. Source Code Review
+     - Manual review of security-critical code sections
+     - Automated static analysis using security scanning tools
+     - Review of cryptographic library usage and implementation
+  
+  2. Configuration Audit
+     - Examination of security configuration files
+     - Verification of key storage mechanisms
+     - Review of certificate chain configurations
+  
+  3. Documentation Verification
+     - Review of security architecture documentation
+     - Validation against GSMA SGP.22 specification requirements
+     - Verification of security testing documentation
+  
+  4. Design Review
+     - Analysis of security architecture and threat model
+     - Review of authentication and authorization flows
+     - Evaluation of data protection mechanisms
+  
+  Tools and Resources:
+  - Static analysis: SonarQube, Coverity, OWASP Dependency-Check
+  - Code review: GitHub/GitLab with security focus
+  - Standards: GSMA SGP.22 v3.0, NIST guidelines
+  - Checklists: OWASP Secure Coding Practices, CWE Top 25
+
+# ----------------------------------------------------------------------------
+# CHECKLIST (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of specific items to check during the inspection.
+# Each item should be a clear, verifiable checkpoint.
+# Items should be actionable and specific.
+# Tip: Use strip filter for each item in templates
+# Can render as checkbox list: - [ ] {{ item | strip }}
+checklist:
+  
+  # ==========================================================================
+  # CRYPTOGRAPHIC IMPLEMENTATION CHECKS
+  # ==========================================================================
+  - "Verify cryptographic algorithms comply with GSMA SGP.22 specification (AES-128/256, RSA-2048+, SHA-256)"
+  - "Confirm no deprecated or weak algorithms are used (MD5, SHA-1, DES, RC4)"
+  - "Check that cryptographic random number generator meets NIST SP 800-90A standards"
+  - "Verify proper use of initialization vectors (IVs) - unique and unpredictable for each encryption"
+  - "Confirm cryptographic keys have appropriate length (minimum 128-bit for symmetric, 2048-bit for asymmetric)"
+  - "Verify cryptographic library versions are up-to-date and don't have known vulnerabilities"
+  
+  # ==========================================================================
+  # SECURE COMMUNICATION CHECKS
+  # ==========================================================================
+  - "Confirm secure channel protocol implementation follows TLS 1.2 or higher (TLS 1.3 preferred)"
+  - "Verify TLS configuration uses only strong cipher suites (no NULL, EXPORT, or DES ciphers)"
+  - "Check that certificate validation is properly implemented with pinning where applicable"
+  - "Verify hostname verification is enabled and cannot be disabled"
+  - "Confirm SSL/TLS session renegotiation is handled securely"
+  - "Check that perfect forward secrecy (PFS) is enabled through ECDHE or DHE key exchange"
+  
+  # ==========================================================================
+  # KEY MANAGEMENT CHECKS
+  # ==========================================================================
+  - "Validate private keys are stored in secure element with no external access or export capability"
+  - "Verify key generation occurs in secure environment (preferably hardware-based)"
+  - "Check that keys are never logged, printed, or transmitted in plaintext"
+  - "Confirm key derivation functions use appropriate algorithms (PBKDF2, HKDF, or similar)"
+  - "Verify key rotation mechanisms are implemented and documented"
+  - "Check that key backup and recovery procedures maintain security"
+  
+  # ==========================================================================
+  # AUTHENTICATION AND AUTHORIZATION CHECKS
+  # ==========================================================================
+  - "Review authentication mechanisms for SM-DP+ communication (mutual authentication required)"
+  - "Verify authentication mechanisms for SM-DS communication"
+  - "Check that session tokens/credentials are properly secured and have appropriate expiration"
+  - "Confirm authorization checks are performed before all privileged operations"
+  - "Verify authentication credentials are never hard-coded in source code"
+  - "Check that failed authentication attempts are logged and rate-limited"
+  
+  # ==========================================================================
+  # CERTIFICATE VALIDATION CHECKS
+  # ==========================================================================
+  - "Check certificate chain validation includes proper root CA verification"
+  - "Verify certificate expiration dates are checked before use"
+  - "Confirm certificate revocation checking is implemented (CRL or OCSP)"
+  - "Check that invalid or self-signed certificates are rejected in production"
+  - "Verify certificate transparency logging is implemented where applicable"
+  - "Confirm proper validation of certificate key usage and extended key usage fields"
+  
+  # ==========================================================================
+  # ERROR HANDLING AND INFORMATION DISCLOSURE CHECKS
+  # ==========================================================================
+  - "Inspect error handling to ensure no sensitive information leakage in error messages"
+  - "Verify stack traces and debug information are not exposed in production builds"
+  - "Check that cryptographic failures fail securely (fail-closed, not fail-open)"
+  - "Confirm timing attack mitigations for cryptographic operations"
+  - "Verify no sensitive data is logged (keys, credentials, PII)"
+  - "Check that verbose error messages are only available in debug/test builds"
+  
+  # ==========================================================================
+  # SECURE BOOT AND FIRMWARE CHECKS
+  # ==========================================================================
+  - "Verify secure boot implementation and firmware signature validation"
+  - "Check that firmware updates are signed and signature is verified before installation"
+  - "Confirm rollback protection is implemented to prevent downgrade attacks"
+  - "Verify boot chain integrity verification (measured boot if available)"
+  - "Check that firmware encryption is used to protect intellectual property and sensitive code"
+  
+  # ==========================================================================
+  # MEMORY PROTECTION CHECKS
+  # ==========================================================================
+  - "Check memory protection mechanisms prevent unauthorized access to secure memory regions"
+  - "Verify sensitive data in memory is cleared after use (no residual key material)"
+  - "Confirm stack protection is enabled (stack canaries, ASLR)"
+  - "Check for buffer overflow protections in code (bounds checking)"
+  - "Verify no use of unsafe functions (strcpy, sprintf, gets) in C/C++ code"
+  - "Confirm memory allocations are checked for success before use"
+  
+  # ==========================================================================
+  # AUDIT LOGGING CHECKS
+  # ==========================================================================
+  - "Confirm audit logging captures all security-relevant events"
+  - "Verify logs include timestamp, event type, result, and relevant context"
+  - "Check that logs are tamper-resistant and integrity-protected"
+  - "Verify sensitive data is not logged (keys, passwords, PII)"
+  - "Confirm log retention policies are implemented and documented"
+  - "Check that logs are monitored for security events"
+  
+  # ==========================================================================
+  # CODE QUALITY AND VULNERABILITY CHECKS
+  # ==========================================================================
+  - "Review source code for common vulnerabilities (buffer overflow, injection, XSS, etc.)"
+  - "Verify input validation is performed on all external inputs"
+  - "Check for SQL injection vulnerabilities if database is used"
+  - "Confirm command injection protections if system calls are made"
+  - "Verify proper output encoding to prevent injection attacks"
+  - "Check for race conditions in multi-threaded code"
+  - "Verify integer overflow/underflow protections"
+  - "Confirm proper resource cleanup (no memory leaks, file handle leaks)"
+  
+  # ==========================================================================
+  # COMPLIANCE AND STANDARDS CHECKS
+  # ==========================================================================
+  - "Validate compliance with side-channel attack mitigation requirements"
+  - "Verify compliance with GSMA SGP.22 security requirements"
+  - "Check adherence to Common Criteria Protection Profile if applicable"
+  - "Confirm compliance with relevant industry standards (NIST, ISO, etc.)"
+  - "Verify security test results are documented and available"
+  - "Check that penetration testing has been performed and issues addressed"
+
+# ----------------------------------------------------------------------------
+# ACCEPTANCE CRITERIA (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of criteria that must be met for the inspection to pass.
+# These are the overall pass/fail conditions for the entire inspection.
+# Each criterion should be measurable and verifiable.
+acceptance_criteria:
+  
+  # Cryptographic Compliance
+  - "All cryptographic algorithms must be from GSMA SGP.22 approved list (AES-128/256, RSA-2048+, SHA-256+)"
+  - "No use of deprecated, weak, or broken cryptographic algorithms (MD5, SHA-1, DES, 3DES, RC4)"
+  
+  # Key Management
+  - "No cryptographic keys shall be stored in plaintext or insufficiently protected memory"
+  - "All private keys must be stored in secure element with no export capability"
+  - "Key generation must use cryptographically secure random number generator"
+  
+  # Certificate and PKI
+  - "Certificate validation must reject expired, revoked, or untrusted certificates"
+  - "Certificate chain validation must verify entire chain up to trusted root CA"
+  - "Certificate revocation checking must be implemented (CRL or OCSP)"
+  
+  # Secure Communications
+  - "All network communications must use TLS 1.2 or higher with strong cipher suites"
+  - "TLS configuration must not allow weak or NULL ciphers"
+  - "Perfect forward secrecy must be enabled"
+  
+  # Logging and Monitoring
+  - "All security-critical operations must be logged with timestamp and result"
+  - "Logs must not contain sensitive information (keys, passwords, credentials)"
+  - "Audit logs must be tamper-resistant"
+  
+  # Code Quality
+  - "Code review must reveal no critical or high-severity security vulnerabilities"
+  - "Static analysis security scanning must show zero critical findings"
+  - "No use of unsafe functions or coding patterns that could lead to vulnerabilities"
+  
+  # Error Handling
+  - "Error messages must not leak sensitive information (keys, internal paths, stack traces)"
+  - "All cryptographic operations must fail securely (fail-closed)"
+  
+  # Compliance
+  - "Implementation must pass static analysis security scanning tools with zero critical issues"
+  - "All checklist items must be verified and documented as compliant"
+  - "Any deviations from standards must be documented with risk assessment and mitigation"
+  - "Penetration testing must be completed with all high/critical findings resolved"
+  
+  # Documentation
+  - "Security architecture must be fully documented and aligned with implementation"
+  - "Threat model must be documented and all identified threats mitigated"
+  - "Security test results must be documented and demonstrate compliance"
+
+# ============================================================================
+# COMMON PATTERNS AND TIPS
+# ============================================================================
+#
+# 1. CHECKLIST ORGANIZATION
+#    - Group related items together (use comments in YAML for sections)
+#    - Order items logically (by system component or security domain)
+#    - Make items specific and actionable
+#    - Each item should be independently verifiable
+#    - Use consistent phrasing (e.g., all start with "Verify", "Check", "Confirm")
+#
+# 2. CHECKLIST ITEM CLARITY
+#    - Be specific about what to check
+#    - Include expected outcome or standard
+#    - Avoid ambiguous terms
+#    - Reference specific standards or requirements when applicable
+#    - Make items testable (not subjective)
+#
+# 3. INSPECTION METHOD
+#    - Explain the overall approach
+#    - List tools and resources to be used
+#    - Include both automated and manual inspection methods
+#    - Reference applicable standards and guidelines
+#    - Can be multi-line for detailed explanation
+#
+# 4. ACCEPTANCE CRITERIA
+#    - Make criteria objective and measurable
+#    - Use "must" for mandatory requirements
+#    - Cover all major security areas
+#    - Ensure criteria can be verified through the checklist
+#    - Include both technical and process requirements
+#
+# 5. TEMPLATE RENDERING
+#    - Checklist often rendered as checkbox list in Markdown
+#    - Use strip filter to clean whitespace
+#    - Consider grouping checklist items by category in template
+#    - Acceptance criteria typically rendered as bullet list
+#
+# 6. CHECKLIST SCOPE
+#    - Balance thoroughness with practicality
+#    - Focus on security-critical areas
+#    - Include both implementation and configuration
+#    - Cover code, design, and documentation
+#
+# 7. INSPECTION DEPTH
+#    - Specify depth of review (sample vs. comprehensive)
+#    - Indicate which code modules/components to focus on
+#    - Note any areas excluded from inspection
+#
+# 8. EVIDENCE AND DOCUMENTATION
+#    - Each checklist item should have supporting evidence
+#    - Document findings for each item (compliant/non-compliant)
+#    - Note any deviations or exceptions
+#
+# ============================================================================
+# EXAMPLE TEMPLATE USAGE
+# ============================================================================
+#
+# Checklist as checkboxes:
+#
+# ## Checklist
+# 
+# {% for item in checklist %}
+# - [ ] {{ item | strip }}
+# {% endfor %}
+#
+# Checklist grouped by category (using template logic):
+#
+# ## Checklist
+# 
+# ### Cryptographic Implementation
+# {% for item in checklist %}
+# {% if "cryptographic" in item | lower or "algorithm" in item | lower %}
+# - [ ] {{ item | strip }}
+# {% endif %}
+# {% endfor %}
+#
+# Acceptance criteria as list:
+#
+# ## Acceptance Criteria
+# 
+# {% for criterion in acceptance_criteria %}
+# - {{ criterion | strip }}
+# {% endfor %}
+#
+# ============================================================================

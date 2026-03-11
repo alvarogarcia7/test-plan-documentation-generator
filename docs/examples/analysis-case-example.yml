@@ -1,0 +1,312 @@
+# ============================================================================
+# ANNOTATED ANALYSIS CASE EXAMPLE
+# ============================================================================
+# This example demonstrates a complete analysis verification method case
+# with detailed annotations explaining each field and common patterns.
+#
+# Schema: data/verification_methods/analysis/schema.json
+# Template: data/verification_methods/analysis/template.j2
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Must be exactly "analysis" for analysis verification method.
+type: analysis
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this analysis to a specific requirement being verified.
+requirement: "XXX200"
+
+# ----------------------------------------------------------------------------
+# ANALYSIS IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this analysis case.
+# Typically includes hierarchical numbering and descriptive suffix.
+id: '4.2.2.4 AN_eUICC_Performance_Analysis'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of what this analysis verifies and its purpose.
+# Can be multi-line. Use strip filter in templates: {{ description | strip }}
+description: |
+  This analysis verifies eUICC system performance under various load
+  conditions to ensure compliance with throughput, latency, and reliability
+  requirements. It uses statistical modeling and queuing theory to predict
+  system behavior under stress and validate that performance meets or
+  exceeds specified thresholds.
+
+# ----------------------------------------------------------------------------
+# METHOD (Required)
+# ----------------------------------------------------------------------------
+# Description of the analytical method used for verification.
+# Explains the approach, tools, or techniques applied.
+method: |
+  Statistical analysis using time-series data from performance tests,
+  combined with mathematical modeling based on queuing theory. Analysis
+  includes:
+  - Throughput calculations under varying channel counts
+  - Response time distribution analysis (mean, percentiles)
+  - Resource utilization modeling
+  - Failure rate prediction using probabilistic models
+
+# ----------------------------------------------------------------------------
+# CALCULATIONS (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of mathematical calculations used in the analysis.
+# Each calculation should be well-defined with formula and parameters.
+calculations:
+  
+  # ==========================================================================
+  # CALCULATION 1: System Throughput
+  # ==========================================================================
+  - name: "Maximum System Throughput"
+    
+    # Mathematical formula (LaTeX or plain text notation)
+    # Tip: Use backticks in Markdown template for code formatting
+    formula: "T_max = (N * S) / (L + O)"
+    
+    # Parameters object (optional)
+    # Key-value pairs defining each variable in the formula
+    # Keys and values are both strings
+    parameters:
+      N: "Number of parallel processing channels"
+      S: "Signal processing speed (operations per second)"
+      L: "Latency per operation (seconds)"
+      O: "System overhead factor (dimensionless)"
+  
+  # ==========================================================================
+  # CALCULATION 2: Response Time Percentile
+  # ==========================================================================
+  - name: "95th Percentile Response Time"
+    
+    # Formula using statistical notation
+    formula: "P95 = μ + (1.645 * σ)"
+    
+    parameters:
+      μ: "Mean response time (milliseconds)"
+      σ: "Standard deviation of response time (milliseconds)"
+      "1.645": "Z-score for 95th percentile in normal distribution"
+  
+  # ==========================================================================
+  # CALCULATION 3: Resource Utilization
+  # ==========================================================================
+  - name: "CPU Utilization Ratio"
+    
+    formula: "U = λ / (μ * c)"
+    
+    parameters:
+      λ: "Average arrival rate (requests per second)"
+      μ: "Service rate per channel (requests per second)"
+      c: "Number of service channels"
+      U: "Utilization ratio (should be < 1 for stability)"
+  
+  # ==========================================================================
+  # CALCULATION 4: Queue Wait Time
+  # ==========================================================================
+  - name: "Average Queue Wait Time"
+    
+    # Formula from queuing theory (M/M/c model)
+    formula: "W = (P0 * (λ/μ)^c * ρ) / (c! * (1-ρ)^2 * μ)"
+    
+    parameters:
+      P0: "Probability of zero customers in system"
+      λ: "Arrival rate"
+      μ: "Service rate"
+      c: "Number of servers"
+      ρ: "Traffic intensity (λ / (c*μ))"
+  
+  # ==========================================================================
+  # CALCULATION 5: Failure Rate
+  # ==========================================================================
+  - name: "Expected Failure Rate Under Load"
+    
+    # Poisson distribution for failure prediction
+    formula: "P(k) = (λ^k * e^(-λ)) / k!"
+    
+    parameters:
+      λ: "Average failure rate (failures per hour)"
+      k: "Number of failures being predicted"
+      "e": "Euler's number (≈2.71828)"
+  
+  # ==========================================================================
+  # CALCULATION 6: No Parameters Example
+  # ==========================================================================
+  - name: "System Capacity Factor"
+    
+    # This calculation has no parameters field (optional)
+    formula: "CF = (T_max * R) / T_required"
+
+# ----------------------------------------------------------------------------
+# MODELS (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of analytical models used to verify the requirement.
+# Each model should describe the approach and what it analyzes.
+models:
+  
+  # ==========================================================================
+  # MODEL 1: Queuing Theory Model
+  # ==========================================================================
+  - name: "Multi-channel Load Balancing Model"
+    
+    # Type of model (e.g., Statistical, Mathematical, Simulation, etc.)
+    type: "Queuing Theory"
+    
+    # Detailed description of the model
+    # Tip: Use replace_regex to normalize whitespace in templates
+    # {{ description | replace_regex(old="\s+", new=" ") | strip }}
+    description: |
+      M/M/c queue model for analyzing multi-channel message processing.
+      Assumes Poisson arrival process and exponential service times.
+      Used to predict queue lengths, wait times, and system utilization
+      under various load conditions. The model helps determine optimal
+      number of channels needed to meet performance requirements.
+  
+  # ==========================================================================
+  # MODEL 2: Statistical Model
+  # ==========================================================================
+  - name: "Resource Utilization Time-Series Model"
+    
+    type: "Statistical"
+    
+    description: |
+      ARIMA (AutoRegressive Integrated Moving Average) time-series model
+      for analyzing CPU and memory utilization patterns over time.
+      Identifies trends, seasonal patterns, and anomalies in resource
+      consumption. Forecasts future utilization to predict when scaling
+      may be required.
+  
+  # ==========================================================================
+  # MODEL 3: Probabilistic Model
+  # ==========================================================================
+  - name: "Failure Prediction Model"
+    
+    type: "Probabilistic"
+    
+    description: |
+      Poisson distribution model for estimating failure rates under
+      stress conditions. Based on historical failure data and current
+      load characteristics. Predicts probability of system failures
+      at different load levels and helps establish reliability metrics.
+  
+  # ==========================================================================
+  # MODEL 4: Capacity Planning Model
+  # ==========================================================================
+  - name: "System Capacity Scaling Model"
+    
+    type: "Mathematical"
+    
+    description: |
+      Linear scaling model that projects system performance as additional
+      resources (channels, memory, CPU) are added. Uses empirical data
+      from performance tests to establish scaling factors and predict
+      when diminishing returns occur.
+
+# ----------------------------------------------------------------------------
+# ACCEPTANCE CRITERIA (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of criteria that must be met for the analysis to pass.
+# Each criterion should be specific, measurable, and testable.
+# Tip: Use strip filter in templates for each item
+acceptance_criteria:
+  # Throughput requirement
+  - "Maximum throughput must exceed 1000 operations per second under normal load"
+  
+  # Latency requirement
+  - "95th percentile response time must be below 200ms for all operations"
+  
+  # Reliability requirement
+  - "System must maintain stability with utilization up to 80% without degradation"
+  
+  # Quality of Service requirement
+  - "Mean queue wait time must not exceed 50ms during peak load periods"
+  
+  # Failure rate requirement
+  - "Predicted failure rate must be less than 0.01% (99.99% reliability) under normal load"
+  
+  # Scalability requirement
+  - "System must scale linearly up to 16 parallel channels with at least 85% efficiency"
+  
+  # Resource requirement
+  - "CPU utilization must remain below 70% at maximum specified throughput"
+  
+  # Stress test requirement
+  - "System must recover gracefully from temporary overload conditions within 5 seconds"
+
+# ============================================================================
+# COMMON PATTERNS AND TIPS
+# ============================================================================
+#
+# 1. FORMULA NOTATION
+#    - Use clear mathematical notation (LaTeX-like or plain text)
+#    - Define all variables in parameters section
+#    - Consider readability in rendered output
+#
+# 2. PARAMETERS OBJECT
+#    - Optional but highly recommended for clarity
+#    - Use descriptive parameter names
+#    - Include units where applicable (e.g., "seconds", "per second")
+#    - All keys and values must be strings
+#
+# 3. MODEL TYPES
+#    - Be specific: "Statistical", "Queuing Theory", "Probabilistic", etc.
+#    - Use consistent terminology across analyses
+#    - Match model type to analysis method
+#
+# 4. MODEL DESCRIPTIONS
+#    - Explain what the model does and why it's used
+#    - Include key assumptions (e.g., "assumes Poisson arrival")
+#    - Mention inputs and outputs
+#    - Use multi-line format for readability
+#
+# 5. ACCEPTANCE CRITERIA
+#    - Make criteria measurable (include numbers and thresholds)
+#    - Use "must" for requirements
+#    - Include units for all quantitative criteria
+#    - Cover all aspects: performance, reliability, scalability
+#
+# 6. WHITESPACE IN FORMULAS
+#    - Use spaces around operators for readability: "a + b" not "a+b"
+#    - Be consistent with notation style
+#
+# 7. TEMPLATE RENDERING
+#    - Formulas often rendered in code blocks: `{{ formula }}`
+#    - Parameters rendered as lists or tables
+#    - Strip filter important for multi-line content
+#
+# 8. VALIDATION
+#    - All calculations must have name and formula
+#    - All models must have name, type, and description
+#    - At least one acceptance criterion required (but multiple recommended)
+#
+# ============================================================================
+# EXAMPLE TEMPLATE USAGE
+# ============================================================================
+#
+# Calculations in Markdown table:
+#
+# {% for calc in calculations %}
+# #### {{ calc.name | strip }}
+# 
+# **Formula**: `{{ calc.formula }}`
+# 
+# {% if calc.parameters %}
+# **Parameters**:
+# {% for param, desc in calc.parameters %}
+# - **{{ param }}**: {{ desc }}
+# {% endfor %}
+# {% endif %}
+# {% endfor %}
+#
+# Models in table:
+#
+# | Model Name | Type | Description |
+# |------------|------|-------------|
+# {% for model in models -%}
+# | {{ model.name }} | {{ model.type }} | {{ model.description | strip }} |
+# {% endfor %}
+#
+# ============================================================================
