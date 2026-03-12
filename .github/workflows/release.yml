@@ -20,24 +20,24 @@
 #        include:
 #          - target: x86_64-unknown-linux-gnu
 #            os: ubuntu-latest
-#            artifact_name: test-plan-doc-gen
-#            asset_name: test-plan-doc-gen-linux-x64
+#            artifact_name: tpdg
+#            asset_name: tpdg-linux-x64
 #          - target: aarch64-unknown-linux-gnu
 #            os: ubuntu-latest
-#            artifact_name: test-plan-doc-gen
-#            asset_name: test-plan-doc-gen-linux-arm64
+#            artifact_name: tpdg
+#            asset_name: tpdg-linux-arm64
 #          - target: x86_64-apple-darwin
 #            os: macos-latest
-#            artifact_name: test-plan-doc-gen
-#            asset_name: test-plan-doc-gen-macos-x64
+#            artifact_name: tpdg
+#            asset_name: tpdg-macos-x64
 #          - target: aarch64-apple-darwin
 #            os: macos-latest
-#            artifact_name: test-plan-doc-gen
-#            asset_name: test-plan-doc-gen-macos-arm64
+#            artifact_name: tpdg
+#            asset_name: tpdg-macos-arm64
 #          - target: x86_64-pc-windows-msvc
 #            os: windows-latest
-#            artifact_name: test-plan-doc-gen.exe
-#            asset_name: test-plan-doc-gen-windows-x64.exe
+#            artifact_name: tpdg.exe
+#            asset_name: tpdg-windows-x64.exe
 #
 #    steps:
 #    - uses: actions/checkout@v4
@@ -191,11 +191,11 @@
 #        echo "## Downloads" >> release_notes.md
 #        echo "" >> release_notes.md
 #        echo "### Binaries" >> release_notes.md
-#        echo "- **Linux x64**: \`test-plan-doc-gen-linux-x64.tar.gz\`" >> release_notes.md
-#        echo "- **Linux ARM64**: \`test-plan-doc-gen-linux-arm64.tar.gz\`" >> release_notes.md
-#        echo "- **macOS x64**: \`test-plan-doc-gen-macos-x64.tar.gz\`" >> release_notes.md
-#        echo "- **macOS ARM64**: \`test-plan-doc-gen-macos-arm64.tar.gz\`" >> release_notes.md
-#        echo "- **Windows x64**: \`test-plan-doc-gen-windows-x64.exe.zip\`" >> release_notes.md
+#        echo "- **Linux x64**: \`tpdg-linux-x64.tar.gz\`" >> release_notes.md
+#        echo "- **Linux ARM64**: \`tpdg-linux-arm64.tar.gz\`" >> release_notes.md
+#        echo "- **macOS x64**: \`tpdg-macos-x64.tar.gz\`" >> release_notes.md
+#        echo "- **macOS ARM64**: \`tpdg-macos-arm64.tar.gz\`" >> release_notes.md
+#        echo "- **Windows x64**: \`tpdg-windows-x64.exe.zip\`" >> release_notes.md
 #        echo "" >> release_notes.md
 #        echo "### Docker Images" >> release_notes.md
 #        echo "\`\`\`bash" >> release_notes.md
@@ -219,11 +219,11 @@
 #        draft: false
 #        prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
 #        files: |
-#          artifacts/test-plan-doc-gen-linux-x64/*.tar.gz
-#          artifacts/test-plan-doc-gen-linux-arm64/*.tar.gz
-#          artifacts/test-plan-doc-gen-macos-x64/*.tar.gz
-#          artifacts/test-plan-doc-gen-macos-arm64/*.tar.gz
-#          artifacts/test-plan-doc-gen-windows-x64.exe/*.zip
+#          artifacts/tpdg-linux-x64/*.tar.gz
+#          artifacts/tpdg-linux-arm64/*.tar.gz
+#          artifacts/tpdg-macos-x64/*.tar.gz
+#          artifacts/tpdg-macos-arm64/*.tar.gz
+#          artifacts/tpdg-windows-x64.exe/*.zip
 #      env:
 #        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #

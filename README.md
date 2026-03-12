@@ -25,13 +25,13 @@ The tool processes container-level data (test plan metadata) and multiple test c
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd test-plan-doc-gen
+cd tpdg
 
 # Build release binary
 cargo build --release
 
 # Binary will be available at:
-./target/release/test-plan-doc-gen
+./target/release/tpdg
 ```
 
 ### Using Pre-built Binary
@@ -39,7 +39,7 @@ cargo build --release
 If a pre-built binary is available, download it and make it executable:
 
 ```bash
-chmod +x test-plan-doc-gen
+chmod +x tpdg
 ```
 
 ## Quick Start Guide
@@ -47,7 +47,7 @@ chmod +x test-plan-doc-gen
 ### Basic Usage Example
 
 ```bash
-./target/release/test-plan-doc-gen \
+./target/release/tpdg \
   --output ./test_plan.md \
   --container ./data/container/schema.json \
              ./data/container/template.j2 \
@@ -67,7 +67,7 @@ This command:
 ### Example with AsciiDoc Format
 
 ```bash
-./target/release/test-plan-doc-gen \
+./target/release/tpdg \
   --format asciidoc \
   --output ./test_plan.adoc \
   --container ./data/container/schema.json \
@@ -83,7 +83,7 @@ This command:
 Omit the `--output` flag to print results to stdout:
 
 ```bash
-./target/release/test-plan-doc-gen \
+./target/release/tpdg \
   --container ./data/container/schema.json \
              ./data/container/template.j2 \
              ./data/container/data.yml \
@@ -96,7 +96,7 @@ Omit the `--output` flag to print results to stdout:
 ### Synopsis
 
 ```
-test-plan-doc-gen [OPTIONS] --container <FILES> --test-case <FILES>
+tpdg [OPTIONS] --container <FILES> --test-case <FILES>
 ```
 
 ### Options

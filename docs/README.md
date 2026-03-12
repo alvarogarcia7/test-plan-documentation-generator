@@ -60,7 +60,7 @@ If you're writing test case YAML files:
 3. **Validate**: Check your YAML against schemas
    ```bash
    # The tool validates automatically
-   ./target/release/test-plan-doc-gen --test-case ...
+   ./target/release/tpdg --test-case ...
    ```
 
 ### For Integration
