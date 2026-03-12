@@ -1,93 +1,519 @@
 # Test Plan Documentation Generator
 
+A Rust CLI tool that generates test plan documentation from JSON schemas, Jinja2 templates, and YAML data files. It validates data against schemas and renders customizable Markdown or AsciiDoc output for test documentation.
 
+## Overview
 
-## Getting started
+The Test Plan Documentation Generator is designed to streamline the creation of test documentation by:
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+- **Validating** test data against JSON schemas to ensure consistency
+- **Rendering** templates using the Tera templating engine (Jinja2-like syntax)
+- **Aggregating** test results and requirements into comprehensive reports
+- **Supporting** multiple verification methods (test, analysis, demonstration, inspection)
+- **Generating** both Markdown and AsciiDoc output formats
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.crypto.tii.ae/b3/hardware-kms/tpdg.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.crypto.tii.ae/b3/hardware-kms/tpdg/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+The tool processes container-level data (test plan metadata) and multiple test case files, validating each against their respective schemas before generating the final documentation.
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+### Prerequisites
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+- Rust toolchain (1.70 or later)
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Build from Source
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+```bash
+# Clone the repository
+git clone <repository-url>
+cd test-plan-doc-gen
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+# Build release binary
+cargo build --release
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+# Binary will be available at:
+./target/release/test-plan-doc-gen
+```
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+### Using Pre-built Binary
+
+If a pre-built binary is available, download it and make it executable:
+
+```bash
+chmod +x test-plan-doc-gen
+```
+
+## Quick Start Guide
+
+### Basic Usage Example
+
+```bash
+./target/release/test-plan-doc-gen \
+  --output ./test_plan.md \
+  --container ./data/container/schema.json \
+             ./data/container/template.j2 \
+             ./data/container/data.yml \
+  --test-case ./data/verification_methods \
+              ./data/test_case/test1.yml \
+              ./data/test_case/test2.yml
+```
+
+This command:
+1. Validates `data.yml` against `schema.json`
+2. Validates each test case file against its type-specific schema
+3. Renders test cases using their type-specific templates
+4. Renders the final output using the container template
+5. Writes the result to `test_plan.md`
+
+### Example with AsciiDoc Format
+
+```bash
+./target/release/test-plan-doc-gen \
+  --format asciidoc \
+  --output ./test_plan.adoc \
+  --container ./data/container/schema.json \
+             ./data/container/template_asciidoc.adoc \
+             ./data/container/data.yml \
+  --test-case ./data/verification_methods \
+              ./data/test_case/test1.yml \
+              ./data/test_case/test2.yml
+```
+
+### Output to stdout
+
+Omit the `--output` flag to print results to stdout:
+
+```bash
+./target/release/test-plan-doc-gen \
+  --container ./data/container/schema.json \
+             ./data/container/template.j2 \
+             ./data/container/data.yml \
+  --test-case ./data/verification_methods \
+              ./data/test_case/test1.yml
+```
+
+## CLI Reference
+
+### Synopsis
+
+```
+test-plan-doc-gen [OPTIONS] --container <FILES> --test-case <FILES>
+```
+
+### Options
+
+#### `-o, --output <FILE>`
+
+Specifies the output file path. If not provided, output is written to stdout.
+
+**Example:**
+```bash
+--output ./report.md
+-o ./docs/test_plan.adoc
+```
+
+#### `--container <SCHEMA> <TEMPLATE> <DATA>`
+
+**Required.** Specifies the container-level schema, template, and data file (in that order).
+
+**Arguments:**
+- `SCHEMA` - JSON schema file for validating the container data
+- `TEMPLATE` - Tera template file (`.j2` for Markdown, `.adoc` for AsciiDoc)
+- `DATA` - YAML data file containing test plan metadata
+
+**Example:**
+```bash
+--container ./schemas/container.json \
+            ./templates/container.j2 \
+            ./data/test_plan_data.yml
+```
+
+#### `--test-case <DIR> <FILE> [FILES...]`
+
+**Required.** Specifies the verification methods directory followed by one or more test case data files.
+
+**Arguments:**
+- `DIR` - Directory containing verification method subdirectories (test, analysis, demonstration, inspection)
+- `FILE` - One or more YAML test case data files
+
+Each test case file must have a `type` field that corresponds to a subdirectory under the verification methods directory.
+
+**Example:**
+```bash
+--test-case ./verification_methods \
+            ./test_cases/tc001.yml \
+            ./test_cases/tc002.yml \
+            ./test_cases/tc003.yml
+```
+
+#### `--format <FORMAT>`
+
+Specifies the output format. Accepted values: `markdown`, `asciidoc`
+
+**Default:** `markdown`
+
+**Example:**
+```bash
+--format markdown
+--format asciidoc
+```
+
+### Exit Codes
+
+- `0` - Success
+- `1` - Usage error (missing or invalid arguments)
+- `2` - File not found error
+- `3` - Validation error (schema validation failed)
+
+## Template System Overview
+
+The tool uses the [Tera](https://tera.netlify.app/) templating engine, which provides Jinja2-like syntax.
+
+### Template Variables
+
+#### Container Template Variables
+
+Container templates receive:
+
+- All fields from the container data YAML file as top-level variables
+- `test_cases_md` - Rendered markdown/AsciiDoc from all test cases (string)
+- `test_cases_path` - Path to temporary file containing rendered test cases (string)
+- `requirements_summary_md` or `requirements_summary_adoc` - Rendered requirements aggregation (if template exists)
+
+**Example container template:**
+```jinja2
+# {{ title }}
+
+Date: {{ date }}
+Version: {{ version }}
+
+## Test Cases
+
+{{ test_cases_md }}
+
+## Requirements Summary
+
+{{ requirements_summary_md }}
+```
+
+#### Test Case Template Variables
+
+Test case templates receive:
+
+- All fields from the test case YAML file as top-level variables
+- `data` - Complete test case data structure
+
+**Example test case template:**
+```jinja2
+## Test Case: {{ id | strip }}
+
+**Requirement**: {{ requirement }}
+**Item**: {{ item }}
+**TC**: {{ tc }}
+
+### Description
+
+{{ description | strip }}
+
+### Test Sequences
+
+{% for ts in test_sequences %}
+#### Test Sequence {{ ts.id }}: {{ ts.name | strip }}
+
+{{ ts.description | strip }}
+
+| Step | Action | Expected Result |
+|------|--------|-----------------|
+{% for step in ts.steps -%}
+| {{ step.step }} | {{ step.description }} | {{ step.expected.result }} |
+{% endfor %}
+{% endfor %}
+```
+
+### Template Syntax
+
+Tera supports standard Jinja2 syntax:
+
+**Variables:**
+```jinja2
+{{ variable_name }}
+{{ object.field }}
+{{ array[0] }}
+```
+
+**Control Structures:**
+```jinja2
+{% if condition %}
+  Content
+{% elif other_condition %}
+  Other content
+{% else %}
+  Default content
+{% endif %}
+
+{% for item in items %}
+  {{ item }}
+{% endfor %}
+```
+
+**Filters:**
+```jinja2
+{{ text | upper }}
+{{ text | lower }}
+{{ array | length }}
+{{ text | strip }}
+{{ text | replace(old="foo", new="bar") }}
+```
+
+## Custom Filter Documentation
+
+The tool provides three custom Tera filters beyond the standard Tera filters.
+
+### `strip` Filter
+
+Removes leading and trailing whitespace from a string.
+
+**Syntax:**
+```jinja2
+{{ value | strip }}
+```
+
+**Parameters:** None
+
+**Example:**
+```jinja2
+Input:  "  hello world  "
+Output: "hello world"
+
+Template: {{ description | strip }}
+```
+
+**Use Cases:**
+- Cleaning up whitespace in YAML data
+- Normalizing test case descriptions
+- Formatting IDs and labels
+
+### `replace` Filter
+
+Replaces occurrences of a substring with another string.
+
+**Syntax:**
+```jinja2
+{{ value | replace(old="search", new="replacement") }}
+{{ value | replace(old="search", new="replacement", times=N) }}
+```
+
+**Parameters:**
+- `old` (required) - String to search for
+- `new` (required) - String to replace with
+- `times` (optional) - Number of replacements to make (default: all occurrences)
+
+**Examples:**
+
+Replace all occurrences:
+```jinja2
+Input:  "foo bar foo baz"
+Filter: {{ text | replace(old="foo", new="qux") }}
+Output: "qux bar qux baz"
+```
+
+Replace first occurrence:
+```jinja2
+Input:  "foo bar foo baz"
+Filter: {{ text | replace(old="foo", new="qux", times=1) }}
+Output: "qux bar foo baz"
+```
+
+Replace first two occurrences:
+```jinja2
+Input:  "foo bar foo baz foo"
+Filter: {{ text | replace(old="foo", new="qux", times=2) }}
+Output: "qux bar qux baz foo"
+```
+
+Remove prefix:
+```jinja2
+Input:  "MTD_SEND_COMMAND"
+Filter: {{ step.description | replace(old="MTD_", new="") }}
+Output: "SEND_COMMAND"
+```
+
+**Use Cases:**
+- Removing prefixes from command descriptions
+- Normalizing text patterns
+- Sanitizing content for output
+
+### `replace_regex` Filter
+
+Replaces text matching a regular expression pattern with a replacement string.
+
+**Syntax:**
+```jinja2
+{{ value | replace_regex(old="pattern", new="replacement") }}
+{{ value | replace_regex(old="pattern", new="replacement", times=N) }}
+```
+
+**Parameters:**
+- `old` (required) - Regular expression pattern to match
+- `new` (required) - Replacement string (supports capture groups: `$1`, `$2`, etc.)
+- `times` (optional) - Number of replacements to make (default: all matches)
+
+**Examples:**
+
+Remove all digits:
+```jinja2
+Input:  "test123abc456"
+Filter: {{ text | replace_regex(old="[0-9]+", new="") }}
+Output: "testabc"
+```
+
+Replace digits with placeholder:
+```jinja2
+Input:  "test123abc456"
+Filter: {{ text | replace_regex(old="[0-9]+", new="#") }}
+Output: "test#abc#"
+```
+
+Replace first digit sequence:
+```jinja2
+Input:  "test123abc456"
+Filter: {{ text | replace_regex(old="[0-9]+", new="NUM", times=1) }}
+Output: "testNUMabc456"
+```
+
+Sanitize IDs (convert special chars to underscores):
+```jinja2
+Input:  "TC.Test-01: Basic"
+Filter: {{ id | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+Output: "TC_Test_01__Basic"
+```
+
+Remove whitespace:
+```jinja2
+Input:  "hello   world"
+Filter: {{ text | replace_regex(old="\s+", new=" ") }}
+Output: "hello world"
+```
+
+**Use Cases:**
+- Sanitizing test case IDs for use as anchors or file names
+- Normalizing whitespace
+- Extracting or transforming patterns
+- Data cleaning and formatting
+
+### Filter Chaining
+
+Filters can be chained together:
+
+```jinja2
+{{ "  TC.Test-01  " | strip | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+Output: "TC_Test_01"
+
+{{ description | strip | replace(old="MTD_", new="") }}
+```
+
+## Project Structure
+
+```
+.
+├── data/                           # Example data files
+│   ├── container/                  # Container-level files
+│   │   ├── schema.json            # Container schema
+│   │   ├── template.j2            # Container template (Markdown)
+│   │   └── data.yml               # Container data
+│   ├── verification_methods/       # Verification method definitions
+│   │   ├── test/                  # Test verification method
+│   │   │   ├── schema.json        # Test case schema
+│   │   │   └── template.j2        # Test case template
+│   │   ├── analysis/              # Analysis verification method
+│   │   ├── demonstration/         # Demonstration verification method
+│   │   ├── inspection/            # Inspection verification method
+│   │   └── requirement_aggregation_template.j2
+│   └── test_case/                 # Example test case files
+│       ├── gsma_4.4.2.2_TC.yml    # Test case example
+│       ├── gsma_4.4.2.3_TC.yml
+│       └── ...
+├── src/
+│   └── main.rs                    # Single-file CLI implementation
+├── tests/
+│   └── e2e.rs                     # End-to-end tests
+├── Cargo.toml                     # Rust dependencies
+└── README.md                      # This file
+```
+
+## Example Test Cases
+
+The repository includes example test cases in the `data/test_case/` directory:
+
+### Test Verification Method Examples
+
+- **[gsma_4.4.2.2_TC.yml](data/test_case/gsma_4.4.2.2_TC.yml)** - Test case demonstrating eUICC metadata update operations with multiple test sequences
+- **[gsma_4.4.2.3_TC.yml](data/test_case/gsma_4.4.2.3_TC.yml)** - Additional test case example
+- **[filter_test_01_TC.yml](data/test_case/filter_test_01_TC.yml)** - Demonstrates custom filter usage (strip, replace, replace_regex)
+
+### Other Verification Methods
+
+- **[gsma_4.4.2.4_AN.yml](data/test_case/gsma_4.4.2.4_AN.yml)** - Analysis verification method example
+- **[gsma_4.4.2.5_DM.yml](data/test_case/gsma_4.4.2.5_DM.yml)** - Demonstration verification method example
+- **[gsma_4.4.2.6_IN.yml](data/test_case/gsma_4.4.2.6_IN.yml)** - Inspection verification method example
+
+Each test case file includes:
+- Test metadata (requirement, item, tc, id)
+- Test description
+- General and sequence-specific initial conditions
+- Test sequences with multiple steps
+- Expected results for each step
+
+## Development
+
+### Running Tests
+
+```bash
+# Run all tests
+make test
+
+# Run unit tests only
+cargo test --lib
+
+# Run E2E tests only
+cargo test --test e2e
+```
+
+### Linting
+
+```bash
+# Run formatting check and clippy
+make lint
+
+# Auto-fix formatting
+cargo fmt
+```
+
+### Building
+
+```bash
+# Debug build
+cargo build
+
+# Release build
+cargo build --release
+```
+
+### Docker
+
+```bash
+# Build Docker image
+make docker-build
+```
+
+## Tech Stack
+
+- **Language**: Rust 2021 edition
+- **CLI Parser**: [clap](https://docs.rs/clap/) with derive features
+- **Templating**: [Tera](https://tera.netlify.app/) (Jinja2-like syntax)
+- **Validation**: [jsonschema](https://docs.rs/jsonschema/) for JSON Schema validation
+- **Serialization**: serde_json, serde_yaml
+- **Testing**: cargo test + [insta](https://docs.rs/insta/) for snapshot testing
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+For open source projects, specify the license here.
