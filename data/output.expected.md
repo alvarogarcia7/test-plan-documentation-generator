@@ -22,6 +22,8 @@ document SHALL be interpreted as described in RFC 2119 [20].
 
 **Requirement**: XXX200
 
+**Sanitized ID**: 4.2.2.4 AN_eUICC_Performance_Analysis
+
 ## Description
 
 Analysis of eUICC performance under various load conditions to verify system requirements.
@@ -90,6 +92,8 @@ Statistical analysis and mathematical modeling
 
 **Requirement**: XXX300
 
+**Clean ID**: 4.2.2.5 DM_eUICC_Profile_Management
+
 ## Description
 
 Demonstration of profile download, installation, and lifecycle management operations on a live eUICC device.
@@ -106,7 +110,6 @@ Demonstration of profile download, installation, and lifecycle management operat
 8. Disable profile and switch to another profile
 9. Delete the test profile
 10. Verify profile removal from eUICC
-
 
 ## Observations
 
@@ -144,6 +147,8 @@ Demonstration of profile download, installation, and lifecycle management operat
 ## Inspection: 4.2.2.6 IN_eUICC_Security_Compliance
 
 **Requirement**: XXX400
+
+**Normalized ID**: 4226-INeUICCSecurityCompliance
 
 ## Description
 
@@ -204,6 +209,8 @@ Code review, configuration audit, and documentation verification
 
 **Item**: 1
 
+**Sanitized Test ID**: 4_2_2_2_1_TC_eUICC_ES6_UpdateMetadata
+
 ## Description
 
 Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
@@ -221,10 +228,9 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
 
-
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
+| 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
 
 
@@ -233,10 +239,9 @@ when the profile is in the operational state and PPR1 is currently set.
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.
 
-
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
+| 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
 
 
@@ -248,6 +253,8 @@ icon type values from a Profile.
 
 **Item**: 1
 
+**Sanitized Test ID**: 4_2_2_3_ANOTHER_ONE
+
 ## Description
 
 Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
@@ -265,10 +272,9 @@ Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA 
 This test case verifies that the eUICC correctly processes an ES6.UpdateMetadata command to unset PPR1
 when the profile is in the operational state and PPR1 is currently set.
 
-
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
+| 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
 
 
@@ -277,10 +283,9 @@ when the profile is in the operational state and PPR1 is currently set.
 The purpose of this test is to verify that the MNO can unset PPR2 and update the icon and
 icon type values from a Profile.
 
-
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
+| 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
 
 

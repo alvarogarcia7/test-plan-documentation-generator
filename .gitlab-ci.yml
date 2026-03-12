@@ -16,67 +16,73 @@ build-image:
   script:
     - export COMMIT_SHA=$(git rev-parse --short HEAD)
     - echo "COMMIT_SHA=$COMMIT_SHA" >> build.env
+    - echo "Building Rust + Docker image"
+    - docker build -t       ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} .
+    # Ensure the image can run offline
+    - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} test-plan-doc-gen --help
+    # Ensure the image can compile offline
+    - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} cargo --offline build --all --all-features --release
+    - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} cargo --offline build --all --all-features
+    # Push the image to the registry
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
-    - echo "Building Python + Docker client image"
-    # Build
-    ## Builder
-    - docker build --target builder -t ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA} .
-    - docker build --target builder -t ${CI_REGISTRY_IMAGE}:builder_latest        .
-    ## App
-    - docker build -t ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} .
-    - docker build -t ${CI_REGISTRY_IMAGE}:app_latest        .
-    # Push
-    ## Builder
-    - docker push     ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA}
-    - docker push     ${CI_REGISTRY_IMAGE}:builder_latest
-    ## App
-    - docker push     ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA}
-    - docker push     ${CI_REGISTRY_IMAGE}:app_latest
-    # Test
-    - docker run      ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA} test-plan-doc-gen --help
-    - docker run      ${CI_REGISTRY_IMAGE}:app_latest        test-plan-doc-gen --help
+    - docker push           ${CI_REGISTRY_IMAGE}:${COMMIT_SHA}
   artifacts:
     reports:
       dotenv: build.env
+    expire_in: 1 week
   tags:
     - dind-amd
 
-test-image-app:
+test-image:
   stage: test
   # Variable comes from artifacts->VARIABLE_NAME
-  image: ${CI_REGISTRY_IMAGE}:app_${COMMIT_SHA}
+  image: ${CI_REGISTRY_IMAGE}:${COMMIT_SHA}
+  variables:
+    DOCKER_RUN_FLAGS: "--net none"
+    DOCKER_OPTIONS: "--net none"
+  # https://gitlab.com/gitlab-org/gitlab-runner/-/work_items/903#:~:text=by%20Koen%20Lekkerkerker-,Problem,%F0%9F%91%8D%2022%20%F0%9F%91%8E%200
   needs:
     - job: build-image
       artifacts: true
   script:
-    - uname -a 
+    - uname -a
+    #    - cargo --offline build --all --all-features --release
+    #error: no matching package named `chrono` found
+    #location searched: crates.io index
+    #required by package `testcase-manager v0.1.0 (/builds/int/test-case-management-system/tcms-cli)`
+    #As a reminder, you're using offline mode (--offline) which can sometimes cause surprising resolution failures, if this error is too confusing you may wish to retry without `--offline`.
+    # - cargo --offline build --all --all-features
     - test-plan-doc-gen --help
   tags:
     - dind-amd
 
-test-image-builder:
+push-image:
   stage: test
-  # Variable comes from artifacts->VARIABLE_NAME
-  image: ${CI_REGISTRY_IMAGE}:builder_${COMMIT_SHA}
+  image: docker:27-cli
   needs:
-    - job: build-image
-      artifacts: true
+    - test-image
   script:
-    - uname -a 
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker pull ${CI_REGISTRY_IMAGE}:${COMMIT_SHA}
+    - docker tag ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} ${CI_REGISTRY_IMAGE}:latest
+    #    - docker push $CI_REGISTRY_IMAGE:${COMMIT_SHA} - No need, already pushed
+    - docker push $CI_REGISTRY_IMAGE:latest
+  only:
+    - master
+    - main
   tags:
     - dind-amd
-
 
 default:
   # Use the commit reference slug (branch/tag name) as the cache key
   cache:
     key: "${CI_COMMIT_REF_SLUG}"
-    paths:
-      # Cache the cargo home directory which contains registries and bins
-      - .cargo
-      # Cache the build artifacts directory
-      - target
-    # This ensures the cache is available to all jobs in the pipeline
+    #    paths:
+    #      # Cache the cargo home directory which contains registries and bins
+    #      - .cargo
+    #      # Cache the build artifacts directory
+    #      - target
+    #    # This ensures the cache is available to all jobs in the pipeline
     policy: pull-push
 
 ci:
@@ -85,6 +91,7 @@ ci:
     - cargo --version
     - rustup component add rustfmt
     - rustup component add clippy
+    - apt update && apt install -y sccache
   image: rust:1.92-bookworm
   stage: build
   script:
