@@ -1,0 +1,274 @@
+# ============================================================================
+# ANNOTATED DEMONSTRATION CASE EXAMPLE
+# ============================================================================
+# This example demonstrates a complete demonstration verification method
+# case with detailed annotations explaining each field and common patterns.
+#
+# Schema: data/verification_methods/demonstration/schema.json
+# Template: data/verification_methods/demonstration/template.j2
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Must be exactly "demonstration" for demonstration verification method.
+type: demonstration
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this demonstration to a specific requirement being verified.
+requirement: "XXX300"
+
+# ----------------------------------------------------------------------------
+# DEMONSTRATION IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this demonstration case.
+# Typically includes hierarchical numbering and descriptive suffix.
+id: '4.2.2.5 DM_eUICC_Profile_Management'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of what this demonstration shows and verifies.
+# Explains the scope and purpose of the demonstration.
+# Can be multi-line. Use strip filter in templates: {{ description | strip }}
+description: |
+  This demonstration verifies profile lifecycle management capabilities
+  by performing a live demonstration of profile download, installation,
+  activation, switching, and deletion operations on a physical eUICC
+  device. The demonstration shows end-to-end functionality in a real-world
+  scenario with actual network connectivity and user interface interaction.
+
+# ----------------------------------------------------------------------------
+# PROCEDURE (Required)
+# ----------------------------------------------------------------------------
+# Step-by-step procedure for conducting the demonstration.
+# This is the "script" that will be followed during the live demo.
+# Can be multi-line, typically formatted as numbered list.
+# Tip: Use replace_regex to normalize whitespace in templates
+# {{ procedure | replace_regex(old="\s+", new=" ") | strip }}
+procedure: |
+  1. Initial Setup
+     a. Power on the device with eUICC installed
+     b. Verify device is connected to test network
+     c. Ensure SM-DP+ server is accessible and configured
+  
+  2. Profile Download
+     a. Open device settings and navigate to eSIM management
+     b. Select "Add eSIM" or "Download Profile" option
+     c. Scan QR code containing activation code from SM-DP+
+     d. Alternatively, manually enter activation code
+  
+  3. Profile Installation
+     a. Monitor installation progress on device screen
+     b. Observe status updates during download and installation
+     c. Wait for installation completion notification
+     d. Verify profile appears in list of available profiles
+  
+  4. Profile Activation
+     a. Select the newly installed profile from the list
+     b. Enable the profile
+     c. Observe network registration process
+     d. Verify cellular connectivity is established
+  
+  5. Connectivity Verification
+     a. Perform a basic network connectivity test (e.g., ping, web browse)
+     b. Make a test phone call if applicable
+     c. Send/receive test SMS if applicable
+     d. Verify data connection functionality
+  
+  6. Profile Switching
+     a. Navigate back to eSIM management settings
+     b. Disable the current test profile
+     c. Select and enable a different profile
+     d. Verify network switches without device reboot
+     e. Confirm new profile is active and functional
+  
+  7. Profile Deletion
+     a. Navigate to test profile in eSIM management
+     b. Select "Delete Profile" or "Remove eSIM" option
+     c. Confirm deletion when prompted
+     d. Verify profile is removed from available profiles list
+  
+  8. Cleanup Verification
+     a. Check that no residual data remains on device
+     b. Verify profile cannot be re-enabled after deletion
+     c. Confirm device returns to pre-installation state
+  
+  9. Documentation
+     a. Take screenshots at each major step
+     b. Record any error messages or unexpected behavior
+     c. Note timing for each operation
+     d. Document final system state
+
+# ----------------------------------------------------------------------------
+# OBSERVATIONS (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of observations made during the demonstration.
+# These are factual statements about what was observed, not interpretations.
+# Each observation should be specific and objective.
+# Tip: Use strip filter for each item in templates
+observations:
+  # Download and Installation Observations
+  - "Profile download initiated successfully immediately after activation code scan"
+  - "Download progress indicator showed real-time percentage completion from 0% to 100%"
+  - "Installation progress displayed individual steps: Authenticating, Downloading, Installing, Configuring"
+  - "Total download and installation time was 47 seconds on 4G LTE connection"
+  - "Profile appeared in device settings within 2 seconds of installation completion"
+  
+  # Activation and Network Observations
+  - "Profile enable operation completed in 3 seconds without any user prompts"
+  - "Network registration indicator changed from 'No Service' to carrier name within 8 seconds"
+  - "Signal strength indicator showed full bars (5/5) after registration"
+  - "Network connectivity was immediately available after profile activation"
+  - "Data connection established automatically without additional configuration"
+  
+  # Functionality Observations
+  - "Web browser successfully loaded test website (google.com) within 2 seconds"
+  - "Outgoing test call connected successfully in 4 seconds"
+  - "Test SMS was sent and delivered within 10 seconds"
+  - "Download speed test achieved 25 Mbps down, 8 Mbps up"
+  
+  # Profile Switching Observations
+  - "Profile switching from test profile to another profile took 5 seconds total"
+  - "Device did not reboot or show any restart prompts during profile switch"
+  - "Network re-registration occurred automatically on the new profile"
+  - "Previous profile was cleanly disabled and new profile became active"
+  - "No loss of device state or settings during profile switch"
+  
+  # Deletion Observations
+  - "Profile deletion required two-step confirmation (select delete, confirm)"
+  - "Deletion process took less than 2 seconds to complete"
+  - "Deleted profile immediately disappeared from profiles list"
+  - "No error messages or warnings appeared during deletion"
+  - "Device settings showed freed storage space after deletion"
+  
+  # Cleanup Observations
+  - "No residual profile data visible in device settings after deletion"
+  - "Attempting to enable deleted profile resulted in expected error: 'Profile not found'"
+  - "Device memory usage returned to pre-installation level (verified via settings)"
+  - "No temporary files or cache related to deleted profile remained"
+  
+  # User Experience Observations
+  - "All operations provided clear visual feedback and status updates"
+  - "No technical errors or cryptic messages were displayed to user"
+  - "Process required minimal user interaction (mostly automated)"
+  - "QR code scanning worked reliably on first attempt"
+
+# ----------------------------------------------------------------------------
+# ACCEPTANCE CRITERIA (Required, Array)
+# ----------------------------------------------------------------------------
+# Array of criteria that must be met for the demonstration to be considered
+# successful. These are the pass/fail conditions for the demonstration.
+# Each criterion should be measurable and verifiable.
+acceptance_criteria:
+  # Timing Requirements
+  - "Profile download and installation must complete within 2 minutes on 4G/LTE connection"
+  - "Profile enable operation must complete within 10 seconds"
+  - "Network registration must occur within 15 seconds of profile activation"
+  - "Profile switching must complete within 10 seconds without device restart"
+  - "Profile deletion must complete within 5 seconds"
+  
+  # Functionality Requirements
+  - "Profile must be immediately usable for network connectivity after enable"
+  - "All standard cellular functions (voice, SMS, data) must work on enabled profile"
+  - "Profile switching must preserve device state and not require reboot"
+  - "Multiple profiles must be able to coexist on device simultaneously"
+  
+  # Data Integrity Requirements
+  - "Profile deletion must completely remove all associated credentials and data"
+  - "No residual profile information may remain accessible after deletion"
+  - "Deleted profile must not be recoverable through device settings"
+  
+  # User Experience Requirements
+  - "All operations must be performable through standard device UI without special tools"
+  - "User must not need to manually configure network settings for profile activation"
+  - "Process must provide clear feedback at each stage of operation"
+  - "Error conditions must be handled gracefully with user-friendly messages"
+  
+  # Reliability Requirements
+  - "All demonstrated operations must complete successfully without errors"
+  - "Device must remain stable throughout all profile lifecycle operations"
+  - "No memory leaks or resource exhaustion may occur during operations"
+
+# ============================================================================
+# COMMON PATTERNS AND TIPS
+# ============================================================================
+#
+# 1. PROCEDURE FORMATTING
+#    - Use hierarchical numbering (1, 1.a, 1.b, 2, 2.a, etc.)
+#    - Be specific and actionable (use imperative verbs)
+#    - Include timing expectations where relevant
+#    - Add verification steps after actions
+#    - Consider including screenshots or video recording steps
+#
+# 2. OBSERVATIONS
+#    - Record what was actually observed, not what was expected
+#    - Include measurements (timing, counts, percentages)
+#    - Be objective and factual, avoid interpretations
+#    - Group related observations together (use comments in YAML)
+#    - Include both positive and negative observations
+#    - Note any deviations from expected behavior
+#
+# 3. ACCEPTANCE CRITERIA
+#    - Make criteria measurable (include numbers and thresholds)
+#    - Use "must" for mandatory requirements
+#    - Include units for all quantitative criteria
+#    - Cover functional, performance, and usability aspects
+#    - Ensure all criteria can be verified during demonstration
+#
+# 4. DEMONSTRATION SCOPE
+#    - Focus on end-to-end scenarios that users would experience
+#    - Include both typical and edge case scenarios
+#    - Demonstrate failure handling and recovery
+#    - Show interoperability with other components
+#
+# 5. TEMPLATE RENDERING
+#    - Procedure often rendered as-is (preserve formatting)
+#    - Observations rendered as bullet list
+#    - Criteria rendered as bullet list or checklist
+#    - Use strip filter to clean whitespace
+#
+# 6. DOCUMENTATION
+#    - Consider adding fields for screenshots, videos, or artifacts
+#    - Include environment details (device model, OS version, etc.)
+#    - Note any special setup or prerequisites
+#
+# 7. PROCEDURE LENGTH
+#    - Be thorough but not overly verbose
+#    - Break complex procedures into logical sections
+#    - Use sub-steps (a, b, c) for detailed actions
+#
+# 8. REAL-WORLD CONTEXT
+#    - Demonstrate in realistic conditions (not just ideal lab setup)
+#    - Include typical user workflows
+#    - Show how features work in production-like environment
+#
+# ============================================================================
+# EXAMPLE TEMPLATE USAGE
+# ============================================================================
+#
+# Procedure section:
+#
+# ## Procedure
+# 
+# {{ procedure | strip }}
+#
+# Observations as list:
+#
+# ## Observations
+# 
+# {% for observation in observations %}
+# - {{ observation | strip }}
+# {% endfor %}
+#
+# Acceptance criteria as checklist:
+#
+# ## Acceptance Criteria
+# 
+# {% for criterion in acceptance_criteria %}
+# - [ ] {{ criterion | strip }}
+# {% endfor %}
+#
+# ============================================================================

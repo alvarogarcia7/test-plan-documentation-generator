@@ -1,0 +1,306 @@
+# ============================================================================
+# ANNOTATED TEST CASE EXAMPLE
+# ============================================================================
+# This example demonstrates a complete test verification method case with
+# detailed annotations explaining each field and common patterns.
+#
+# Schema: data/verification_methods/test/schema.json
+# Template: data/verification_methods/test/template.j2
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Determines which schema and template to use for validation and rendering.
+# Must be exactly "test" for test verification method.
+type: test
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this test case to a specific requirement.
+# Format: Usually an alphanumeric code (e.g., "XXX100", "REQ-AUTH-001")
+requirement: "XXX100"
+
+# ----------------------------------------------------------------------------
+# ITEM NUMBER (Required, Integer)
+# ----------------------------------------------------------------------------
+# Hierarchical item number for organizing test cases.
+# Must be an integer, not a string.
+item: 1
+
+# ----------------------------------------------------------------------------
+# TEST CASE NUMBER (Required, Integer)
+# ----------------------------------------------------------------------------
+# Test case number within the item.
+# Must be an integer, not a string.
+tc: 4
+
+# ----------------------------------------------------------------------------
+# TEST CASE IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this test case.
+# Can include version info, hierarchical numbering, or descriptive names.
+# Tip: Use strip filter in templates to remove whitespace: {{ id | strip }}
+id: '4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of what this test case verifies.
+# Can be multi-line. Use strip filter in templates to clean whitespace.
+description: |
+  This test case verifies that the eUICC correctly processes an 
+  ES6.UpdateMetadata command to update profile metadata when the 
+  profile is in the operational state. It tests both nominal flows 
+  and edge cases for metadata modification operations.
+
+# ----------------------------------------------------------------------------
+# GENERAL INITIAL CONDITIONS (Required, Object)
+# ----------------------------------------------------------------------------
+# System-wide preconditions that apply to all test sequences.
+# Structure: Entity name → Array of condition strings
+# These conditions are shared across all sequences in this test case.
+general_initial_conditions:
+  # Entity: eUICC device
+  eUICC:
+    - "The profile PROFILE_OPERATIONAL1 with metadata is loaded on the eUICC"
+    - "The eUICC is powered on and operational"
+    - "Secure channel communication is available"
+  
+  # Entity: SM-DP+ server
+  SM-DP+:
+    - "SM-DP+ server is accessible via network"
+    - "Server has valid certificates configured"
+  
+  # Entity: Test environment
+  Environment:
+    - "SMS delivery service is operational"
+    - "Network connectivity is stable"
+
+# ----------------------------------------------------------------------------
+# INITIAL CONDITIONS (Required, Object)
+# ----------------------------------------------------------------------------
+# Test-specific initial conditions that must be met before test execution.
+# These are more specific than general conditions and may vary between runs.
+initial_conditions:
+  eUICC:
+    - "PROFILE_OPERATIONAL1 is in Enabled state"
+    - "No pending operations on the profile"
+  
+  Network:
+    - "Secure OTA channel established via SMS"
+
+# ----------------------------------------------------------------------------
+# TEST SEQUENCES (Required, Array)
+# ----------------------------------------------------------------------------
+# One or more test sequences that comprise this test case.
+# Each sequence represents a distinct test flow or scenario.
+test_sequences:
+  
+  # ==========================================================================
+  # SEQUENCE 1: Nominal Flow
+  # ==========================================================================
+  - id: 1  # Sequence identifier (integer)
+    
+    name: "Nominal Flow: Update Profile Metadata"  # Descriptive name
+    
+    # Sequence-level description (can be multi-line)
+    description: |
+      This sequence tests the nominal flow for updating profile metadata
+      using the ES6.UpdateMetadata command. The test verifies that:
+      - Metadata update command is accepted
+      - Metadata values are correctly updated
+      - Appropriate success response is returned
+    
+    # Sequence-specific initial conditions
+    # These conditions are in addition to general and test-level conditions
+    initial_conditions:
+      eUICC:
+        - "Profile metadata contains default values"
+        - "PPR1 flag is currently set"
+    
+    # --------------------------------------------------------------------------
+    # TEST STEPS (Required, Array)
+    # --------------------------------------------------------------------------
+    # Ordered sequence of test actions and verifications
+    steps:
+      
+      # ========================================================================
+      # STEP 1: Send update command
+      # ========================================================================
+      - step: 1  # Step number (integer)
+        
+        # Manual flag (optional, boolean)
+        # Set to true if step requires manual execution
+        # Default: false (automated)
+        manual: false
+        
+        # Step description
+        # Tip: Use replace filter to remove common prefixes
+        # Example: {{ description | replace(old="MTD_", new="") }}
+        description: "MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE))"
+        
+        # Command to execute
+        # This could be a command type, tool name, or execution method
+        command: "ssh"
+        
+        # Expected results object (required)
+        expected:
+          # Success flag (optional, boolean)
+          # Default: true
+          # Set to false if this step is expected to fail
+          success: true
+          
+          # Expected result (required, string)
+          # What should happen when the step executes
+          result: "SW=0x91XX"
+          
+          # Expected output (required, string)
+          # The output message or status expected
+          output: "Command accepted, response pending (SW indicates pending data)"
+      
+      # ========================================================================
+      # STEP 2: Retrieve response
+      # ========================================================================
+      - step: 2
+        manual: false
+        description: "Fetch response using 'XX' value from previous step"
+        command: "ssh"
+        expected:
+          success: true
+          result: "MTD_CHECK_SMS_POR(0x9000)"
+          output: "Proactive command response indicates successful metadata update"
+      
+      # ========================================================================
+      # STEP 3: Verify metadata
+      # ========================================================================
+      - step: 3
+        # This is a manual verification step
+        manual: true
+        description: "Manually verify that PPR1 flag has been unset in profile metadata"
+        command: "inspect"
+        expected:
+          result: "PPR1 flag is not set in metadata"
+          output: "Profile metadata inspection confirms PPR1 = false"
+  
+  # ==========================================================================
+  # SEQUENCE 2: Update Multiple Fields
+  # ==========================================================================
+  - id: 2
+    name: "Extended Flow: Update Multiple Metadata Fields"
+    
+    description: |
+      This sequence tests updating multiple metadata fields simultaneously,
+      including icon data and PPR flags. Verifies that:
+      - Multiple fields can be updated in single command
+      - All updates are applied atomically
+      - Profile remains operational after updates
+    
+    initial_conditions:
+      eUICC:
+        - "Profile has both PPR1 and PPR2 set"
+        - "Profile icon is set to default icon"
+    
+    steps:
+      - step: 1
+        description: "MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#UPDATE_METADATA_COMPLEX, FALSE))"
+        command: "ssh"
+        expected:
+          result: "SW=0x91XX"
+          output: "Command accepted for processing"
+      
+      - step: 2
+        description: "Fetch response for metadata update"
+        command: "ssh"
+        expected:
+          result: "MTD_CHECK_SMS_POR(0x9000)"
+          output: "Update completed successfully"
+      
+      - step: 3
+        manual: true
+        description: "Verify PPR2 is unset and icon has been updated"
+        command: "inspect"
+        expected:
+          result: "PPR2 = false, icon matches new value"
+          output: "All metadata changes applied correctly"
+      
+      - step: 4
+        description: "Enable profile to verify it remains operational"
+        command: "ssh"
+        expected:
+          result: "Profile enabled successfully"
+          output: "Profile operational after metadata update"
+
+  # ==========================================================================
+  # SEQUENCE 3: Error Handling
+  # ==========================================================================
+  - id: 3
+    name: "Error Flow: Invalid Metadata Update"
+    
+    description: |
+      This sequence tests error handling when attempting to update
+      metadata with invalid values or in invalid states.
+    
+    initial_conditions:
+      eUICC:
+        - "Profile is in Disabled state"
+    
+    steps:
+      - step: 1
+        description: "Attempt to update metadata on disabled profile"
+        command: "ssh"
+        expected:
+          # This step is expected to fail
+          success: false
+          result: "SW=0x6985"
+          output: "Conditions of use not satisfied (profile not enabled)"
+      
+      - step: 2
+        manual: false
+        description: "Verify profile metadata unchanged"
+        command: "inspect"
+        expected:
+          result: "Metadata values match original state"
+          output: "No metadata modifications occurred"
+
+# ============================================================================
+# COMMON PATTERNS AND TIPS
+# ============================================================================
+#
+# 1. WHITESPACE HANDLING
+#    - Always use {{ field | strip }} in templates to remove extra whitespace
+#    - YAML preserves trailing spaces; strip filter cleans them
+#
+# 2. COMMAND PREFIX REMOVAL
+#    - Use replace filter: {{ description | replace(old="MTD_", new="") }}
+#    - Keeps templates clean and focuses on actual command
+#
+# 3. ID SANITIZATION
+#    - For anchors: {{ id | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+#    - Creates HTML/Markdown-safe identifiers
+#
+# 4. OPTIONAL FIELDS
+#    - manual: Defaults to false if omitted
+#    - success: Defaults to true if omitted
+#    - Use conditionals: {% if step.manual %}Manual{% endif %}
+#
+# 5. MULTI-LINE CONTENT
+#    - Use | for multi-line preserving newlines
+#    - Use > for multi-line folding into single line
+#    - Always apply strip filter in templates
+#
+# 6. ENTITY ORGANIZATION
+#    - Group conditions by logical entities (eUICC, Network, etc.)
+#    - Use consistent entity names across sequences
+#
+# 7. STEP NUMBERING
+#    - Number steps sequentially within each sequence
+#    - Step numbers restart at 1 for each new sequence
+#
+# 8. EXPECTED RESULTS
+#    - Be specific and testable
+#    - Include both technical (result) and human-readable (output)
+#    - Use success: false for negative test cases
+#
+# ============================================================================

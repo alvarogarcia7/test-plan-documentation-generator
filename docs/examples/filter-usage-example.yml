@@ -1,0 +1,421 @@
+# ============================================================================
+# FILTER USAGE EXAMPLE
+# ============================================================================
+# This example demonstrates advanced filter usage patterns for the Test Plan
+# Documentation Generator. Shows practical applications of strip, replace,
+# and replace_regex filters with various data scenarios.
+#
+# Schema: data/verification_methods/test/schema.json
+# Template: data/verification_methods/test/template.j2
+# ============================================================================
+
+type: test
+requirement: "FILTER-DEMO-001"
+item: 1
+tc: 1
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 1: Strip Filter - Whitespace Cleanup
+# ----------------------------------------------------------------------------
+# Intentional whitespace around values to demonstrate strip filter
+id: '  TC.Filter.Demo-001: Comprehensive Filter Examples  '
+
+description: '  This test case demonstrates all custom filters with practical
+  use cases. It includes intentional whitespace, special characters, and
+  patterns that benefit from filter transformations.  '
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 2: General Initial Conditions with Trailing Whitespace
+# ----------------------------------------------------------------------------
+general_initial_conditions:
+  eUICC:
+    - "  The test profile is loaded with metadata.  "
+    - "  System is operational and ready for testing.  "
+    - "  All security certificates are valid.  "
+  TestEnvironment:
+    - "  Network connectivity is established.  "
+    - "  Logging is enabled for debugging.  "
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 3: Initial Conditions (More Whitespace Examples)
+# ----------------------------------------------------------------------------
+initial_conditions:
+  Device:
+    - "  Profile PROFILE_TEST_001 is in Enabled state.  "
+    - "  No pending operations exist.  "
+  Network:
+    - "  OTA channel is active via SMS.  "
+
+test_sequences:
+  # ==========================================================================
+  # SEQUENCE 1: Strip Filter Examples
+  # ==========================================================================
+  - id: 1
+    name: "  Filter Pattern 1: Whitespace Normalization  "
+    
+    description: |
+      This sequence demonstrates strip filter usage for cleaning
+      whitespace from YAML data. The description itself has extra
+      spacing     that should be normalized in the template.
+      
+      Template Usage:
+        {{ name | strip }}
+        {{ description | strip }}
+    
+    initial_conditions:
+      System:
+        - "  Initial condition with leading/trailing spaces.  "
+    
+    steps:
+      # ======================================================================
+      # STEP 1: Basic strip usage
+      # ======================================================================
+      - step: 1
+        description: "  COMMAND_WITH_SPACES: Execute test command  "
+        command: "  ssh  "
+        expected:
+          result: "  SW=0x9000  "
+          output: "  Operation completed successfully.  "
+      
+      # ======================================================================
+      # STEP 2: Strip in table cells
+      # ======================================================================
+      - step: 2
+        description: "  FETCH_RESULT: Retrieve command response  "
+        command: "ssh"
+        expected:
+          result: "Data retrieved successfully"
+          output: "  Response contains expected payload.  "
+
+  # ==========================================================================
+  # SEQUENCE 2: Replace Filter Examples
+  # ==========================================================================
+  - id: 2
+    name: "Filter Pattern 2: String Replacement"
+    
+    description: |
+      This sequence demonstrates replace filter for removing prefixes,
+      normalizing separators, and cleaning unwanted patterns.
+      
+      Template Usage:
+        {{ description | replace(old="MTD_", new="") }}
+        {{ id | replace(old=".", new="_") }}
+        {{ text | replace(old=" ", new="-") }}
+    
+    initial_conditions:
+      System:
+        - "System ready for replace filter demonstration"
+    
+    steps:
+      # ======================================================================
+      # STEP 1: Remove MTD_ prefix (common pattern)
+      # ======================================================================
+      - step: 1
+        # This description has MTD_ prefix that should be removed in template
+        description: "MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#TEST_DATA, TRUE))"
+        command: "ssh"
+        expected:
+          result: "SW=0x9000"
+          output: "MTD_CHECK_SMS_POR indicates success"
+      
+      # ======================================================================
+      # STEP 2: Multiple prefix occurrences
+      # ======================================================================
+      - step: 2
+        # Multiple MTD_ prefixes - replace removes all by default
+        description: "MTD_EXECUTE MTD_COMMAND MTD_WITH MTD_MULTIPLE MTD_PREFIXES"
+        command: "ssh"
+        expected:
+          result: "All prefixes can be removed"
+          output: "MTD_RESULT shows completion"
+      
+      # ======================================================================
+      # STEP 3: Limited replacements with times parameter
+      # ======================================================================
+      - step: 3
+        # Template can use times parameter: replace(old="MTD_", new="", times=1)
+        description: "MTD_FIRST_PREFIX and MTD_SECOND_PREFIX and MTD_THIRD_PREFIX"
+        command: "ssh"
+        expected:
+          result: "Replace with times=1 only replaces first occurrence"
+          output: "Success"
+      
+      # ======================================================================
+      # STEP 4: Replace spaces with underscores (for IDs)
+      # ======================================================================
+      - step: 4
+        description: "CREATE FILE NAME: Test Case Data File.txt"
+        command: "ssh"
+        expected:
+          result: "Template: {{ description | replace(old=' ', new='_') }}"
+          output: "Becomes: CREATE_FILE_NAME:_Test_Case_Data_File.txt"
+
+  # ==========================================================================
+  # SEQUENCE 3: Replace Regex Filter Examples
+  # ==========================================================================
+  - id: 3
+    name: "Filter Pattern 3: Regular Expression Replacement"
+    
+    description: |
+      This sequence demonstrates replace_regex filter for complex pattern
+      matching and replacement using regular expressions.
+      
+      Template Usage:
+        {{ id | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+        {{ text | replace_regex(old="\\s+", new=" ") }}
+        {{ text | replace_regex(old="\\d+", new="NUM") }}
+    
+    initial_conditions:
+      System:
+        - "System ready for regex filter demonstration"
+    
+    steps:
+      # ======================================================================
+      # STEP 1: Sanitize ID for HTML anchor
+      # ======================================================================
+      - step: 1
+        # ID with dots, colons, spaces - needs sanitization for HTML anchors
+        description: "Test ID: 'TC.Test-01: Basic Validation' → 'TC_Test_01__Basic_Validation'"
+        command: "ssh"
+        expected:
+          # Template usage: {{ expected.result | replace_regex(old="[^a-zA-Z0-9_]", new="_") }}
+          result: "Convert: TC.Test-01: Basic → TC_Test_01__Basic"
+          output: "Pattern [^a-zA-Z0-9_] replaces all non-alphanumeric/underscore chars"
+      
+      # ======================================================================
+      # STEP 2: Normalize whitespace (multiple spaces to single)
+      # ======================================================================
+      - step: 2
+        description: "This    text    has    irregular     spacing"
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace_regex(old="\\s+", new=" ") }}
+          result: "\\s+ matches one or more whitespace characters"
+          output: "Becomes: 'This text has irregular spacing'"
+      
+      # ======================================================================
+      # STEP 3: Remove all digits
+      # ======================================================================
+      - step: 3
+        description: "Test123Case456With789Numbers000"
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace_regex(old="\\d+", new="") }}
+          result: "\\d+ matches one or more digits"
+          output: "Becomes: 'TestCaseWithNumbers'"
+      
+      # ======================================================================
+      # STEP 4: Remove all non-letters (keep only alphabetic)
+      # ======================================================================
+      - step: 4
+        description: "Test!@#123$%^Case&*()"
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace_regex(old="[^a-zA-Z]", new="") }}
+          result: "[^a-zA-Z] matches any non-letter character"
+          output: "Becomes: 'TestCase'"
+      
+      # ======================================================================
+      # STEP 5: Replace digit sequences with placeholder
+      # ======================================================================
+      - step: 5
+        description: "Version 1.2.3 Build 456"
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace_regex(old="\\d+", new="X") }}
+          result: "Each digit sequence replaced with X"
+          output: "Becomes: 'Version X.X.X Build X'"
+      
+      # ======================================================================
+      # STEP 6: Limited regex replacements (times parameter)
+      # ======================================================================
+      - step: 6
+        description: "test123abc456def789ghi"
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace_regex(old="\\d+", new="NUM", times=2) }}
+          result: "Replace first 2 digit sequences only"
+          output: "Becomes: 'testNUMabcNUMdef789ghi'"
+
+  # ==========================================================================
+  # SEQUENCE 4: Filter Chaining Examples
+  # ==========================================================================
+  - id: 4
+    name: "  Filter Pattern 4: Chaining Multiple Filters  "
+    
+    description: |
+      This sequence demonstrates chaining multiple filters together for
+      complex transformations. Order matters in filter chains.
+      
+      Template Usage:
+        {{ text | strip | lower | replace(old=" ", new="-") }}
+        {{ id | strip | replace_regex(old="[^a-zA-Z0-9_]", new="_") | lower }}
+    
+    initial_conditions:
+      System:
+        - "  System ready for filter chaining demonstration  "
+    
+    steps:
+      # ======================================================================
+      # STEP 1: Create slug from title (strip → lower → replace)
+      # ======================================================================
+      - step: 1
+        description: "  Test Case Title: Basic Validation (v1.0)  "
+        command: "ssh"
+        expected:
+          # Template: {{ description | strip | lower | replace(old=" ", new="-") }}
+          result: "Strip whitespace, convert to lowercase, replace spaces"
+          output: "Becomes: 'test-case-title:-basic-validation-(v1.0)'"
+      
+      # ======================================================================
+      # STEP 2: Safe ID (strip → regex → lower)
+      # ======================================================================
+      - step: 2
+        description: "  TC.Test-01: BASIC  "
+        command: "ssh"
+        expected:
+          # Template: {{ description | strip | replace_regex(old="[^a-zA-Z0-9_]", new="_") | lower }}
+          result: "Strip, sanitize special chars, then lowercase"
+          output: "Becomes: 'tc_test_01__basic'"
+      
+      # ======================================================================
+      # STEP 3: Clean command description (replace → regex → strip)
+      # ======================================================================
+      - step: 3
+        description: "  MTD_COMMAND_NAME    with   extra    spacing  "
+        command: "ssh"
+        expected:
+          # Template: {{ description | replace(old="MTD_", new="") | replace_regex(old="\\s+", new=" ") | strip }}
+          result: "Remove prefix, normalize whitespace, then strip edges"
+          output: "Becomes: 'COMMAND_NAME with extra spacing'"
+      
+      # ======================================================================
+      # STEP 4: Complex transformation chain
+      # ======================================================================
+      - step: 4
+        description: "  MTD_Test123-Case456_Name789  "
+        command: "ssh"
+        expected:
+          # Multiple filters: strip → replace → regex → lower
+          # {{ description | strip | replace(old="MTD_", new="") | replace_regex(old="\\d+", new="") | lower }}
+          result: "Strip → Remove MTD_ → Remove digits → Lowercase"
+          output: "Becomes: 'test-case_name'"
+
+  # ==========================================================================
+  # SEQUENCE 5: Conditional Filter Application
+  # ==========================================================================
+  - id: 5
+    name: "Filter Pattern 5: Conditional Usage"
+    
+    description: |
+      This sequence demonstrates conditional filter application based on
+      field presence or values.
+      
+      Template Usage:
+        {% if step.manual %}{{ "MANUAL" }}{% else %}{{ "AUTO" }}{% endif %}
+        {% if field %}{{ field | strip }}{% endif %}
+    
+    initial_conditions:
+      System:
+        - "System ready"
+    
+    steps:
+      # ======================================================================
+      # STEP 1: Manual step with conditional rendering
+      # ======================================================================
+      - step: 1
+        manual: true
+        description: "Manual verification step"
+        command: "inspect"
+        expected:
+          result: "Manual steps can be flagged in templates"
+          output: "Use {% if step.manual %} to conditionally format"
+      
+      # ======================================================================
+      # STEP 2: Automated step (manual defaults to false)
+      # ======================================================================
+      - step: 2
+        description: "Automated test step"
+        command: "ssh"
+        expected:
+          success: true
+          result: "Automated steps run without interaction"
+          output: "Use {% if not step.manual %} or check for absence"
+
+# ============================================================================
+# FILTER USAGE PATTERNS - TEMPLATE EXAMPLES
+# ============================================================================
+#
+# PATTERN 1: Clean text fields (most common)
+# ===========================================
+# {{ id | strip }}
+# {{ description | strip }}
+# {{ name | strip }}
+# {{ requirement | strip }}
+#
+# PATTERN 2: Remove command prefixes
+# ===================================
+# {{ step.description | replace(old="MTD_", new="") | strip }}
+#
+# PATTERN 3: Create safe HTML/Markdown anchors
+# =============================================
+# <a id="{{ id | strip | replace_regex(old='[^a-zA-Z0-9_-]', new='_') }}">
+# [Link](#{{ id | strip | lower | replace(old=' ', new='-') }})
+#
+# PATTERN 4: Normalize whitespace in multi-line content
+# ======================================================
+# {{ description | replace_regex(old="\\s+", new=" ") | strip }}
+# {{ procedure | replace_regex(old="\\n{2,}", new="\\n\\n") }}
+#
+# PATTERN 5: Create filename from title
+# ======================================
+# {{ title | strip | lower | replace(old=" ", new="_") | replace_regex(old="[^a-z0-9_]", new="") }}.md
+#
+# PATTERN 6: Clean and format table cells
+# ========================================
+# | {{ step.step }} | {{ step.description | replace(old="MTD_", new="") | strip }} | {{ step.expected.result | strip }} |
+#
+# PATTERN 7: Conditional inline text
+# ===================================
+# Manual: {% if step.manual %}Yes{% else %}No{% endif %}
+# Status: {% if result.success %}✓{% else %}✗{% endif %}
+#
+# PATTERN 8: Sanitize for different contexts
+# ===========================================
+# File: {{ id | replace_regex(old="[^a-zA-Z0-9_-]", new="_") }}
+# Anchor: {{ id | replace_regex(old="[^a-zA-Z0-9_-]", new="_") | lower }}
+# URL: {{ id | replace(old=" ", new="-") | lower | urlencode }}
+#
+# PATTERN 9: Complex multi-step cleaning
+# =======================================
+# {{ text | strip | replace(old="prefix_", new="") | replace_regex(old="\\s+", new=" ") | lower }}
+#
+# PATTERN 10: Preserve specific structure
+# ========================================
+# {% for item in items -%}
+# - {{ item | strip }}
+# {% endfor %}
+#
+# ============================================================================
+# ESCAPING IN REGEX PATTERNS
+# ============================================================================
+#
+# Special characters need escaping in regex:
+# - Dot: \\. (matches literal dot)
+# - Backslash: \\\\ (matches literal backslash)
+# - Parentheses: \\( \\) (matches literal parens)
+# - Square brackets: \\[ \\] (matches literal brackets)
+# - Asterisk: \\* (matches literal asterisk)
+# - Plus: \\+ (matches literal plus)
+# - Question: \\? (matches literal question mark)
+# - Pipe: \\| (matches literal pipe)
+# - Caret: \\^ (matches literal caret)
+# - Dollar: \\$ (matches literal dollar)
+#
+# Character classes (no escaping needed inside []):
+# - [^a-zA-Z0-9_] - Matches anything not alphanumeric or underscore
+# - [a-zA-Z] - Matches any letter
+# - [0-9] - Matches any digit
+# - [\\s] - Matches whitespace (backslash s needs escape)
+#
+# ============================================================================
