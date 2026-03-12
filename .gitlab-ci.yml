@@ -19,7 +19,7 @@ build-image:
     - echo "Building Rust + Docker image"
     - docker build -t       ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} .
     # Ensure the image can run offline
-    - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} test-plan-doc-gen --help
+    - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} tpdg --help
     # Ensure the image can compile offline
     - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} cargo --offline build --all --all-features --release
     - docker run --net none ${CI_REGISTRY_IMAGE}:${COMMIT_SHA} cargo --offline build --all --all-features

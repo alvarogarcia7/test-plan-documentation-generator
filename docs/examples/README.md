@@ -178,7 +178,7 @@ All examples conform to their respective schemas and will pass validation:
 
 ```bash
 # Test validation (example)
-./target/release/test-plan-doc-gen \
+./target/release/tpdg \
   --container data/container/schema.json \
              data/container/template.j2 \
              data/container/data.yml \
