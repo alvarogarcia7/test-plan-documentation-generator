@@ -21,3 +21,5 @@ lcov.info
 
 # Backlog.md
 /node_modules/
+
+/vendor/
