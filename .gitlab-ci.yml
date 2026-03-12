@@ -46,13 +46,7 @@ test-image:
       artifacts: true
   script:
     - uname -a
-    #    - cargo --offline build --all --all-features --release
-    #error: no matching package named `chrono` found
-    #location searched: crates.io index
-    #required by package `testcase-manager v0.1.0 (/builds/int/test-case-management-system/tcms-cli)`
-    #As a reminder, you're using offline mode (--offline) which can sometimes cause surprising resolution failures, if this error is too confusing you may wish to retry without `--offline`.
-    # - cargo --offline build --all --all-features
-    - test-plan-doc-gen --help
+    - tpdg --help
   tags:
     - dind-amd
 
@@ -101,7 +95,7 @@ ci:
     - cargo test --release --verbose
   artifacts:
     paths:
-      - target/release/test-plan-doc-gen
+      - target/release/tpdg
     expire_in: 1 day
   coverage: '/(\d+\.\d+)% coverage/'
   allow_failure: false

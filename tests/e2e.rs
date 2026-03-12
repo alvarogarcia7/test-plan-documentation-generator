@@ -20,7 +20,7 @@ fn get_binary_path() -> PathBuf {
     if path.ends_with("deps") {
         path.pop();
     }
-    path.push("test-plan-doc-gen");
+    path.push("tpdg");
     path
 }
 
@@ -555,7 +555,7 @@ fn test_e2e_dataset_4_gsma() {
     cmd.arg("-o").arg(report_path.as_os_str());
 
     // Execute
-    let status = cmd.status().expect("failed to execute test-plan-doc-gen");
+    let status = cmd.status().expect("failed to execute tpdg");
     assert!(status.success(), "binary exited with non-zero status");
 
     // Verify report.md was created and is not empty

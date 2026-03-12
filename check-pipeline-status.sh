@@ -22,7 +22,7 @@ if [ -z "$GITLAB_REMOTE" ]; then
     echo "  git remote add gitlab <your-gitlab-repo-url>"
     echo ""
     echo "Example:"
-    echo "  git remote add gitlab git@gitlab.com:username/test-plan-doc-gen.git"
+    echo "  git remote add gitlab git@gitlab.com:username/tpdg.git"
     exit 1
 fi
 

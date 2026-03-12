@@ -13,7 +13,7 @@ use tera::Tera;
 use tera::{Filter, Value};
 
 #[derive(Parser, Debug)]
-#[command(name = "test-plan-doc-gen")]
+#[command(name = "tpdg")]
 #[command(about = "A CLI tool to render templates for test plan documentation", long_about = None)]
 struct Args {
     /// Output file path
@@ -176,7 +176,7 @@ fn get_template_suffix(format: &str) -> &str {
 }
 
 fn main() -> Result<()> {
-    log_fd3!("Starting test-plan-doc-gen");
+    log_fd3!("Starting tpdg");
     tracing_subscriber::fmt::init();
 
     // Log the raw arguments before parsing
@@ -408,7 +408,7 @@ fn main() -> Result<()> {
     // Note: The temporary directory is not cleaned up by this process, but the OS
     // will handle cleanup of temp directories according to system policies
     let unique = format!(
-        "test-plan-doc-gen-{}",
+        "tpdg-{}",
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)?
             .as_nanos()
@@ -736,7 +736,7 @@ mod tests {
     #[test]
     fn test_parse_minimal_valid_args() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -756,7 +756,7 @@ mod tests {
     #[test]
     fn test_parse_with_output_file() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "-o",
             "output.md",
             "--container",
@@ -777,7 +777,7 @@ mod tests {
     #[test]
     fn test_parse_with_long_output_flag() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--output",
             "result.html",
             "--container",
@@ -798,7 +798,7 @@ mod tests {
     #[test]
     fn test_parse_with_multiple_test_case_files() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -818,7 +818,7 @@ mod tests {
     #[test]
     fn test_parse_container_values() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "container_schema.json",
             "container_template.tera",
@@ -838,7 +838,7 @@ mod tests {
     #[test]
     fn test_parse_test_case_values() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -858,12 +858,8 @@ mod tests {
 
     #[test]
     fn test_parse_missing_container_arg() {
-        let args = Args::try_parse_from([
-            "test-plan-doc-gen",
-            "--test-case",
-            "verification_methods",
-            "test1.json",
-        ]);
+        let args =
+            Args::try_parse_from(["tpdg", "--test-case", "verification_methods", "test1.json"]);
 
         assert!(args.is_err());
     }
@@ -871,7 +867,7 @@ mod tests {
     #[test]
     fn test_parse_missing_test_case_arg() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -884,7 +880,7 @@ mod tests {
     #[test]
     fn test_parse_container_with_insufficient_args() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -899,7 +895,7 @@ mod tests {
     #[test]
     fn test_parse_test_case_with_insufficient_args() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -914,7 +910,7 @@ mod tests {
     #[test]
     fn test_parse_container_with_too_many_args() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -931,7 +927,7 @@ mod tests {
     #[test]
     fn test_parse_args_order_independence() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--test-case",
             "verification_methods",
             "test1.json",
@@ -964,7 +960,7 @@ mod tests {
     #[test]
     fn test_parse_with_paths_containing_spaces() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "my schema.json",
             "my template.tera",
@@ -983,7 +979,7 @@ mod tests {
     #[test]
     fn test_parse_with_relative_paths() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "./schemas/container.json",
             "../templates/container.tera",
@@ -1002,7 +998,7 @@ mod tests {
     #[test]
     fn test_parse_with_absolute_paths() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "/usr/local/schema.json",
             "/usr/local/template.tera",
@@ -1024,7 +1020,7 @@ mod tests {
     #[test]
     fn test_parse_format_default_value() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--container",
             "schema.json",
             "template.tera",
@@ -1042,7 +1038,7 @@ mod tests {
     #[test]
     fn test_parse_format_markdown() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--format",
             "markdown",
             "--container",
@@ -1062,7 +1058,7 @@ mod tests {
     #[test]
     fn test_parse_format_asciidoc() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--format",
             "asciidoc",
             "--container",
@@ -1082,7 +1078,7 @@ mod tests {
     #[test]
     fn test_parse_format_invalid() {
         let args = Args::try_parse_from([
-            "test-plan-doc-gen",
+            "tpdg",
             "--format",
             "html",
             "--container",

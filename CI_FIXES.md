@@ -83,7 +83,7 @@ make test
 
 # Test Docker build
 docker build -t test-local .
-docker run test-local test-plan-doc-gen --help
+docker run test-local tpdg --help
 ```
 
 ## Additional Resources
