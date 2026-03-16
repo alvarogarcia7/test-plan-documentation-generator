@@ -1,5 +1,5 @@
 requirements_with_detail:
-{%- set reqs = ["TEST_REQ_001", "TEST_REQ_002"] %}
+{%- set reqs = ["XXX100", "XXX200", "XXX300", "XXX400"] %}
 {%- for req in reqs %}
 {%- set filtered = test_results | filter(attribute="requirement", value=req) %}
 {%- if filtered | length > 0 %}
