@@ -534,9 +534,10 @@ fn main() -> Result<()> {
                 test_results_array.len()
             );
 
-            // Find verification_schema.json in the schemas directory
-            let verification_schema_path =
-                PathBuf::from("../data/schemas/verification_schema.json");
+            // Look for verification_schema.json relative to container schema directory
+            let container_schema_dir = container_schema.parent().unwrap_or_else(|| Path::new("."));
+            let verification_schema_path = container_schema_dir.join("verification_schema.json");
+
             if verification_schema_path.exists() {
                 log_fd3!(
                     "\tUsing verification schema: {}",
