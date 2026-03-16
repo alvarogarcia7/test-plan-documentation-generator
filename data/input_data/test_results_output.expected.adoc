@@ -1,4 +1,4 @@
-= Input Data Test Results
+= Test Results Document - Sample
 :doctype: book
 :toc: left
 :toclevels: 3
@@ -12,18 +12,24 @@
 [discrete]
 == Document Information
 
-*Project:* Input Data Verification System
+*Project:* Test Results Sample Project
 
-*Test Date:* 2026-03-16T14:33:36.258035Z
+*Test Date:* 2024-03-15T14:30:00Z
 
-*Environment:* Development
+*Environment:* Test Environment
 
-*Platform:* Linux x86_64
+*Platform:* Test Platform v1.0
 
-*Executor:* test-automation-system
+*Executor:* Test Executor v1.0
 
-*Execution Duration:* 2.5 seconds
+*Execution Duration:* 120.5 seconds
 
+
+<<<
+
+== Table of Contents
+
+toc::[]
 
 <<<
 
@@ -31,7 +37,7 @@
 
 === Test Execution Overview
 
-This document presents the results of test execution for Input Data Verification System.
+This document presents the results of test execution for Test Results Sample Project.
 
 [cols="1,2", options="header"]
 |===
@@ -47,34 +53,27 @@ This document presents the results of test execution for Input Data Verification
 | Failed Test Cases
 | 1
 
+| Not Executed Test Cases
+| 0
+
 |===
 
-=== Pass/Fail Summary
+=== Success Rate
 
 *Pass Rate:* 50%
-
-*Overall Status:* ✗ *FAIL*
 
 
 <<<
 
 = Detailed Test Results
 
+== Test Case: 4.2.2.3 ANOTHER ONE
 
-== Test Case: TEST_FAILING_002
+*Description*: Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
 
-*Description:* Test case with some failing verifications
+*Overall Status*: ✗ FAIL
 
-*Requirement:* TEST_REQ_002
-
-*Item:* 1
-
-*TC:* 2
-
-
-*Overall Status:* ✗ FAIL
-
-=== Execution Summary
+== Execution Summary
 
 [cols="1,1", options="header"]
 |===
@@ -82,25 +81,25 @@ This document presents the results of test execution for Input Data Verification
 | Count
 
 | Total Steps
-| 3
+| 4
 
 | Passed Steps
 | 1
 
 | Failed Steps
-| 2
+| 1
 
 | Not Executed Steps
-| 0
+| 2
 
 |===
 
 
-=== Test Sequence 1: Mixed Results Sequence
+== Test Sequence 1: Test Sequence #01 Nominal: Unset PPR1
 
-*Sequence Status:* ✗ FAIL
+*Sequence Status*: ✗ FAIL
 
-==== Step-by-Step Results
+=== Step Results
 
 [cols="1,3,2", options="header"]
 |===
@@ -109,26 +108,22 @@ This document presents the results of test execution for Input Data Verification
 | Status
 
 | 1
-| Echo that passes
+| MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE))
 | ✓ Pass
 
 | 2
-| Command that should fail
-| ✗ Fail
-
-| 3
-| Exit code mismatch
+| Fetch 'XX'
 | ✗ Fail
 
 
 |===
 
 
-==== Step 2 - Failure Details
+=== Step 2 - Failure Details
 
-*Description:* Command that should fail
+*Description*: Fetch 'XX'
 
-*Reason:* Output mismatch: expected 'expected', got 'wrong'
+*Reason*: Expected success status code 0x9000 but received error code 0x6985 indicating security validation failure
 
 [cols="1,2,2", options="header"]
 |===
@@ -137,66 +132,55 @@ This document presents the results of test execution for Input Data Verification
 | Actual
 
 | Result
-| 0
-| 0
+| MTD_CHECK_SMS_POR(0x9000)
+| MTD_CHECK_SMS_POR(0x6985)
 
 | Output
-| expected
-| wrong
+| This operation was successful.
+| Command not allowed - security status not satisfied
 
 | Success
-| true
+| 
 | N/A
 
 |===
 
 
-==== Step 3 - Failure Details
 
-*Description:* Exit code mismatch
+== Test Sequence 2: Test Sequence #02 Nominal: Unset PPPR2 and update icon
 
-*Reason:* Success mismatch: expected true, got false
+*Sequence Status*: ✗ FAIL
 
-[cols="1,2,2", options="header"]
+=== Step Results
+
+[cols="1,3,2", options="header"]
 |===
-| Property
-| Expected
-| Actual
+| Step
+| Description
+| Status
 
-| Result
-| 0
 | 1
+| MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE))
+| ⊘ Not Executed
 
-| Output
-| 
-| 
+| 2
+| Fetch 'XX'
+| ⊘ Not Executed
 
-| Success
-| true
-| N/A
 
 |===
 
 
 
 
-<<<
 
+== Test Case: 4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata
 
-== Test Case: TEST_PASSING_001
+*Description*: Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
 
-*Description:* Test case with all passing verifications
+*Overall Status*: ✓ PASS
 
-*Requirement:* TEST_REQ_001
-
-*Item:* 1
-
-*TC:* 1
-
-
-*Overall Status:* ✓ PASS
-
-=== Execution Summary
+== Execution Summary
 
 [cols="1,1", options="header"]
 |===
@@ -204,10 +188,10 @@ This document presents the results of test execution for Input Data Verification
 | Count
 
 | Total Steps
-| 3
+| 4
 
 | Passed Steps
-| 3
+| 4
 
 | Failed Steps
 | 0
@@ -218,11 +202,11 @@ This document presents the results of test execution for Input Data Verification
 |===
 
 
-=== Test Sequence 1: Passing Sequence
+== Test Sequence 1: Test Sequence #01 Nominal: Unset PPR1
 
-*Sequence Status:* ✓ PASS
+*Sequence Status*: ✓ PASS
 
-==== Step-by-Step Results
+=== Step Results
 
 [cols="1,3,2", options="header"]
 |===
@@ -231,11 +215,11 @@ This document presents the results of test execution for Input Data Verification
 | Status
 
 | 1
-| Echo hello
+| MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE))
 | ✓ Pass
 
 | 2
-| True command
+| Fetch 'XX'
 | ✓ Pass
 
 
@@ -243,11 +227,11 @@ This document presents the results of test execution for Input Data Verification
 
 
 
-=== Test Sequence 2: Second Passing Sequence
+== Test Sequence 2: Test Sequence #02 Nominal: Unset PPPR2 and update icon
 
-*Sequence Status:* ✓ PASS
+*Sequence Status*: ✓ PASS
 
-==== Step-by-Step Results
+=== Step Results
 
 [cols="1,3,2", options="header"]
 |===
@@ -256,18 +240,21 @@ This document presents the results of test execution for Input Data Verification
 | Status
 
 | 1
-| Echo world
+| MTD_SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; MTD_STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE))
+| ✓ Pass
+
+| 2
+| Fetch 'XX'
 | ✓ Pass
 
 
 |===
+
 
 
 
 
 <<<
-
-
 
 == Final Verification Verdict
 
@@ -290,9 +277,19 @@ This document presents the results of test execution for Input Data Verification
 | Failed
 | 1
 
+| Not Executed
+| 0
+
 |===
 
 === Conclusion
 
 1 test case(s) failed during execution. Review the detailed test results section for failure analysis and remediation actions.
 
+
+<<<
+
+[discrete]
+== Copyright Notice
+
+(C) GSMA 2024. All rights reserved.

@@ -17,13 +17,14 @@ help:
 	@echo "  make install-sccache - Install sccache for build caching"
 	@echo "  make build	   - Build the project"
 	@echo "  make check	   - Check the project without building"
-	@echo "  make test		- Run tests"
+	@echo "  make test		- Run all tests (unit + E2E + input_data)"
 	@echo "  make lint		- Run all linting checks (fmt-check + clippy)"
 	@echo "  make fmt		 - Format code with rustfmt"
 	@echo "  make fmt-check   - Check code formatting without making changes"
 	@echo "  make clippy	  - Run clippy linter"
 	@echo "  make coverage	- Run code coverage and print report"
 	@echo "  make clean	   - Remove build artifacts"
+	@echo "  make docker-build	- Build Docker image"
 	@echo "  make install-sccache - Install sccache locally"
 	@echo "  make sccache-stats   - Show sccache statistics"
 	@echo "  make sccache-clean   - Clean sccache directories"
@@ -61,6 +62,12 @@ test-e2e-asciidoc:
 	$(MAKE) test-e2e-test-plan-asciidoc
 	$(MAKE) test-e2e-test-results-asciidoc
 .PHONY: test-e2e-asciidoc
+
+test-e2e-input-data-all:
+	$(MAKE) test-e2e-input-data
+	$(MAKE) test-e2e-input-data-test-plan-asciidoc
+	$(MAKE) test-e2e-input-data-test-results-asciidoc
+.PHONY: test-e2e-input-data-all
 
 
 test-e2e-test-plan-asciidoc:

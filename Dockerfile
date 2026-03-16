@@ -74,6 +74,8 @@ RUN make test-e2e
 
 RUN make test-e2e-asciidoc
 
+RUN make test-e2e-input-data-all
+
 # Install program
 RUN cp target/release/tpdg /usr/local/bin/tpdg
 
