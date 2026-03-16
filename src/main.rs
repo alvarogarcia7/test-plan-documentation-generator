@@ -132,7 +132,15 @@ thread_local! {
 }
 
 #[allow(dead_code)]
-struct IncludeFileFunction;
+struct IncludeFileFunction {
+    base_path: Option<PathBuf>,
+}
+
+impl IncludeFileFunction {
+    fn new(base_path: Option<PathBuf>) -> Self {
+        Self { base_path }
+    }
+}
 
 impl Function for IncludeFileFunction {
     fn call(&self, args: &HashMap<String, Value>) -> tera::Result<Value> {
@@ -141,8 +149,19 @@ impl Function for IncludeFileFunction {
             .and_then(|v| v.as_str())
             .ok_or_else(|| tera::Error::msg("Function 'include_file' requires 'path' argument"))?;
 
-        let file_content = fs::read_to_string(path)
-            .map_err(|e| tera::Error::msg(format!("Failed to read file '{}': {}", path, e)))?;
+        let full_path = if let Some(ref base) = self.base_path {
+            base.join(path)
+        } else {
+            PathBuf::from(path)
+        };
+
+        let file_content = fs::read_to_string(&full_path).map_err(|e| {
+            tera::Error::msg(format!(
+                "Failed to read file '{}': {}",
+                full_path.display(),
+                e
+            ))
+        })?;
 
         let context = CONTEXT_HOLDER.with(|holder| {
             holder
@@ -152,12 +171,13 @@ impl Function for IncludeFileFunction {
         })?;
 
         let mut tera = Tera::default();
-        register_custom_filters(&mut tera);
+        register_custom_filters_and_functions(&mut tera, self.base_path.clone());
         tera.add_raw_template("included_template", &file_content)
             .map_err(|e| {
                 tera::Error::msg(format!(
                     "Failed to parse included template '{}': {}",
-                    path, e
+                    full_path.display(),
+                    e
                 ))
             })?;
 
@@ -167,16 +187,17 @@ impl Function for IncludeFileFunction {
     }
 }
 
-fn register_custom_filters(tera: &mut Tera) {
+fn register_custom_filters_and_functions(tera: &mut Tera, base_path: Option<PathBuf>) {
     tera.register_filter("replace", ReplaceFilter);
     tera.register_filter("replace_regex", ReplaceRegexFilter);
     tera.register_filter("strip", StripFilter);
+    tera.register_function("include_file", IncludeFileFunction::new(base_path));
 }
 
 #[cfg(test)]
 fn render_template(template_str: &str, context: &tera::Context) -> Result<String> {
     let mut tera = Tera::default();
-    register_custom_filters(&mut tera);
+    register_custom_filters_and_functions(&mut tera, None);
     tera.add_raw_template("template", template_str)?;
     let rendered = tera.render("template", context)?;
     Ok(rendered)
@@ -378,7 +399,10 @@ fn main() -> Result<()> {
         // Load template once per type
         let template_str = fs::read_to_string(template_path)?;
         let mut tera = Tera::default();
-        register_custom_filters(&mut tera);
+        register_custom_filters_and_functions(
+            &mut tera,
+            template_path.parent().map(|p| p.to_path_buf()),
+        );
         tera.add_raw_template("tc_template", &template_str)?;
 
         // Process each file of this type
@@ -593,7 +617,10 @@ fn main() -> Result<()> {
         );
         let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
         let mut req_tera = Tera::default();
-        register_custom_filters(&mut req_tera);
+        register_custom_filters_and_functions(
+            &mut req_tera,
+            Some(verification_methods_dir.clone()),
+        );
         req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
 
         log_fd3!("Rendering requirement aggregation template...");
@@ -627,7 +654,10 @@ fn main() -> Result<()> {
     // Read the template file
     let template_str = fs::read_to_string(container_template)?;
     let mut tera = Tera::default();
-    register_custom_filters(&mut tera);
+    register_custom_filters_and_functions(
+        &mut tera,
+        container_template.parent().map(|p| p.to_path_buf()),
+    );
     tera.add_raw_template("template", &template_str)?;
 
     // Render the template
