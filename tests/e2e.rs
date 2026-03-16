@@ -991,3 +991,153 @@ fn test_e2e_input_data_test_results() {
 
     assert_snapshot!("e2e_input_data_test_results", normalize(&output));
 }
+
+#[test]
+fn test_e2e_input_data_test_results() {
+    std::env::set_var("INSTA_UPDATE", "always");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("test_results_output.adoc");
+
+    let container_schema = "data/input_data/test_results/container_schema.json";
+    let container_template = "data/input_data/test_results/container_template_asciidoc.adoc";
+    let container_data = "data/input_data/test_results/container_data.yml";
+
+    let vm_dir = "data/input_data/verification_methods";
+    let tc_passing = "data/input_data/test_results/RESULT_TEST_PASSING_001.yml";
+    let tc_failing = "data/input_data/test_results/RESULT_TEST_FAILING_002.yml";
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema)
+        .arg(container_template)
+        .arg(container_data)
+        .arg("--test-case")
+        .arg(vm_dir)
+        .arg(tc_passing)
+        .arg(tc_failing)
+        .arg("--format")
+        .arg("asciidoc")
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "test results rendering should succeed");
+    assert!(
+        output_path.exists(),
+        "test results output file was not created"
+    );
+
+    let output = std::fs::read_to_string(&output_path).expect("failed to read output file");
+
+    assert!(
+        output.contains("Executive Summary"),
+        "output should contain executive summary section"
+    );
+
+    assert!(
+        output.contains("Passed Test Cases"),
+        "output should contain passed test cases metric"
+    );
+    assert!(
+        output.contains("Failed Test Cases"),
+        "output should contain failed test cases metric"
+    );
+
+    assert!(
+        output.contains("| 1"),
+        "output should show 1 passed test case"
+    );
+
+    assert!(
+        output.contains("| 1"),
+        "output should show 1 failed test case"
+    );
+
+    assert!(
+        output.contains("4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata"),
+        "output should contain passing test case ID"
+    );
+    assert!(
+        output.contains("4.2.2.3 ANOTHER ONE"),
+        "output should contain failing test case ID"
+    );
+
+    assert!(
+        output.contains("✓ PASS") && output.contains("✗ FAIL"),
+        "output should contain both pass and fail status indicators"
+    );
+
+    assert!(
+        output.contains("Test Sequence #01"),
+        "output should contain test sequence 1"
+    );
+    assert!(
+        output.contains("Test Sequence #02"),
+        "output should contain test sequence 2"
+    );
+
+    assert!(
+        output.contains("MTD_SENDS_SMS_PP"),
+        "output should contain test step descriptions"
+    );
+
+    assert!(
+        output.contains("Failure Details"),
+        "output should contain failure details section"
+    );
+    assert!(
+        output.contains("Expected success status code 0x9000"),
+        "output should contain failure reason"
+    );
+    assert!(
+        output.contains("MTD_CHECK_SMS_POR(0x9000)"),
+        "output should contain expected result"
+    );
+    assert!(
+        output.contains("MTD_CHECK_SMS_POR(0x6985)"),
+        "output should contain actual result"
+    );
+
+    assert!(
+        output.contains("NotExecuted") || output.contains("Not Executed"),
+        "output should contain not executed status"
+    );
+
+    assert!(
+        output.contains("Total Steps"),
+        "output should contain total steps metric"
+    );
+    assert!(
+        output.contains("Passed Steps"),
+        "output should contain passed steps metric"
+    );
+    assert!(
+        output.contains("Failed Steps"),
+        "output should contain failed steps metric"
+    );
+    assert!(
+        output.contains("Not Executed Steps"),
+        "output should contain not executed steps metric"
+    );
+
+    let executive_summary_pos = output
+        .find("Executive Summary")
+        .expect("Executive Summary should be present");
+    let detailed_results_pos = output
+        .find("Detailed Test Results")
+        .expect("Detailed Test Results should be present");
+    assert!(
+        executive_summary_pos < detailed_results_pos,
+        "Executive Summary should come before Detailed Test Results"
+    );
+
+    let pass_count = output.matches("✓ PASS").count();
+    let fail_count = output.matches("✗ FAIL").count();
+    assert!(
+        pass_count > 0 && fail_count > 0,
+        "output should contain both pass and fail indicators"
+    );
+
+    assert_snapshot!("e2e_input_data_test_results", normalize(&output));
+}
