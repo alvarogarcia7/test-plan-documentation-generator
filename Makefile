@@ -87,7 +87,7 @@ test-e2e-input-data:
 	./target/release/tpdg \
 	--output ./data/input_data/output.actual.md \
 	--container ./data/input_data/container/schema.json ./data/input_data/container/template.j2 ./data/input_data/container/data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
 	3>log_3.log
 	diff ./data/input_data/output.actual.md ./data/input_data/output.expected.md
 .PHONY: test-e2e-input-data
@@ -102,7 +102,7 @@ test-e2e-input-data-test-plan-asciidoc:
 	--format asciidoc \
 	--output ./data/input_data/test_plan_output.actual.adoc \
 	--container ./data/input_data/container/schema.json ./data/input_data/container/template_asciidoc.adoc ./data/input_data/container/data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
 	3>log_3.log
 	diff ./data/input_data/test_plan_output.actual.adoc ./data/input_data/test_plan_output.expected.adoc
 .PHONY: test-e2e-input-data-test-plan-asciidoc
