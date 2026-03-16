@@ -4,13 +4,14 @@ use jsonschema::JSONSchema;
 use regex::Regex;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use tera::Context;
 use tera::Tera;
-use tera::{Filter, Value};
+use tera::{Filter, Function, Value};
 
 #[derive(Parser, Debug)]
 #[command(name = "tpdg")]
@@ -123,6 +124,46 @@ impl Filter for StripFilter {
             .ok_or_else(|| tera::Error::msg("Filter 'strip' received a non-string value"))?;
 
         Ok(Value::String(s.trim().to_string()))
+    }
+}
+
+thread_local! {
+    static CONTEXT_HOLDER: RefCell<Option<Context>> = const { RefCell::new(None) };
+}
+
+#[allow(dead_code)]
+struct IncludeFileFunction;
+
+impl Function for IncludeFileFunction {
+    fn call(&self, args: &HashMap<String, Value>) -> tera::Result<Value> {
+        let path = args
+            .get("path")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Function 'include_file' requires 'path' argument"))?;
+
+        let file_content = fs::read_to_string(path)
+            .map_err(|e| tera::Error::msg(format!("Failed to read file '{}': {}", path, e)))?;
+
+        let context = CONTEXT_HOLDER.with(|holder| {
+            holder
+                .borrow()
+                .clone()
+                .ok_or_else(|| tera::Error::msg("Context not available for include_file function"))
+        })?;
+
+        let mut tera = Tera::default();
+        register_custom_filters(&mut tera);
+        tera.add_raw_template("included_template", &file_content)
+            .map_err(|e| {
+                tera::Error::msg(format!(
+                    "Failed to parse included template '{}': {}",
+                    path, e
+                ))
+            })?;
+
+        let rendered = tera.render("included_template", &context)?;
+
+        Ok(Value::String(rendered))
     }
 }
 
