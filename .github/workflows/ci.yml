@@ -94,10 +94,10 @@ jobs:
           3>log_3.log
         diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 
-    - name: Build Docker image
-      run: |
-        mkdir -p .sccache/host
-        docker build -t test:latest .
+#    - name: Build Docker image
+#      run: |
+#        mkdir -p .sccache/host
+#        docker build -t test:latest .
     
     - name: Show sccache stats
       run: sccache --show-stats
