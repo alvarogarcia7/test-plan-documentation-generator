@@ -534,9 +534,10 @@ fn main() -> Result<()> {
                 test_results_array.len()
             );
 
-            // Find verification_schema.json in the schemas directory
-            let verification_schema_path =
-                PathBuf::from("../data/schemas/verification_schema.json");
+            // Look for verification_schema.json relative to container schema directory
+            let container_schema_dir = container_schema.parent().unwrap_or_else(|| Path::new("."));
+            let verification_schema_path = container_schema_dir.join("verification_schema.json");
+
             if verification_schema_path.exists() {
                 log_fd3!(
                     "\tUsing verification schema: {}",
@@ -4065,6 +4066,233 @@ requirements_by_status:
             .expect("Failed to render");
 
             assert_eq!(result, "Unicode: Hello 世界 🌍");
+        }
+    }
+
+    mod test_e2e_snapshot_verification {
+        use super::*;
+
+        #[test]
+        fn test_strip_filter_whitespace_removal() {
+            let template = "{{ text_with_whitespace | strip }}";
+            let mut context = Context::new();
+            context.insert("text_with_whitespace", "  hello world  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "hello world",
+                "strip filter should remove leading and trailing whitespace"
+            );
+        }
+
+        #[test]
+        fn test_replace_filter_all_occurrences() {
+            let template = r#"{{ text_with_patterns | replace(old="foo", new="bar") }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_patterns", "foo bar foo baz foo");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "bar bar bar baz bar",
+                "replace filter should replace all occurrences by default"
+            );
+        }
+
+        #[test]
+        fn test_replace_filter_times_parameter_first() {
+            let template = r#"{{ text_with_patterns | replace(old="foo", new="qux", times=1) }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_patterns", "foo bar foo baz foo");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "qux bar foo baz foo",
+                "replace filter with times=1 should replace only first occurrence"
+            );
+        }
+
+        #[test]
+        fn test_replace_filter_times_parameter_two() {
+            let template = r#"{{ text_with_patterns | replace(old="foo", new="xyz", times=2) }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_patterns", "foo bar foo baz foo");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "xyz bar xyz baz foo",
+                "replace filter with times=2 should replace first two occurrences"
+            );
+        }
+
+        #[test]
+        fn test_replace_regex_filter_remove_digits() {
+            let template = r#"{{ text_with_regex | replace_regex(old="[0-9]+", new="") }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_regex", "test123abc456def789");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "testabcdef",
+                "replace_regex should remove all digit sequences"
+            );
+        }
+
+        #[test]
+        fn test_replace_regex_filter_replace_digits_with_hash() {
+            let template = r##"{{ text_with_regex | replace_regex(old="[0-9]+", new="#") }}"##;
+            let mut context = Context::new();
+            context.insert("text_with_regex", "test123abc456def789");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "test#abc#def#",
+                "replace_regex should replace each digit sequence with #"
+            );
+        }
+
+        #[test]
+        fn test_replace_regex_filter_times_parameter() {
+            let template =
+                r#"{{ text_with_regex | replace_regex(old="[0-9]+", new="NUM", times=1) }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_regex", "test123abc456def789");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "testNUMabc456def789",
+                "replace_regex with times=1 should replace only first digit sequence"
+            );
+        }
+
+        #[test]
+        fn test_replace_regex_filter_character_class_letters() {
+            let template = r#"{{ text_with_regex | replace_regex(old="[a-z]+", new="*") }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_regex", "test123abc456def789");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "*123*456*789",
+                "replace_regex with [a-z]+ should replace all letter sequences with *"
+            );
+        }
+
+        #[test]
+        fn test_filter_chaining_strip_then_replace() {
+            let template =
+                r#"{{ text_with_whitespace | strip | replace(old="hello", new="goodbye") }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_whitespace", "  hello world  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "goodbye world",
+                "chaining strip then replace should first strip whitespace, then replace text"
+            );
+        }
+
+        #[test]
+        fn test_filter_chaining_replace_then_strip() {
+            let template =
+                r#"{{ text_with_whitespace | replace(old="world", new="universe") | strip }}"#;
+            let mut context = Context::new();
+            context.insert("text_with_whitespace", "  hello world  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "hello universe",
+                "chaining replace then strip should first replace text, then strip whitespace"
+            );
+        }
+
+        #[test]
+        fn test_complex_filter_chain() {
+            let template = r#"{{ complex_pattern | replace(old="AAA", new="XXX") | replace_regex(old="-[A-Z]+", new="") | strip }}"#;
+            let mut context = Context::new();
+            context.insert("complex_pattern", "AAA-BBB-CCC AAA-DDD-EEE");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "XXX XXX",
+                "complex filter chain should apply replace, then replace_regex, then strip"
+            );
+        }
+
+        #[test]
+        fn test_multiline_strip() {
+            let template = "{{ multiline_text | strip }}";
+            let mut context = Context::new();
+            context.insert("multiline_text", "  Line with spaces  \n  Another line  ");
+
+            let result = render_template(template, &context).expect("Failed to render");
+            assert_eq!(
+                result, "Line with spaces  \n  Another line",
+                "strip should only remove leading/trailing whitespace, not internal spacing"
+            );
+        }
+
+        #[test]
+        fn test_all_filters_combined_as_per_e2e_snapshot() {
+            let mut context = Context::new();
+            context.insert("text_with_whitespace", "  hello world  ");
+            context.insert("text_with_patterns", "foo bar foo baz foo");
+            context.insert("text_with_regex", "test123abc456def789");
+            context.insert("multiline_text", "  Line with spaces  \n  Another line  ");
+            context.insert("complex_pattern", "AAA-BBB-CCC AAA-DDD-EEE");
+
+            let test_cases = vec![
+                ("{{ text_with_whitespace | strip }}", "hello world"),
+                (
+                    r#"{{ text_with_patterns | replace(old="foo", new="bar") }}"#,
+                    "bar bar bar baz bar",
+                ),
+                (
+                    r#"{{ text_with_patterns | replace(old="foo", new="qux", times=1) }}"#,
+                    "qux bar foo baz foo",
+                ),
+                (
+                    r#"{{ text_with_patterns | replace(old="foo", new="xyz", times=2) }}"#,
+                    "xyz bar xyz baz foo",
+                ),
+                (
+                    r#"{{ text_with_regex | replace_regex(old="[0-9]+", new="") }}"#,
+                    "testabcdef",
+                ),
+                (
+                    r##"{{ text_with_regex | replace_regex(old="[0-9]+", new="#") }}"##,
+                    "test#abc#def#",
+                ),
+                (
+                    r#"{{ text_with_regex | replace_regex(old="[0-9]+", new="NUM", times=1) }}"#,
+                    "testNUMabc456def789",
+                ),
+                (
+                    r#"{{ text_with_regex | replace_regex(old="[a-z]+", new="*") }}"#,
+                    "*123*456*789",
+                ),
+                (
+                    r#"{{ text_with_whitespace | strip | replace(old="hello", new="goodbye") }}"#,
+                    "goodbye world",
+                ),
+                (
+                    r#"{{ text_with_whitespace | replace(old="world", new="universe") | strip }}"#,
+                    "hello universe",
+                ),
+                (
+                    r#"{{ complex_pattern | replace(old="AAA", new="XXX") | replace_regex(old="-[A-Z]+", new="") | strip }}"#,
+                    "XXX XXX",
+                ),
+            ];
+
+            for (template, expected) in test_cases {
+                let result = render_template(template, &context)
+                    .unwrap_or_else(|_| panic!("Failed to render template: {}", template));
+                assert_eq!(
+                    result, expected,
+                    "Template '{}' should produce '{}'",
+                    template, expected
+                );
+            }
         }
     }
 }

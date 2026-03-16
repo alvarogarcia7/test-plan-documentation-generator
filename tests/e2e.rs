@@ -871,3 +871,123 @@ fn test_e2e_custom_tera_filters() {
 
     assert_snapshot!("e2e_custom_tera_filters", normalize(&output));
 }
+
+#[test]
+fn test_e2e_input_data() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+    let bin = get_binary_path();
+
+    let container_schema = "./data/input_data/container/schema.json";
+    let container_template = "./data/input_data/container/template.j2";
+    let container_file = "./data/input_data/container/data.yml";
+
+    let vm_dir = "./data/input_data/verification_methods";
+
+    let tc_dir = std::path::Path::new("./data/input_data/test_case");
+    let tc_files = sorted_test_case_files(tc_dir);
+
+    let mut cmd = Command::new(bin);
+    cmd.arg("--container")
+        .arg(container_schema)
+        .arg(container_template)
+        .arg(container_file);
+    cmd.arg("--test-case").arg(vm_dir);
+    for f in &tc_files {
+        cmd.arg(f);
+    }
+    let td = tempdir().unwrap();
+    let report_path = td.path().join("report.md");
+    cmd.arg("-o").arg(report_path.as_os_str());
+
+    let status = cmd.status().expect("failed to execute tpdg");
+    assert!(status.success(), "binary exited with non-zero status");
+
+    assert!(report_path.exists(), "report.md was not created");
+    let metadata = std::fs::metadata(&report_path).expect("failed to stat report.md");
+    assert!(metadata.len() > 0, "report.md is empty");
+
+    let mut output =
+        std::fs::read_to_string(&report_path).expect("failed to read generated report.md");
+    let tmp_prefix = std::env::temp_dir().to_string_lossy().to_string();
+    if !tmp_prefix.is_empty() {
+        output = output.replace(&tmp_prefix, "<TMPDIR>");
+    }
+    let cwd = std::env::current_dir()
+        .expect("cwd")
+        .to_string_lossy()
+        .to_string();
+    if !cwd.is_empty() {
+        output = output.replace(&cwd, "<CWD>");
+    }
+    assert_snapshot!("e2e_input_data", normalize(&output));
+}
+
+#[test]
+fn test_e2e_input_data_test_results() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.adoc");
+
+    let vm_dir = "./data/input_data/verification_methods";
+
+    let container_schema = "data/input_data/test_results/container_schema.json";
+    let container_template = "data/input_data/test_results/container_template_asciidoc.adoc";
+    let container_data = "data/input_data/test_results/container_data.yml";
+
+    let result_dir = std::path::Path::new("./data/input_data/test_results");
+    let mut result_files: Vec<String> = Vec::new();
+    for entry in std::fs::read_dir(result_dir).expect("failed to read test_results directory") {
+        let entry = entry.expect("failed to read dir entry");
+        let path = entry.path();
+        if path.is_file() {
+            if let Some(ext) = path.extension() {
+                if (ext == "yml" || ext == "yaml")
+                    && path
+                        .file_name()
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .starts_with("RESULT_")
+                {
+                    result_files.push(path.to_string_lossy().to_string());
+                }
+            }
+        }
+    }
+
+    assert!(
+        !result_files.is_empty(),
+        "no result yml files found in data/input_data/test_results"
+    );
+
+    result_files.sort();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema)
+        .arg(container_template)
+        .arg(container_data);
+    cmd.arg("--test-case").arg(vm_dir);
+    for result_file in &result_files {
+        cmd.arg(result_file);
+    }
+    cmd.arg("--format")
+        .arg("asciidoc")
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).expect("failed to read output file");
+
+    assert!(
+        output.contains("TEST_REQ_001") || output.contains("TEST_REQ_002"),
+        "output should contain test requirements"
+    );
+
+    assert_snapshot!("e2e_input_data_test_results", normalize(&output));
+}

@@ -505,6 +505,45 @@ cargo build --release
 make docker-build
 ```
 
+## CI/CD Verification
+
+The project includes scripts to verify CI pipeline status on both GitHub Actions and GitLab CI.
+
+### GitHub Actions Verification
+
+To verify the GitHub Actions CI pipeline status for a specific branch:
+
+```bash
+# Verify the unmodified_push_2026-03-12 branch
+make verify-github-actions
+
+# Or run the script directly with a custom branch
+./verify-github-actions.sh <branch-name>
+```
+
+The script checks:
+- ✅ Build, lint (fmt-check + clippy)
+- ✅ Unit tests
+- ✅ E2E tests (markdown and asciidoc for both datasets)
+- ✅ Docker build
+- ✅ Coverage job
+
+For detailed information, see [GITHUB_ACTIONS_VERIFICATION.md](GITHUB_ACTIONS_VERIFICATION.md).
+
+### GitLab CI Verification
+
+To check the GitLab CI pipeline status:
+
+```bash
+# Check GitLab pipeline status
+make check-gitlab-pipeline
+
+# Or run the script directly
+./check-pipeline-status.sh
+```
+
+For detailed information, see [PIPELINE_VERIFICATION.md](PIPELINE_VERIFICATION.md).
+
 ## Tech Stack
 
 - **Language**: Rust 2021 edition

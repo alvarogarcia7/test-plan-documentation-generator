@@ -1,0 +1,78 @@
+title: Input Data Test Results
+project: Input Data Verification System
+test_date: '2026-03-16T14:33:36.258035Z'
+test_results:
+- test_case_id: TEST_FAILING_002
+  description: Test case with some failing verifications
+  requirement: TEST_REQ_002
+  item: 1
+  tc: 2
+  sequences:
+  - sequence_id: 1
+    name: Mixed Results Sequence
+    step_results:
+    - Pass:
+        step: 1
+        description: Echo that passes
+    - Fail:
+        step: 2
+        description: Command that should fail
+        expected:
+          success: true
+          result: '0'
+          output: expected
+        actual_result: '0'
+        actual_output: wrong
+        reason: 'Output mismatch: expected ''expected'', got ''wrong'''
+    - Fail:
+        step: 3
+        description: Exit code mismatch
+        expected:
+          success: true
+          result: '0'
+          output: ''
+        actual_result: '1'
+        actual_output: ''
+        reason: 'Success mismatch: expected true, got false'
+    all_steps_passed: false
+  total_steps: 3
+  passed_steps: 1
+  failed_steps: 2
+  not_executed_steps: 0
+  overall_pass: false
+- test_case_id: TEST_PASSING_001
+  description: Test case with all passing verifications
+  requirement: TEST_REQ_001
+  item: 1
+  tc: 1
+  sequences:
+  - sequence_id: 1
+    name: Passing Sequence
+    step_results:
+    - Pass:
+        step: 1
+        description: Echo hello
+    - Pass:
+        step: 2
+        description: True command
+    all_steps_passed: true
+  - sequence_id: 2
+    name: Second Passing Sequence
+    step_results:
+    - Pass:
+        step: 1
+        description: Echo world
+    all_steps_passed: true
+  total_steps: 3
+  passed_steps: 3
+  failed_steps: 0
+  not_executed_steps: 0
+  overall_pass: true
+metadata:
+  environment: Development
+  platform: Linux x86_64
+  executor: test-automation-system
+  execution_duration: 2.5
+  total_test_cases: 2
+  passed_test_cases: 1
+  failed_test_cases: 1
