@@ -4,13 +4,14 @@ use jsonschema::JSONSchema;
 use regex::Regex;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use tera::Context;
 use tera::Tera;
-use tera::{Filter, Value};
+use tera::{Filter, Function, Value};
 
 #[derive(Parser, Debug)]
 #[command(name = "tpdg")]
@@ -126,16 +127,77 @@ impl Filter for StripFilter {
     }
 }
 
-fn register_custom_filters(tera: &mut Tera) {
+thread_local! {
+    static CONTEXT_HOLDER: RefCell<Option<Context>> = const { RefCell::new(None) };
+}
+
+#[allow(dead_code)]
+struct IncludeFileFunction {
+    base_path: Option<PathBuf>,
+}
+
+impl IncludeFileFunction {
+    fn new(base_path: Option<PathBuf>) -> Self {
+        Self { base_path }
+    }
+}
+
+impl Function for IncludeFileFunction {
+    fn call(&self, args: &HashMap<String, Value>) -> tera::Result<Value> {
+        let path = args
+            .get("path")
+            .and_then(|v| v.as_str())
+            .ok_or_else(|| tera::Error::msg("Function 'include_file' requires 'path' argument"))?;
+
+        let full_path = if let Some(ref base) = self.base_path {
+            base.join(path)
+        } else {
+            PathBuf::from(path)
+        };
+
+        let file_content = fs::read_to_string(&full_path).map_err(|e| {
+            tera::Error::msg(format!(
+                "Failed to read file '{}': {}",
+                full_path.display(),
+                e
+            ))
+        })?;
+
+        let context = CONTEXT_HOLDER.with(|holder| {
+            holder
+                .borrow()
+                .clone()
+                .ok_or_else(|| tera::Error::msg("Context not available for include_file function"))
+        })?;
+
+        let mut tera = Tera::default();
+        register_custom_filters_and_functions(&mut tera, self.base_path.clone());
+        tera.add_raw_template("included_template", &file_content)
+            .map_err(|e| {
+                tera::Error::msg(format!(
+                    "Failed to parse included template '{}': {}",
+                    full_path.display(),
+                    e
+                ))
+            })?;
+
+        let rendered = tera.render("included_template", &context)?;
+
+        Ok(Value::String(rendered))
+    }
+}
+
+fn register_custom_filters_and_functions(tera: &mut Tera, base_path: Option<PathBuf>) {
     tera.register_filter("replace", ReplaceFilter);
     tera.register_filter("replace_regex", ReplaceRegexFilter);
     tera.register_filter("strip", StripFilter);
+    tera.register_function("include_file", IncludeFileFunction::new(base_path));
 }
 
 #[cfg(test)]
 fn render_template(template_str: &str, context: &tera::Context) -> Result<String> {
     let mut tera = Tera::default();
-    register_custom_filters(&mut tera);
+    register_custom_filters_and_functions(&mut tera, None);
     tera.add_raw_template("template", template_str)?;
     let rendered = tera.render("template", context)?;
     Ok(rendered)
@@ -337,7 +399,10 @@ fn main() -> Result<()> {
         // Load template once per type
         let template_str = fs::read_to_string(template_path)?;
         let mut tera = Tera::default();
-        register_custom_filters(&mut tera);
+        register_custom_filters_and_functions(
+            &mut tera,
+            template_path.parent().map(|p| p.to_path_buf()),
+        );
         tera.add_raw_template("tc_template", &template_str)?;
 
         // Process each file of this type
@@ -552,7 +617,10 @@ fn main() -> Result<()> {
         );
         let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
         let mut req_tera = Tera::default();
-        register_custom_filters(&mut req_tera);
+        register_custom_filters_and_functions(
+            &mut req_tera,
+            Some(verification_methods_dir.clone()),
+        );
         req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
 
         log_fd3!("Rendering requirement aggregation template...");
@@ -586,7 +654,10 @@ fn main() -> Result<()> {
     // Read the template file
     let template_str = fs::read_to_string(container_template)?;
     let mut tera = Tera::default();
-    register_custom_filters(&mut tera);
+    register_custom_filters_and_functions(
+        &mut tera,
+        container_template.parent().map(|p| p.to_path_buf()),
+    );
     tera.add_raw_template("template", &template_str)?;
 
     // Render the template
@@ -3414,6 +3485,586 @@ requirements_by_status:
 
             let result = render_template(template, &context).expect("Failed to render");
             assert_eq!(result, "hello world");
+        }
+    }
+
+    mod test_include_file_function {
+        use super::*;
+        use tempfile::TempDir;
+
+        fn render_template_with_base_path(
+            template_str: &str,
+            context: &tera::Context,
+            base_path: Option<PathBuf>,
+        ) -> Result<String> {
+            CONTEXT_HOLDER.with(|holder| {
+                *holder.borrow_mut() = Some(context.clone());
+            });
+
+            let mut tera = Tera::default();
+            register_custom_filters_and_functions(&mut tera, base_path);
+            tera.add_raw_template("template", template_str)?;
+            let rendered = tera.render("template", context)?;
+            Ok(rendered)
+        }
+
+        #[test]
+        fn test_include_file_basic_file_inclusion() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("file.txt");
+            fs::write(&file_path, "Hello from included file!").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="file.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Hello from included file!");
+        }
+
+        #[test]
+        fn test_include_file_with_variable_interpolation() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("greeting.txt");
+            fs::write(&file_path, "Hello, {{ name }}!").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="greeting.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("name", "World");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Hello, World!");
+        }
+
+        #[test]
+        fn test_include_file_missing_path_argument() {
+            let temp_dir = TempDir::new().unwrap();
+
+            let template = r#"{{ include_file() }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_file_not_found() {
+            let temp_dir = TempDir::new().unwrap();
+
+            let template = r#"{{ include_file(path="nonexistent.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_nested_variable_access() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("profile.txt");
+            fs::write(&file_path, "User: {{ user.name }}, Age: {{ user.age }}")
+                .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="profile.txt") }}"#;
+            let mut context = Context::new();
+            let user_data = serde_json::json!({
+                "name": "Alice",
+                "age": 30
+            });
+            context.insert("user", &user_data);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "User: Alice, Age: 30");
+        }
+
+        #[test]
+        fn test_include_file_with_replace_filter() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("text.txt");
+            fs::write(
+                &file_path,
+                "{{ message | replace(old='world', new='universe') }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="text.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("message", "hello world");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "hello universe");
+        }
+
+        #[test]
+        fn test_include_file_with_strip_filter() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("whitespace.txt");
+            fs::write(&file_path, "{{ content | strip }}").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="whitespace.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("content", "   trimmed   ");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "trimmed");
+        }
+
+        #[test]
+        fn test_include_file_with_replace_regex_filter() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("regex.txt");
+            fs::write(
+                &file_path,
+                r#"{{ text | replace_regex(old='\d+', new='NUM') }}"#,
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="regex.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("text", "I have 3 apples and 5 oranges");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "I have NUM apples and NUM oranges");
+        }
+
+        #[test]
+        fn test_include_file_multiple_variables() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("multi.txt");
+            fs::write(
+                &file_path,
+                "{{ greeting }}, {{ name }}! You have {{ count }} messages.",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="multi.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("greeting", "Hello");
+            context.insert("name", "Bob");
+            context.insert("count", &5);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Hello, Bob! You have 5 messages.");
+        }
+
+        #[test]
+        fn test_include_file_with_conditional() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("conditional.txt");
+            fs::write(
+                &file_path,
+                "{% if show_message %}Message is visible{% else %}Hidden{% endif %}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="conditional.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("show_message", &true);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Message is visible");
+        }
+
+        #[test]
+        fn test_include_file_with_loop() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("loop.txt");
+            fs::write(
+                &file_path,
+                "{% for item in items %}{{ item }}\n{% endfor %}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="loop.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("items", &vec!["a", "b", "c"]);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "a\nb\nc\n");
+        }
+
+        #[test]
+        fn test_include_file_empty_file() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("empty.txt");
+            fs::write(&file_path, "").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="empty.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "");
+        }
+
+        #[test]
+        fn test_include_file_with_nested_object_access() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("nested.txt");
+            fs::write(
+                &file_path,
+                "Company: {{ company.name }}, CEO: {{ company.ceo.name }}, Age: {{ company.ceo.age }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="nested.txt") }}"#;
+            let mut context = Context::new();
+            let company_data = serde_json::json!({
+                "name": "TechCorp",
+                "ceo": {
+                    "name": "John Doe",
+                    "age": 45
+                }
+            });
+            context.insert("company", &company_data);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Company: TechCorp, CEO: John Doe, Age: 45");
+        }
+
+        #[test]
+        fn test_include_file_with_array_access() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("array.txt");
+            fs::write(
+                &file_path,
+                "First: {{ data.0 }}, Second: {{ data.1 }}, Third: {{ data.2 }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="array.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("data", &vec!["apple", "banana", "cherry"]);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "First: apple, Second: banana, Third: cherry");
+        }
+
+        #[test]
+        fn test_include_file_with_combined_filters() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("filters.txt");
+            fs::write(
+                &file_path,
+                "{{ text | replace(old='hello', new='hi') | strip }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="filters.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("text", "   hello world   ");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "hi world");
+        }
+
+        #[test]
+        fn test_include_file_with_replace_times_parameter() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("replace_times.txt");
+            fs::write(
+                &file_path,
+                "{{ text | replace(old='a', new='X', times=2) }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="replace_times.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("text", "banana");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "bXnXna");
+        }
+
+        #[test]
+        fn test_include_file_with_replace_regex_times() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("regex_times.txt");
+            fs::write(
+                &file_path,
+                r#"{{ text | replace_regex(old='\d+', new='X', times=1) }}"#,
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="regex_times.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("text", "1 and 2 and 3");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "X and 2 and 3");
+        }
+
+        #[test]
+        fn test_include_file_multiline_content() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("multiline.txt");
+            fs::write(
+                &file_path,
+                "Line 1: {{ line1 }}\nLine 2: {{ line2 }}\nLine 3: {{ line3 }}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="multiline.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("line1", "First");
+            context.insert("line2", "Second");
+            context.insert("line3", "Third");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Line 1: First\nLine 2: Second\nLine 3: Third");
+        }
+
+        #[test]
+        fn test_include_file_subdirectory() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("templates");
+            fs::create_dir(&subdir).expect("Failed to create subdirectory");
+            let file_path = subdir.join("content.txt");
+            fs::write(&file_path, "Content from subdirectory: {{ value }}")
+                .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="templates/content.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("value", "test");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Content from subdirectory: test");
+        }
+
+        #[test]
+        fn test_include_file_without_base_path() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("absolute.txt");
+            fs::write(&file_path, "Absolute path content: {{ data }}")
+                .expect("Failed to write file");
+
+            let template = format!(
+                r#"{{{{ include_file(path="{}") }}}}"#,
+                file_path.to_string_lossy()
+            );
+            let mut context = Context::new();
+            context.insert("data", "works");
+
+            let result = render_template_with_base_path(&template, &context, None)
+                .expect("Failed to render");
+
+            assert_eq!(result, "Absolute path content: works");
+        }
+
+        #[test]
+        fn test_include_file_in_template_context() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("included.txt");
+            fs::write(&file_path, "{{ value }}").expect("Failed to write file");
+
+            let template = r#"Before {{ include_file(path="included.txt") }} After"#;
+            let mut context = Context::new();
+            context.insert("value", "MIDDLE");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Before MIDDLE After");
+        }
+
+        #[test]
+        fn test_include_file_invalid_template_syntax() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("invalid.txt");
+            fs::write(&file_path, "{{ unclosed").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="invalid.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_with_nested_arrays() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("nested_array.txt");
+            fs::write(
+                &file_path,
+                "{% for user in users %}{{ user.name }}: {{ user.score }}\n{% endfor %}",
+            )
+            .expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="nested_array.txt") }}"#;
+            let mut context = Context::new();
+            let users = serde_json::json!([
+                {"name": "Alice", "score": 95},
+                {"name": "Bob", "score": 87}
+            ]);
+            context.insert("users", &users);
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Alice: 95\nBob: 87\n");
+        }
+
+        #[test]
+        fn test_include_file_special_characters_in_content() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("special.txt");
+            fs::write(&file_path, "Special: {{ symbols }}").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="special.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("symbols", "!@#$%^&*()");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Special: !@#$%^&*()");
+        }
+
+        #[test]
+        fn test_include_file_unicode_content() {
+            let temp_dir = TempDir::new().unwrap();
+            let file_path = temp_dir.path().join("unicode.txt");
+            fs::write(&file_path, "Unicode: {{ text }}").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="unicode.txt") }}"#;
+            let mut context = Context::new();
+            context.insert("text", "Hello 世界 🌍");
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Failed to render");
+
+            assert_eq!(result, "Unicode: Hello 世界 🌍");
         }
     }
 }
