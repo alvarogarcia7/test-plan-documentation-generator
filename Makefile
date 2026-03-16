@@ -27,6 +27,8 @@ help:
 	@echo "  make install-sccache - Install sccache locally"
 	@echo "  make sccache-stats   - Show sccache statistics"
 	@echo "  make sccache-clean   - Clean sccache directories"
+	@echo "  make verify-github-actions - Verify GitHub Actions CI pipeline status"
+	@echo "  make check-gitlab-pipeline - Check GitLab CI pipeline status"
 .PHONY: help
 
 build:
@@ -159,4 +161,14 @@ sccache-stats:
 sccache-clean:
 	rm -rf .sccache/host .sccache/docker
 .PHONY: sccache-clean
+
+verify-github-actions:
+	@chmod +x verify-github-actions.sh
+	@./verify-github-actions.sh unmodified_push_2026-03-12
+.PHONY: verify-github-actions
+
+check-gitlab-pipeline:
+	@chmod +x check-pipeline-status.sh
+	@./check-pipeline-status.sh
+.PHONY: check-gitlab-pipeline
 
