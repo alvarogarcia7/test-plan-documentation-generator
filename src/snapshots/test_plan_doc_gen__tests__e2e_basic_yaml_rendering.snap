@@ -1,7 +1,0 @@
----
-source: src/main.rs
-assertion_line: 465
-expression: output
----
-Name: InstaTest
-Age: 42
