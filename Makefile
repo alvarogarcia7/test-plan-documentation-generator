@@ -41,6 +41,8 @@ test: build
 	cargo test --release --all-features --tests
 	$(MAKE) test-e2e
 	$(MAKE) test-e2e-asciidoc
+	$(MAKE) test-e2e-input-data
+	$(MAKE) test-e2e-input-data-asciidoc
 	echo "All steps in test passing"
 .PHONY: test
 
@@ -78,6 +80,40 @@ test-e2e-test-results-asciidoc:
 	3>log_3.log
 	diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 .PHONY: test-e2e-test-results-asciidoc
+
+test-e2e-input-data:
+	./target/release/tpdg \
+	--output ./data/input_data/output.actual.md \
+	--container ./data/input_data/container/schema.json ./data/input_data/container/template.j2 ./data/input_data/container/data.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml \
+	3>log_3.log
+	diff ./data/input_data/output.actual.md ./data/input_data/output.expected.md
+.PHONY: test-e2e-input-data
+
+test-e2e-input-data-asciidoc:
+	$(MAKE) test-e2e-input-data-test-plan-asciidoc
+	$(MAKE) test-e2e-input-data-test-results-asciidoc
+.PHONY: test-e2e-input-data-asciidoc
+
+test-e2e-input-data-test-plan-asciidoc:
+	./target/release/tpdg \
+	--format asciidoc \
+	--output ./data/input_data/test_plan_output.actual.adoc \
+	--container ./data/input_data/container/schema.json ./data/input_data/container/template_asciidoc.adoc ./data/input_data/container/data.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml \
+	3>log_3.log
+	diff ./data/input_data/test_plan_output.actual.adoc ./data/input_data/test_plan_output.expected.adoc
+.PHONY: test-e2e-input-data-test-plan-asciidoc
+
+test-e2e-input-data-test-results-asciidoc:
+	./target/release/tpdg \
+	--format asciidoc \
+	--output ./data/input_data/test_results_output.actual.adoc \
+	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template_asciidoc.adoc ./data/input_data/test_results/container_data.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
+	3>log_3.log
+	diff ./data/input_data/test_results_output.actual.adoc ./data/input_data/test_results_output.expected.adoc
+.PHONY: test-e2e-input-data-test-results-asciidoc
 
 fmt:
 	cargo fmt

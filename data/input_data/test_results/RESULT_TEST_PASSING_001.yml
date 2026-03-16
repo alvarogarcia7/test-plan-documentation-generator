@@ -1,0 +1,27 @@
+type: result
+requirement: "TEST_REQ_001"
+test_case_id: 'TEST_PASSING_001'
+description: 'Test case with all passing verifications'
+sequences:
+  - sequence_id: 1
+    name: "Passing Sequence"
+    step_results:
+      - Pass:
+          step: 1
+          description: "Echo hello"
+      - Pass:
+          step: 2
+          description: "True command"
+    all_steps_passed: true
+  - sequence_id: 2
+    name: "Second Passing Sequence"
+    step_results:
+      - Pass:
+          step: 1
+          description: "Echo world"
+    all_steps_passed: true
+total_steps: 3
+passed_steps: 3
+failed_steps: 0
+not_executed_steps: 0
+overall_pass: true
