@@ -217,3 +217,9 @@ All test cases have been executed successfully. The system under test meets the 
 
 No test cases were executed or results are inconclusive.
 {% endif %}
+
+<<<
+
+== Requirements Summary
+
+{{ requirements_summary_adoc }}

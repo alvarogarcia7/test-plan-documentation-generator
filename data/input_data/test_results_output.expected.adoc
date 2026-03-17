@@ -296,3 +296,32 @@ This document presents the results of test execution for Input Data Verification
 
 1 test case(s) failed during execution. Review the detailed test results section for failure analysis and remediation actions.
 
+
+<<<
+
+== Requirements Summary
+
+requirements_with_detail:
+  - requirement: TEST_REQ_001
+    items:
+      - item: 1
+        tc: 1
+        id: TEST_PASSING_001
+        pass: true
+  - requirement: TEST_REQ_002
+    items:
+      - item: 1
+        tc: 2
+        id: TEST_FAILING_002
+        pass: false
+status_per_requirement:
+  - requirement: TEST_REQ_001
+    pass: true
+  - requirement: TEST_REQ_002
+    pass: false
+requirements_by_status:
+  pass:
+    - TEST_REQ_001
+  fail:
+    - TEST_REQ_002
+
