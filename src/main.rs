@@ -155,6 +155,31 @@ impl Function for IncludeFileFunction {
             PathBuf::from(path)
         };
 
+        if let Some(ref base) = self.base_path {
+            let canonical_base = base.canonicalize().map_err(|e| {
+                tera::Error::msg(format!(
+                    "Failed to canonicalize base path '{}': {}",
+                    base.display(),
+                    e
+                ))
+            })?;
+
+            let canonical_full = full_path.canonicalize().map_err(|e| {
+                tera::Error::msg(format!(
+                    "Failed to access file '{}': {}",
+                    full_path.display(),
+                    e
+                ))
+            })?;
+
+            if !canonical_full.starts_with(&canonical_base) {
+                return Err(tera::Error::msg(format!(
+                    "Security error: Path '{}' is outside the allowed base directory",
+                    path
+                )));
+            }
+        }
+
         let file_content = fs::read_to_string(&full_path).map_err(|e| {
             tera::Error::msg(format!(
                 "Failed to read file '{}': {}",
@@ -4077,6 +4102,207 @@ requirements_by_status:
             .expect("Failed to render");
 
             assert_eq!(result, "Unicode: Hello 世界 🌍");
+        }
+
+        #[test]
+        fn test_include_file_path_traversal_parent_directory() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("subdir");
+            fs::create_dir(&subdir).expect("Failed to create subdir");
+
+            let secret_file = temp_dir.path().join("secret.txt");
+            fs::write(&secret_file, "Secret content").expect("Failed to write secret file");
+
+            let template = r#"{{ include_file(path="../secret.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(template, &context, Some(subdir));
+
+            assert!(
+                result.is_err(),
+                "Should prevent path traversal to parent directory"
+            );
+        }
+
+        #[test]
+        fn test_include_file_path_traversal_multiple_parent_directories() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("level1").join("level2").join("level3");
+            fs::create_dir_all(&subdir).expect("Failed to create nested subdirs");
+
+            let template = r#"{{ include_file(path="../../../etc/passwd") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(template, &context, Some(subdir));
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_path_traversal_absolute_path() {
+            let temp_dir = TempDir::new().unwrap();
+
+            let template = r#"{{ include_file(path="/etc/passwd") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            );
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_path_traversal_with_dot_segments() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("allowed");
+            fs::create_dir(&subdir).expect("Failed to create subdir");
+
+            let secret_file = temp_dir.path().join("secret.txt");
+            fs::write(&secret_file, "Secret content").expect("Failed to write secret file");
+
+            let template = r#"{{ include_file(path="./../../secret.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(template, &context, Some(subdir));
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_path_traversal_symlink_escape() {
+            let temp_dir = TempDir::new().unwrap();
+            let allowed_dir = temp_dir.path().join("allowed");
+            fs::create_dir(&allowed_dir).expect("Failed to create allowed dir");
+
+            let outside_dir = temp_dir.path().join("outside");
+            fs::create_dir(&outside_dir).expect("Failed to create outside dir");
+
+            let secret_file = outside_dir.join("secret.txt");
+            fs::write(&secret_file, "Secret content").expect("Failed to write secret file");
+
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::symlink;
+                let link_path = allowed_dir.join("link_to_outside");
+                if symlink(&outside_dir, &link_path).is_ok() {
+                    let template = r#"{{ include_file(path="link_to_outside/secret.txt") }}"#;
+                    let context = Context::new();
+
+                    let result =
+                        render_template_with_base_path(template, &context, Some(allowed_dir));
+
+                    assert!(result.is_err());
+                }
+            }
+        }
+
+        #[test]
+        fn test_include_file_allowed_subdirectory_access() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("subdir");
+            fs::create_dir(&subdir).expect("Failed to create subdir");
+
+            let file_path = subdir.join("allowed.txt");
+            fs::write(&file_path, "Allowed content").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="subdir/allowed.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Should allow access to subdirectory");
+
+            assert_eq!(result, "Allowed content");
+        }
+
+        #[test]
+        fn test_include_file_allowed_nested_subdirectory_access() {
+            let temp_dir = TempDir::new().unwrap();
+            let nested_dir = temp_dir.path().join("level1").join("level2");
+            fs::create_dir_all(&nested_dir).expect("Failed to create nested dirs");
+
+            let file_path = nested_dir.join("nested.txt");
+            fs::write(&file_path, "Nested content").expect("Failed to write file");
+
+            let template = r#"{{ include_file(path="level1/level2/nested.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(
+                template,
+                &context,
+                Some(temp_dir.path().to_path_buf()),
+            )
+            .expect("Should allow access to nested subdirectory");
+
+            assert_eq!(result, "Nested content");
+        }
+
+        #[test]
+        fn test_include_file_path_with_encoded_traversal() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("allowed");
+            fs::create_dir(&subdir).expect("Failed to create subdir");
+
+            let template = r#"{{ include_file(path="..%2F..%2Fetc%2Fpasswd") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(template, &context, Some(subdir));
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_path_with_backslashes() {
+            let temp_dir = TempDir::new().unwrap();
+            let subdir = temp_dir.path().join("allowed");
+            fs::create_dir(&subdir).expect("Failed to create subdir");
+
+            let template = r#"{{ include_file(path="..\\..\\secret.txt") }}"#;
+            let context = Context::new();
+
+            let result = render_template_with_base_path(template, &context, Some(subdir));
+
+            assert!(result.is_err());
+        }
+
+        #[test]
+        fn test_include_file_security_documentation() {
+            let temp_dir = TempDir::new().unwrap();
+            let base_dir = temp_dir.path().join("base");
+            fs::create_dir(&base_dir).expect("Failed to create base dir");
+
+            let allowed_file = base_dir.join("allowed.txt");
+            fs::write(&allowed_file, "Safe content").expect("Failed to write allowed file");
+
+            let parent_dir = temp_dir.path();
+            let forbidden_file = parent_dir.join("forbidden.txt");
+            fs::write(&forbidden_file, "Forbidden content")
+                .expect("Failed to write forbidden file");
+
+            let template_allowed = r#"{{ include_file(path="allowed.txt") }}"#;
+            let template_forbidden = r#"{{ include_file(path="../forbidden.txt") }}"#;
+            let context = Context::new();
+
+            let result_allowed =
+                render_template_with_base_path(template_allowed, &context, Some(base_dir.clone()));
+            assert!(
+                result_allowed.is_ok(),
+                "Should allow files within base_path"
+            );
+            assert_eq!(result_allowed.unwrap(), "Safe content");
+
+            let result_forbidden =
+                render_template_with_base_path(template_forbidden, &context, Some(base_dir));
+            assert!(
+                result_forbidden.is_err(),
+                "Should prevent access to files outside base_path"
+            );
         }
     }
 
