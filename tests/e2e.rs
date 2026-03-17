@@ -1055,11 +1055,11 @@ fn test_e2e_input_data_test_results_detailed() {
     );
 
     assert!(
-        output.contains("4.2.2.2.1 TC_eUICC_ES6.UpdateMetadata"),
+        output.contains("TEST_PASSING_001"),
         "output should contain passing test case ID"
     );
     assert!(
-        output.contains("4.2.2.3 ANOTHER ONE"),
+        output.contains("TEST_FAILING_002"),
         "output should contain failing test case ID"
     );
 
