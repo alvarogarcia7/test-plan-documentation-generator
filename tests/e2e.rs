@@ -630,7 +630,7 @@ fn test_e2e_requirement_aggregation() {
 
     let req_agg_template_path = vm_dir.join("requirement_aggregation_template.adoc");
     std::fs::copy(
-        "./data/test_results/requirement_aggregation_template.adoc",
+        "./data/verification_methods/requirement_aggregation_template.adoc",
         &req_agg_template_path,
     )
     .unwrap();
