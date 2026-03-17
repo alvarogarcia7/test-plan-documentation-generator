@@ -993,7 +993,7 @@ fn test_e2e_input_data_test_results() {
 }
 
 #[test]
-fn test_e2e_input_data_test_results() {
+fn test_e2e_input_data_test_results_detailed() {
     std::env::set_var("INSTA_UPDATE", "always");
 
     let dir = tempdir().unwrap();
@@ -1139,5 +1139,5 @@ fn test_e2e_input_data_test_results() {
         "output should contain both pass and fail indicators"
     );
 
-    assert_snapshot!("e2e_input_data_test_results", normalize(&output));
+    assert_snapshot!("e2e_input_data_test_results_detailed", normalize(&output));
 }
