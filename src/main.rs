@@ -275,6 +275,17 @@ fn main() -> Result<()> {
         exit(2);
     }
 
+    // Verify container template file exists specifically
+    if !container_template.exists() {
+        let message = format!(
+            "Error: Container template file does not exist: {}",
+            container_template.display()
+        );
+        log_fd3!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
     // Verify that all received files exist
     let mut missing_files = Vec::new();
     let all_files = [
