@@ -1,0 +1,19 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+= Test Results
+=== Test: TC-001
+Result: true
+== Requirements Summary
+requirements_with_detail:
+  - requirement: REQ1
+    items:
+      - id: TC-001
+        pass: true
+      - id: TC-002
+        pass: false
+  - requirement: REQ2
+    items:
+      - id: TC-003
+        pass: true

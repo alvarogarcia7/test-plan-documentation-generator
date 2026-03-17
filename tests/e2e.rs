@@ -1124,3 +1124,634 @@ fn test_e2e_input_data_test_results_detailed() {
 
     assert_snapshot!("e2e_input_data_test_results_detailed", normalize(&output));
 }
+
+#[test]
+fn test_e2e_template_injection_test_cases_md() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let yaml_path = dir.path().join("data.yaml");
+    let container_template_path = dir.path().join("container_template.tera");
+    let output_path = dir.path().join("output.md");
+
+    let mut yaml_file = File::create(&yaml_path).unwrap();
+    writeln!(yaml_file, "title: Test Document").unwrap();
+
+    let mut container_template = File::create(&container_template_path).unwrap();
+    writeln!(container_template, "# {{{{ title }}}}").unwrap();
+    writeln!(container_template).unwrap();
+    writeln!(container_template, "## Test Cases").unwrap();
+    writeln!(container_template).unwrap();
+    writeln!(container_template, "{{{{ test_cases_md }}}}").unwrap();
+
+    let schema_path = dir.path().join("schema.json");
+    std::fs::write(&schema_path, "{}").unwrap();
+
+    let vm_dir = dir.path().join("verification_methods");
+    let test_type_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_type_dir).unwrap();
+    let tc_schema_path = test_type_dir.join("schema.json");
+    std::fs::write(&tc_schema_path, "{}").unwrap();
+    let tc_template_path = test_type_dir.join("template.j2");
+    let mut tc_template = File::create(&tc_template_path).unwrap();
+    writeln!(tc_template, "### Test Case: {{{{ id }}}}").unwrap();
+    writeln!(tc_template, "Description: {{{{ description }}}}").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yaml");
+    std::fs::write(
+        &tc_file1,
+        "type: test\nid: TC-001\ndescription: First test case\n",
+    )
+    .unwrap();
+
+    let tc_file2 = dir.path().join("tc2.yaml");
+    std::fs::write(
+        &tc_file2,
+        "type: test\nid: TC-002\ndescription: Second test case\n",
+    )
+    .unwrap();
+
+    let status = Command::new(get_binary_path())
+        .arg("--container")
+        .arg(schema_path.to_str().unwrap())
+        .arg(container_template_path.to_str().unwrap())
+        .arg(yaml_path.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg(tc_file2.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.to_str().unwrap())
+        .status()
+        .expect("failed to run binary");
+
+    assert!(status.success(), "binary should have succeeded");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("# Test Document"),
+        "output should contain container title"
+    );
+    assert!(
+        output.contains("## Test Cases"),
+        "output should contain test cases section"
+    );
+    assert!(
+        output.contains("### Test Case: TC-001"),
+        "output should contain first test case"
+    );
+    assert!(
+        output.contains("Description: First test case"),
+        "output should contain first test case description"
+    );
+    assert!(
+        output.contains("### Test Case: TC-002"),
+        "output should contain second test case"
+    );
+    assert!(
+        output.contains("Description: Second test case"),
+        "output should contain second test case description"
+    );
+
+    assert_snapshot!("e2e_template_injection_test_cases_md", normalize(&output));
+}
+
+#[test]
+fn test_e2e_template_injection_requirements_summary_adoc() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.adoc");
+
+    let vm_dir = dir.path().join("vm");
+    let result_vm_dir = vm_dir.join("result");
+    std::fs::create_dir_all(&result_vm_dir).unwrap();
+
+    let result_schema_path = result_vm_dir.join("schema.json");
+    std::fs::write(&result_schema_path, "{}").unwrap();
+
+    let result_template_path = result_vm_dir.join("template_asciidoc.adoc");
+    let mut result_template = File::create(&result_template_path).unwrap();
+    writeln!(result_template, "=== Test: {{{{ test_case_id }}}}").unwrap();
+    writeln!(result_template, "Result: {{{{ overall_pass }}}}").unwrap();
+
+    let req_agg_template_path = vm_dir.join("requirement_aggregation_template.adoc");
+    let mut req_agg_template = File::create(&req_agg_template_path).unwrap();
+    writeln!(req_agg_template, "== Requirements Summary").unwrap();
+    writeln!(req_agg_template).unwrap();
+    writeln!(req_agg_template, "requirements_with_detail:").unwrap();
+    writeln!(req_agg_template, "{{% set reqs = [\"REQ1\", \"REQ2\"] %}}").unwrap();
+    writeln!(req_agg_template, "{{% for req in reqs %}}").unwrap();
+    writeln!(
+        req_agg_template,
+        "{{% set filtered = test_results | filter(attribute=\"requirement\", value=req) %}}"
+    )
+    .unwrap();
+    writeln!(req_agg_template, "{{% if filtered | length > 0 %}}").unwrap();
+    writeln!(req_agg_template, "  - requirement: {{{{ req }}}}").unwrap();
+    writeln!(req_agg_template, "    items:").unwrap();
+    writeln!(req_agg_template, "{{% for item in filtered %}}").unwrap();
+    writeln!(req_agg_template, "      - id: {{{{ item.test_case_id }}}}").unwrap();
+    writeln!(
+        req_agg_template,
+        "        pass: {{% if item.overall_pass %}}true{{% else %}}false{{% endif %}}"
+    )
+    .unwrap();
+    writeln!(req_agg_template, "{{% endfor %}}").unwrap();
+    writeln!(req_agg_template, "{{% endif %}}").unwrap();
+    writeln!(req_agg_template, "{{% endfor %}}").unwrap();
+
+    let container_schema = dir.path().join("container_schema.json");
+    std::fs::write(&container_schema, "{}").unwrap();
+
+    let container_template = dir.path().join("container_template.adoc");
+    let mut ct = File::create(&container_template).unwrap();
+    writeln!(ct, "= Test Results").unwrap();
+    writeln!(ct).unwrap();
+    writeln!(ct, "{{{{ test_cases_md }}}}").unwrap();
+    writeln!(ct).unwrap();
+    writeln!(ct, "{{{{ requirements_summary_adoc }}}}").unwrap();
+
+    let container_data = dir.path().join("container_data.yml");
+    let mut cd = File::create(&container_data).unwrap();
+    writeln!(cd, "test_results:").unwrap();
+    writeln!(cd, "  - test_case_id: TC-001").unwrap();
+    writeln!(cd, "    requirement: REQ1").unwrap();
+    writeln!(cd, "    overall_pass: true").unwrap();
+    writeln!(cd, "  - test_case_id: TC-002").unwrap();
+    writeln!(cd, "    requirement: REQ1").unwrap();
+    writeln!(cd, "    overall_pass: false").unwrap();
+    writeln!(cd, "  - test_case_id: TC-003").unwrap();
+    writeln!(cd, "    requirement: REQ2").unwrap();
+    writeln!(cd, "    overall_pass: true").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yml");
+    std::fs::write(
+        &tc_file1,
+        "type: result\ntest_case_id: TC-001\noverall_pass: true\n",
+    )
+    .unwrap();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema.to_str().unwrap())
+        .arg(container_template.to_str().unwrap())
+        .arg(container_data.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg("--format")
+        .arg("asciidoc")
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("= Test Results"),
+        "output should contain container title"
+    );
+    assert!(
+        output.contains("=== Test: TC-001"),
+        "output should contain test case"
+    );
+    assert!(
+        output.contains("== Requirements Summary"),
+        "output should contain requirements summary section"
+    );
+    assert!(
+        output.contains("requirements_with_detail:"),
+        "output should contain requirements detail"
+    );
+    assert!(
+        output.contains("- requirement: REQ1"),
+        "output should contain REQ1"
+    );
+    assert!(
+        output.contains("- requirement: REQ2"),
+        "output should contain REQ2"
+    );
+    assert!(
+        output.contains("pass: true") && output.contains("pass: false"),
+        "output should contain both pass and fail statuses"
+    );
+
+    assert_snapshot!(
+        "e2e_template_injection_requirements_summary_adoc",
+        normalize(&output)
+    );
+}
+
+#[test]
+fn test_e2e_template_injection_missing_requirement_aggregation_template() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.adoc");
+
+    let vm_dir = dir.path().join("vm");
+    let result_vm_dir = vm_dir.join("result");
+    std::fs::create_dir_all(&result_vm_dir).unwrap();
+
+    let result_schema_path = result_vm_dir.join("schema.json");
+    std::fs::write(&result_schema_path, "{}").unwrap();
+
+    let result_template_path = result_vm_dir.join("template_asciidoc.adoc");
+    let mut result_template = File::create(&result_template_path).unwrap();
+    writeln!(result_template, "=== Test: {{{{ test_case_id }}}}").unwrap();
+    writeln!(result_template, "Status: {{{{ overall_pass }}}}").unwrap();
+
+    let container_schema = dir.path().join("container_schema.json");
+    std::fs::write(&container_schema, "{}").unwrap();
+
+    let container_template = dir.path().join("container_template.adoc");
+    let mut ct = File::create(&container_template).unwrap();
+    writeln!(ct, "= Test Results").unwrap();
+    writeln!(ct).unwrap();
+    writeln!(ct, "{{{{ test_cases_md }}}}").unwrap();
+    writeln!(ct).unwrap();
+    writeln!(ct, "{{% if requirements_summary_adoc is defined %}}").unwrap();
+    writeln!(ct, "{{{{ requirements_summary_adoc }}}}").unwrap();
+    writeln!(ct, "{{% else %}}").unwrap();
+    writeln!(ct, "Requirements summary not available").unwrap();
+    writeln!(ct, "{{% endif %}}").unwrap();
+
+    let container_data = dir.path().join("container_data.yml");
+    let mut cd = File::create(&container_data).unwrap();
+    writeln!(cd, "test_results:").unwrap();
+    writeln!(cd, "  - test_case_id: TC-001").unwrap();
+    writeln!(cd, "    requirement: REQ1").unwrap();
+    writeln!(cd, "    overall_pass: true").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yml");
+    std::fs::write(
+        &tc_file1,
+        "type: result\ntest_case_id: TC-001\noverall_pass: true\n",
+    )
+    .unwrap();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema.to_str().unwrap())
+        .arg(container_template.to_str().unwrap())
+        .arg(container_data.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg("--format")
+        .arg("asciidoc")
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(
+        status.success(),
+        "binary should have succeeded even without requirement aggregation template"
+    );
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("= Test Results"),
+        "output should contain container title"
+    );
+    assert!(
+        output.contains("=== Test: TC-001"),
+        "output should contain test case"
+    );
+    assert!(
+        output.contains("Requirements summary not available"),
+        "output should indicate requirements summary is not available"
+    );
+    assert!(
+        !output.contains("requirements_with_detail:"),
+        "output should not contain requirements detail when template is missing"
+    );
+
+    assert_snapshot!(
+        "e2e_template_injection_missing_requirement_aggregation_template",
+        normalize(&output)
+    );
+}
+
+#[test]
+fn test_e2e_template_injection_nested_include_file() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.md");
+
+    let vm_dir = dir.path().join("vm");
+    let test_vm_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_vm_dir).unwrap();
+
+    let test_schema_path = test_vm_dir.join("schema.json");
+    std::fs::write(&test_schema_path, "{}").unwrap();
+
+    let nested_template_path = test_vm_dir.join("nested.j2");
+    let mut nested_template = File::create(&nested_template_path).unwrap();
+    writeln!(nested_template, "**Nested content for {{{{ name }}}}**").unwrap();
+    writeln!(nested_template, "Value: {{{{ value }}}}").unwrap();
+
+    let test_template_path = test_vm_dir.join("template.j2");
+    let mut test_template = File::create(&test_template_path).unwrap();
+    writeln!(test_template, "## Test Case: {{{{ id }}}}").unwrap();
+    writeln!(test_template).unwrap();
+    writeln!(test_template, "{{{{ include_file(path=\"nested.j2\") }}}}").unwrap();
+    writeln!(test_template).unwrap();
+    writeln!(test_template, "Status: {{{{ status }}}}").unwrap();
+
+    let container_schema = dir.path().join("container_schema.json");
+    std::fs::write(&container_schema, "{}").unwrap();
+
+    let container_template = dir.path().join("container_template.j2");
+    let mut ct = File::create(&container_template).unwrap();
+    writeln!(ct, "# {{{{ title }}}}").unwrap();
+    writeln!(ct).unwrap();
+    writeln!(ct, "{{{{ test_cases_md }}}}").unwrap();
+
+    let container_data = dir.path().join("container_data.yml");
+    std::fs::write(&container_data, "title: Test Report\n").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yml");
+    let mut tc1 = File::create(&tc_file1).unwrap();
+    writeln!(tc1, "type: test").unwrap();
+    writeln!(tc1, "id: TC-001").unwrap();
+    writeln!(tc1, "name: First Test").unwrap();
+    writeln!(tc1, "value: 100").unwrap();
+    writeln!(tc1, "status: PASS").unwrap();
+
+    let tc_file2 = dir.path().join("tc2.yml");
+    let mut tc2 = File::create(&tc_file2).unwrap();
+    writeln!(tc2, "type: test").unwrap();
+    writeln!(tc2, "id: TC-002").unwrap();
+    writeln!(tc2, "name: Second Test").unwrap();
+    writeln!(tc2, "value: 200").unwrap();
+    writeln!(tc2, "status: FAIL").unwrap();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema.to_str().unwrap())
+        .arg(container_template.to_str().unwrap())
+        .arg(container_data.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg(tc_file2.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("# Test Report"),
+        "output should contain container title"
+    );
+    assert!(
+        output.contains("## Test Case: TC-001"),
+        "output should contain first test case"
+    );
+    assert!(
+        output.contains("**Nested content for First Test**"),
+        "output should contain nested template content with first test variable"
+    );
+    assert!(
+        output.contains("Value: 100"),
+        "output should contain value from first test case"
+    );
+    assert!(
+        output.contains("Status: PASS"),
+        "output should contain first test case status"
+    );
+    assert!(
+        output.contains("## Test Case: TC-002"),
+        "output should contain second test case"
+    );
+    assert!(
+        output.contains("**Nested content for Second Test**"),
+        "output should contain nested template content with second test variable"
+    );
+    assert!(
+        output.contains("Value: 200"),
+        "output should contain value from second test case"
+    );
+    assert!(
+        output.contains("Status: FAIL"),
+        "output should contain second test case status"
+    );
+
+    assert_snapshot!(
+        "e2e_template_injection_nested_include_file",
+        normalize(&output)
+    );
+}
+
+#[test]
+fn test_e2e_template_injection_nested_include_with_filters() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.md");
+
+    let vm_dir = dir.path().join("vm");
+    let test_vm_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_vm_dir).unwrap();
+
+    let test_schema_path = test_vm_dir.join("schema.json");
+    std::fs::write(&test_schema_path, "{}").unwrap();
+
+    let nested_template_path = test_vm_dir.join("format.j2");
+    let mut nested_template = File::create(&nested_template_path).unwrap();
+    writeln!(
+        nested_template,
+        "Formatted: {{{{ text | strip | replace(old='test', new='TEST') }}}}"
+    )
+    .unwrap();
+    writeln!(
+        nested_template,
+        "Regex: {{{{ text | replace_regex(old='\\\\d+', new='#') }}}}"
+    )
+    .unwrap();
+
+    let test_template_path = test_vm_dir.join("template.j2");
+    let mut test_template = File::create(&test_template_path).unwrap();
+    writeln!(test_template, "### {{{{ id }}}}").unwrap();
+    writeln!(test_template, "{{{{ include_file(path=\"format.j2\") }}}}").unwrap();
+
+    let container_schema = dir.path().join("container_schema.json");
+    std::fs::write(&container_schema, "{}").unwrap();
+
+    let container_template = dir.path().join("container_template.j2");
+    let mut ct = File::create(&container_template).unwrap();
+    writeln!(ct, "# Report").unwrap();
+    writeln!(ct, "{{{{ test_cases_md }}}}").unwrap();
+
+    let container_data = dir.path().join("container_data.yml");
+    std::fs::write(&container_data, "dummy: data\n").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yml");
+    let mut tc1 = File::create(&tc_file1).unwrap();
+    writeln!(tc1, "type: test").unwrap();
+    writeln!(tc1, "id: TC-001").unwrap();
+    writeln!(tc1, "text: '  test 123 data 456  '").unwrap();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema.to_str().unwrap())
+        .arg(container_template.to_str().unwrap())
+        .arg(container_data.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("### TC-001"),
+        "output should contain test case ID"
+    );
+    assert!(
+        output.contains("Formatted: TEST 123 data 456"),
+        "output should contain filtered text with strip and replace applied"
+    );
+    assert!(
+        output.contains("Regex:   test 123 data 456"),
+        "output should contain the text with original spacing"
+    );
+
+    assert_snapshot!(
+        "e2e_template_injection_nested_include_with_filters",
+        normalize(&output)
+    );
+}
+
+#[test]
+fn test_e2e_template_injection_multiple_levels_nested_include() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let output_path = dir.path().join("output.md");
+
+    let vm_dir = dir.path().join("vm");
+    let test_vm_dir = vm_dir.join("test");
+    std::fs::create_dir_all(&test_vm_dir).unwrap();
+
+    let test_schema_path = test_vm_dir.join("schema.json");
+    std::fs::write(&test_schema_path, "{}").unwrap();
+
+    let level3_template_path = test_vm_dir.join("level3.j2");
+    let mut level3_template = File::create(&level3_template_path).unwrap();
+    writeln!(level3_template, "Level3: {{{{ deep_value }}}}").unwrap();
+
+    let level2_template_path = test_vm_dir.join("level2.j2");
+    let mut level2_template = File::create(&level2_template_path).unwrap();
+    writeln!(level2_template, "Level2: {{{{ mid_value }}}}").unwrap();
+    writeln!(
+        level2_template,
+        "{{{{ include_file(path=\"level3.j2\") }}}}"
+    )
+    .unwrap();
+
+    let level1_template_path = test_vm_dir.join("level1.j2");
+    let mut level1_template = File::create(&level1_template_path).unwrap();
+    writeln!(level1_template, "Level1: {{{{ top_value }}}}").unwrap();
+    writeln!(
+        level1_template,
+        "{{{{ include_file(path=\"level2.j2\") }}}}"
+    )
+    .unwrap();
+
+    let test_template_path = test_vm_dir.join("template.j2");
+    let mut test_template = File::create(&test_template_path).unwrap();
+    writeln!(test_template, "# {{{{ id }}}}").unwrap();
+    writeln!(test_template, "{{{{ include_file(path=\"level1.j2\") }}}}").unwrap();
+
+    let container_schema = dir.path().join("container_schema.json");
+    std::fs::write(&container_schema, "{}").unwrap();
+
+    let container_template = dir.path().join("container_template.j2");
+    let mut ct = File::create(&container_template).unwrap();
+    writeln!(ct, "{{{{ test_cases_md }}}}").unwrap();
+
+    let container_data = dir.path().join("container_data.yml");
+    std::fs::write(&container_data, "dummy: data\n").unwrap();
+
+    let tc_file1 = dir.path().join("tc1.yml");
+    let mut tc1 = File::create(&tc_file1).unwrap();
+    writeln!(tc1, "type: test").unwrap();
+    writeln!(tc1, "id: TC-NESTED").unwrap();
+    writeln!(tc1, "top_value: TOP").unwrap();
+    writeln!(tc1, "mid_value: MID").unwrap();
+    writeln!(tc1, "deep_value: DEEP").unwrap();
+
+    let mut cmd = Command::new(get_binary_path());
+    cmd.arg("--container")
+        .arg(container_schema.to_str().unwrap())
+        .arg(container_template.to_str().unwrap())
+        .arg(container_data.to_str().unwrap())
+        .arg("--test-case")
+        .arg(vm_dir.to_str().unwrap())
+        .arg(tc_file1.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.as_os_str());
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success(), "binary should have succeeded");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+
+    assert!(
+        output.contains("# TC-NESTED"),
+        "output should contain test case ID"
+    );
+    assert!(
+        output.contains("Level1: TOP"),
+        "output should contain level 1 content"
+    );
+    assert!(
+        output.contains("Level2: MID"),
+        "output should contain level 2 content"
+    );
+    assert!(
+        output.contains("Level3: DEEP"),
+        "output should contain level 3 content"
+    );
+
+    let level1_pos = output
+        .find("Level1: TOP")
+        .expect("Level1 should be present");
+    let level2_pos = output
+        .find("Level2: MID")
+        .expect("Level2 should be present");
+    let level3_pos = output
+        .find("Level3: DEEP")
+        .expect("Level3 should be present");
+
+    assert!(
+        level1_pos < level2_pos && level2_pos < level3_pos,
+        "nested includes should maintain correct order"
+    );
+
+    assert_snapshot!(
+        "e2e_template_injection_multiple_levels_nested_include",
+        normalize(&output)
+    );
+}

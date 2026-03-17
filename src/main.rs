@@ -495,6 +495,9 @@ fn main() -> Result<()> {
 
             // Render
             log_fd3!("Rendering test-case template for: {}", file.display());
+            CONTEXT_HOLDER.with(|holder| {
+                *holder.borrow_mut() = Some(tc_context.clone());
+            });
             let rendered = tera.render("tc_template", &tc_context)?;
             if !first {
                 concatenated.push_str("\n\n");
@@ -661,6 +664,9 @@ fn main() -> Result<()> {
         req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
 
         log_fd3!("Rendering requirement aggregation template...");
+        CONTEXT_HOLDER.with(|holder| {
+            *holder.borrow_mut() = Some(context.clone());
+        });
         match req_tera.render("req_agg_template", &context) {
             Ok(requirements_summary) => {
                 let context_key = match args.format.as_str() {
@@ -698,6 +704,9 @@ fn main() -> Result<()> {
     tera.add_raw_template("template", &template_str)?;
 
     // Render the template
+    CONTEXT_HOLDER.with(|holder| {
+        *holder.borrow_mut() = Some(context.clone());
+    });
     let rendered = tera.render("template", &context)?;
 
     // Write the output
