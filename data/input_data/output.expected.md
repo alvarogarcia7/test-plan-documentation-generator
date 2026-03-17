@@ -1,164 +1,118 @@
-1 Introduction
-1.1 Overview
-The main aim of the GSMA Remote SIM Provisioning specifications [2] & [3] is to provide
-solution for the Remote SIM Provisioning of Consumer Devices. The adoption of this
-technical solution will provide the basis for global interoperability between different Operator
-deployment scenarios, for example network equipment (e.g. Subscription Manager Data
-Preparation (SM-DP+)) and various eUICC platforms.
-This Test Plan provides a set of test cases to be used for testing the eUICC implementations
-related to the provisioning system specifications documents [2] & [3]. This document offers
-an unified test strategy for checking the eUICC component.
+# Input Data Test Plan
 
-2020-03-16
+## Introduction
 
+### Overview
 
-1.6 Conventions
-The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this
-document SHALL be interpreted as described in RFC 2119 [20].
+This Test Plan provides a comprehensive set of test cases for the input-data verification system. The test cases demonstrate various scenarios including passing verifications, failing verifications, and mixed results to validate the test execution framework.
 
-# Test Plan
+2026-03-16
 
-## Test Case: TEST_002 Failing Test Case
+### Conventions
+
+The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document SHALL be interpreted as described in RFC 2119.
+
+## Test Plan
+
+## Test Case: TEST_FAILING_002
 
 **Requirement**: TEST_REQ_002
 
-**Item**: 2
+**Item**: 1
 
-**Sanitized Test ID**: TEST_002_Failing_Test_Case
+**Sanitized Test ID**: TEST_FAILING_002
 
 ## Description
 
-This test case validates error handling and failure scenarios.
+Test case with some failing verifications
 
 
 ## General Initial Conditions
 
 | **Entity** | **Description of the general initial condition** |
 | ------------- | --------- |
-| system | The system is in a degraded state. |
-| system | Error conditions are simulated. |
+| System | Ready |
 
 
 
-## Test Sequence 1 Test Sequence #01 Error Handling
+## Test Sequence 1 Mixed Results Sequence
 
-This test sequence verifies that the system properly handles
-error conditions and returns appropriate error codes.
-
-
-### Initial Conditions for This Sequence
-
-| **Entity** | **Description** |
-| ---------- | --------------- |
-| system | Error injection active. |
-
-
-
-| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
-| --------------- | ---------- | ------------------- | --------------------|
-| 1 | Trigger error condition | ERROR_DETECTED | Expected error was triggered. |
-| 2 | Verify error handling | ERROR_HANDLED | Error was handled correctly. |
-
-
-## Test Sequence 2 Test Sequence #02 Recovery
-
-This test verifies that the system can recover from
-the error condition and return to normal operation.
+Some steps pass, some fail
 
 
 ### Initial Conditions for This Sequence
 
 | **Entity** | **Description** |
 | ---------- | --------------- |
-| system | Error state is active. |
+| LPA | Active |
 
 
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | Attempt recovery | RECOVERY_SUCCESS | System recovered successfully. |
-
-
-## Test Sequence 3 Test Sequence #03 Validation After Recovery
-
-This test validates that all systems are functional
-after recovery from error state.
-
-
-### Initial Conditions for This Sequence
-
-| **Entity** | **Description** |
-| ---------- | --------------- |
-| system | Recovery complete. |
-
-
-
-| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
-| --------------- | ---------- | ------------------- | --------------------|
-| 1 | Validate system state | SYSTEM_HEALTHY | System is operating normally. |
+| 1 | Echo that passes | 0 | pass |
+| 2 | Command that should fail | 0 | expected |
+| 3 | Exit code mismatch | 0 |  |
 
 
 
 
-## Test Case: TEST_001 Passing Test Case
+## Test Case: TEST_PASSING_001
 
 **Requirement**: TEST_REQ_001
 
 **Item**: 1
 
-**Sanitized Test ID**: TEST_001_Passing_Test_Case
+**Sanitized Test ID**: TEST_PASSING_001
 
 ## Description
 
-This is a passing test case that validates basic functionality.
+Test case with all passing verifications
 
 
 ## General Initial Conditions
 
 | **Entity** | **Description of the general initial condition** |
 | ------------- | --------- |
-| system | The system is initialized and ready for testing. |
-| system | All required components are available. |
+| System | Ready |
 
 
 
-## Test Sequence 1 Test Sequence #01 Basic Operation
+## Test Sequence 1 Passing Sequence
 
-This test sequence verifies that the basic operation succeeds
-under normal conditions with expected inputs.
-
-
-### Initial Conditions for This Sequence
-
-| **Entity** | **Description** |
-| ---------- | --------------- |
-| system | System is in ready state. |
-
-
-
-| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
-| --------------- | ---------- | ------------------- | --------------------|
-| 1 | Initialize test data | INIT_SUCCESS | Test data initialized successfully. |
-| 2 | Execute main operation | EXEC_SUCCESS | Operation completed successfully. |
-
-
-## Test Sequence 2 Test Sequence #02 Validation
-
-This test sequence validates that results are correct
-and meet all requirements.
+All steps should pass
 
 
 ### Initial Conditions for This Sequence
 
 | **Entity** | **Description** |
 | ---------- | --------------- |
-| system | Previous sequence completed successfully. |
+| LPA | Active |
 
 
 
 | **Step Number** | **Action** | **Expected Result** | **Expected Output** |
 | --------------- | ---------- | ------------------- | --------------------|
-| 1 | Validate results | VALID_RESULT | All validations passed. |
+| 1 | Echo hello | 0 | hello |
+| 2 | True command | 0 |  |
+
+
+## Test Sequence 2 Second Passing Sequence
+
+Another sequence that passes
+
+
+### Initial Conditions for This Sequence
+
+| **Entity** | **Description** |
+| ---------- | --------------- |
+| System | Ready |
+
+
+
+| **Step Number** | **Action** | **Expected Result** | **Expected Output** |
+| --------------- | ---------- | ------------------- | --------------------|
+| 1 | Echo world | 0 | world |
 
 
 
@@ -290,4 +244,4 @@ icon type values from a Profile.
 
 
 
-(C) GSMA 2024. All rights reserved.
+(C) Test Plan Generator 2024. All rights reserved.
