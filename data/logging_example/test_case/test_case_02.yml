@@ -1,0 +1,4 @@
+type: test
+id: TC-LOG-002
+name: Second Test Case
+description: Another test case showing template loading with include_file

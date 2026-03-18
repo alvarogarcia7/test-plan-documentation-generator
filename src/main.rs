@@ -180,6 +180,14 @@ impl Function for IncludeFileFunction {
             }
         }
 
+        let absolute_full_path = full_path
+            .canonicalize()
+            .unwrap_or_else(|_| full_path.clone());
+        eprintln!(
+            "Loading template via include_file: {}",
+            absolute_full_path.display()
+        );
+
         let file_content = fs::read_to_string(&full_path).map_err(|e| {
             tera::Error::msg(format!(
                 "Failed to read file '{}': {}",
@@ -433,6 +441,13 @@ fn main() -> Result<()> {
         log_fd3!("Processing files of type '{}'", type_name);
 
         // Load template once per type
+        let absolute_template_path = template_path
+            .canonicalize()
+            .unwrap_or_else(|_| template_path.clone());
+        eprintln!(
+            "Loading verification method template: {}",
+            absolute_template_path.display()
+        );
         let template_str = fs::read_to_string(template_path)?;
         let mut tera = Tera::default();
         register_custom_filters_and_functions(
@@ -655,6 +670,13 @@ fn main() -> Result<()> {
             "Loading requirement aggregation template from: {}",
             req_agg_template_path.display()
         );
+        let absolute_req_agg_path = req_agg_template_path
+            .canonicalize()
+            .unwrap_or_else(|_| req_agg_template_path.clone());
+        eprintln!(
+            "Loading requirement aggregation template: {}",
+            absolute_req_agg_path.display()
+        );
         let req_agg_template_str = fs::read_to_string(&req_agg_template_path)?;
         let mut req_tera = Tera::default();
         register_custom_filters_and_functions(
@@ -695,6 +717,13 @@ fn main() -> Result<()> {
     }
 
     // Read the template file
+    let absolute_container_template = container_template
+        .canonicalize()
+        .unwrap_or_else(|_| container_template.clone());
+    eprintln!(
+        "Loading container template: {}",
+        absolute_container_template.display()
+    );
     let template_str = fs::read_to_string(container_template)?;
     let mut tera = Tera::default();
     register_custom_filters_and_functions(

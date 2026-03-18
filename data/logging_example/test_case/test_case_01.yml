@@ -1,0 +1,4 @@
+type: test
+id: TC-LOG-001
+name: First Test Case
+description: This test case demonstrates verification method template loading

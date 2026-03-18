@@ -17,7 +17,8 @@ help:
 	@echo "  make install-sccache - Install sccache for build caching"
 	@echo "  make build	   - Build the project"
 	@echo "  make check	   - Check the project without building"
-	@echo "  make test		- Run all tests (unit + E2E + input_data)"
+	@echo "  make test		- Run all tests (unit + E2E + input_data + logging example)"
+	@echo "  make test-logging-example - Run template loading logging example"
 	@echo "  make lint		- Run all linting checks (fmt-check + clippy)"
 	@echo "  make fmt		 - Format code with rustfmt"
 	@echo "  make fmt-check   - Check code formatting without making changes"
@@ -46,6 +47,7 @@ test: build
 	$(MAKE) test-e2e-asciidoc
 	$(MAKE) test-e2e-input-data
 	$(MAKE) test-e2e-input-data-asciidoc
+	$(MAKE) test-logging-example
 	echo "All steps in test passing"
 .PHONY: test
 
@@ -198,4 +200,26 @@ check-gitlab-pipeline:
 	@chmod +x check-pipeline-status.sh
 	@./check-pipeline-status.sh
 .PHONY: check-gitlab-pipeline
+
+test-logging-example:
+	@echo ""
+	@echo "=========================================="
+	@echo "Running Template Loading Logging Example"
+	@echo "=========================================="
+	@echo ""
+	@echo "This example demonstrates template loading logging."
+	@echo "Watch stderr for log messages showing absolute template paths."
+	@echo ""
+	./target/release/tpdg \
+	--output ./data/logging_example/output.actual.md \
+	--container ./data/logging_example/container/schema.json ./data/logging_example/container/template.j2 ./data/logging_example/container/data.yml \
+	--test-case ./data/logging_example/verification_methods ./data/logging_example/test_case/analysis_case_01.yml ./data/logging_example/test_case/test_case_01.yml ./data/logging_example/test_case/test_case_02.yml \
+	2>&1 | tee /dev/stderr | grep "Loading"
+	@echo ""
+	@echo "Verifying output matches expected..."
+	diff ./data/logging_example/output.actual.md ./data/logging_example/output.expected.md
+	@echo ""
+	@echo "✓ Template loading logging example passed!"
+	@echo ""
+.PHONY: test-logging-example
 
