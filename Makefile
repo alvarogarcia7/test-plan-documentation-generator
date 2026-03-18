@@ -61,6 +61,7 @@ test-e2e:
 test-e2e-asciidoc:
 	$(MAKE) test-e2e-test-plan-asciidoc
 	$(MAKE) test-e2e-test-results-asciidoc
+	$(MAKE) test-e2e-test-results-md
 .PHONY: test-e2e-asciidoc
 
 test-e2e-input-data-all:
@@ -90,6 +91,15 @@ test-e2e-test-results-asciidoc:
 	diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 .PHONY: test-e2e-test-results-asciidoc
 
+test-e2e-test-results-md:
+	./target/release/tpdg \
+	--output ./data/test_results_output.actual.md \
+	--container ./data/test_results/container_schema.json ./data/test_results/container_template.j2 ./data/test_results/container_data.yml \
+	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
+	3>log_3.log
+	diff ./data/test_results_output.actual.md ./data/test_results_output.expected.md
+.PHONY: test-e2e-test-results-md
+
 test-e2e-input-data:
 	./target/release/tpdg \
 	--output ./data/input_data/output.actual.md \
@@ -102,6 +112,7 @@ test-e2e-input-data:
 test-e2e-input-data-asciidoc:
 	$(MAKE) test-e2e-input-data-test-plan-asciidoc
 	$(MAKE) test-e2e-input-data-test-results-asciidoc
+	$(MAKE) test-e2e-input-data-test-results-md
 .PHONY: test-e2e-input-data-asciidoc
 
 test-e2e-input-data-test-plan-asciidoc:
@@ -123,6 +134,15 @@ test-e2e-input-data-test-results-asciidoc:
 	3>log_3.log
 	diff ./data/input_data/test_results_output.actual.adoc ./data/input_data/test_results_output.expected.adoc
 .PHONY: test-e2e-input-data-test-results-asciidoc
+
+test-e2e-input-data-test-results-md:
+	./target/release/tpdg \
+	--output ./data/input_data/test_results_output.actual.md \
+	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template.j2 ./data/input_data/test_results/container_data.yml \
+	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
+	3>log_3.log
+	diff ./data/input_data/test_results_output.actual.md ./data/input_data/test_results_output.expected.md
+.PHONY: test-e2e-input-data-test-results-md
 
 fmt:
 	cargo fmt
