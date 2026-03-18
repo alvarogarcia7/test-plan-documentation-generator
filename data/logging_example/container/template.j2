@@ -1,0 +1,24 @@
+# {{ title }}
+
+Version: {{ version }}
+
+---
+
+## Template Loading Demonstration
+
+This example demonstrates the template loading logging feature that outputs absolute file paths to stderr when templates are loaded.
+
+The following templates are loaded during the execution of this example:
+
+1. **Verification Method Templates** - Loaded based on the `type` field in test case YAML files
+2. **Requirement Aggregation Template** - Optional template for aggregating requirements
+3. **Container Template** - This template (the main container)
+4. **Include File Templates** - Loaded via `include_file()` function calls
+
+## Test Cases
+
+{{ test_cases_md }}
+
+---
+
+End of document.

@@ -4,6 +4,7 @@
 /data/test_plan_output.actual.adoc
 /data/test_results_output.actual.adoc
 *.actual.md
+*.actual.adoc
 *.log
 
 /.local/

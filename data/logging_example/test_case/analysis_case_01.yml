@@ -1,0 +1,4 @@
+type: analysis
+id: AN-LOG-001
+name: Analysis Case
+description: This demonstrates loading a different verification method type

@@ -1,0 +1,13 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+# Test Report
+## Test Case: TC-001
+**Nested content for First Test**
+Value: 100
+Status: PASS
+## Test Case: TC-002
+**Nested content for Second Test**
+Value: 200
+Status: FAIL

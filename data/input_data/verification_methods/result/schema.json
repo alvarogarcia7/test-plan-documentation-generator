@@ -6,6 +6,9 @@
       "type": "string",
       "enum": ["result"]
     },
+    "requirement": {
+      "type": "string"
+    },
     "test_case_id": {
       "type": "string"
     },

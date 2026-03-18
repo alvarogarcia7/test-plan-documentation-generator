@@ -1,0 +1,8 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+# TC-NESTED
+Level1: TOP
+Level2: MID
+Level3: DEEP

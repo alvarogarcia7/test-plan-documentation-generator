@@ -1,0 +1,8 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+= Test Results
+=== Test: TC-001
+Status: true
+Requirements summary not available
