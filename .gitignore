@@ -32,5 +32,15 @@ artifacts/
 
 /vendor/
 
-# StrictDoc output
-/requirements/output/
+# StrictDoc output and cache
+requirements/output/
+requirements/.strictdoc/
+.strictdoc_cache/
+
+# Python
+*.pyc
+__pycache__/
+
+# Virtual environments
+.venv/
+venv/
