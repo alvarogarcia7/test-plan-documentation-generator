@@ -6,7 +6,7 @@ WORKDIR /app
 COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
 COPY scripts/lib /tmp/scripts/lib/
 RUN apt-get update && \
-    apt-get install -y sccache && \
+    apt-get install -y sccache python3 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN whereis sccache
@@ -14,6 +14,17 @@ RUN sccache --version
 
 ENV HOME="/root"
 ENV PATH="$PATH:$HOME/.cargo/bin"
+
+# Install uv and setup Python environment
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="$HOME/.local/bin:$PATH"
+
+# Copy pyproject.toml and install StrictDoc
+COPY pyproject.toml ./
+RUN uv pip install --system --no-cache .[requirements]
+
+# Verify StrictDoc installation
+RUN strictdoc --version
 
 # Create cache directory and copy host cache if it exists
 RUN mkdir -p /app/.sccache/docker
