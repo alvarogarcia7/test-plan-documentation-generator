@@ -46,3 +46,6 @@ __pycache__/
 venv/
 
 *.egg-info/
+
+# StrictDoc
+/output/server/
