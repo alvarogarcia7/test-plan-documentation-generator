@@ -19,99 +19,149 @@ ELEMENTS:
   - TITLE: RATIONALE
     TYPE: String
     REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
 
 [REQUIREMENT]
 UID: HLR-001
 TITLE: Markdown Output Format
 STATEMENT: The system shall generate test documentation in Markdown format.
 RATIONALE: Markdown is widely supported and human-readable.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-005
 
 [REQUIREMENT]
 UID: HLR-002
 TITLE: AsciiDoc Output Format
 STATEMENT: The system shall generate test documentation in AsciiDoc format.
 RATIONALE: AsciiDoc provides advanced formatting capabilities for technical documentation.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-005
 
 [REQUIREMENT]
 UID: HLR-003
 TITLE: Tera Template Engine
 STATEMENT: The system shall use the Tera template engine for rendering templates.
 RATIONALE: Tera provides Jinja2-like syntax familiar to many users.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-002
 
 [REQUIREMENT]
 UID: HLR-004
 TITLE: JSON Schema Validation
 STATEMENT: The system shall use JSON Schema specification for validating input data.
 RATIONALE: JSON Schema is a standard and widely-adopted validation approach.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-003
 
 [REQUIREMENT]
 UID: HLR-005
 TITLE: Container Schema Validation
 STATEMENT: The system shall validate container-level data against a user-provided JSON schema.
 RATIONALE: Container data structure may vary between projects.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-003
 
 [REQUIREMENT]
 UID: HLR-006
 TITLE: Test Case Schema Validation
 STATEMENT: The system shall validate each test case data file against its type-specific JSON schema.
 RATIONALE: Different verification methods may have different data structures.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-003
 
 [REQUIREMENT]
 UID: HLR-007
 TITLE: Test Verification Method
 STATEMENT: The system shall support test verification method with dedicated schema and template.
 RATIONALE: Testing is the primary verification method for most requirements.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-004
 
 [REQUIREMENT]
 UID: HLR-008
 TITLE: Analysis Verification Method
 STATEMENT: The system shall support analysis verification method with dedicated schema and template.
 RATIONALE: Some requirements are verified through analysis rather than testing.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-004
 
 [REQUIREMENT]
 UID: HLR-009
 TITLE: Demonstration Verification Method
 STATEMENT: The system shall support demonstration verification method with dedicated schema and template.
 RATIONALE: Demonstration is appropriate for user-facing functionality verification.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-004
 
 [REQUIREMENT]
 UID: HLR-010
 TITLE: Inspection Verification Method
 STATEMENT: The system shall support inspection verification method with dedicated schema and template.
 RATIONALE: Inspection is used for design and documentation verification.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-004
 
 [REQUIREMENT]
 UID: HLR-011
 TITLE: CLI Arguments
 STATEMENT: The system shall accept command-line arguments for specifying input files and output options.
 RATIONALE: CLI arguments enable flexible invocation from scripts and build systems.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-006
 
 [REQUIREMENT]
 UID: HLR-012
 TITLE: Exit Codes
 STATEMENT: The system shall return appropriate exit codes for success and different error conditions.
 RATIONALE: Exit codes enable automated error detection in scripts and CI/CD pipelines.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-006
 
 [REQUIREMENT]
 UID: HLR-013
 TITLE: Requirements Aggregation
 STATEMENT: The system shall aggregate requirements coverage from test cases into a summary report.
 RATIONALE: Aggregated view helps identify coverage gaps.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-007
 
 [REQUIREMENT]
 UID: HLR-014
 TITLE: Container Template
 STATEMENT: The system shall render a container template that includes test plan metadata and aggregated test cases.
 RATIONALE: Container template provides the overall structure of the documentation.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-008
 
 [REQUIREMENT]
 UID: HLR-015
 TITLE: Test Case Templates
 STATEMENT: The system shall render individual test case templates based on verification method type.
 RATIONALE: Each verification method may require different formatting and content.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-008
 
 [REQUIREMENT]
 UID: HLR-016
 TITLE: Custom Template Filters
 STATEMENT: The system shall provide custom Tera filters for common text transformations.
 RATIONALE: Custom filters reduce template complexity and enable reusable text processing logic.
+REFS:
+- TYPE: Parent
+  VALUE: SYSREQ-002

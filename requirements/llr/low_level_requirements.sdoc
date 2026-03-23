@@ -19,147 +19,241 @@ ELEMENTS:
   - TITLE: RATIONALE
     TYPE: String
     REQUIRED: False
+  RELATIONS:
+  - TYPE: Parent
 
 [REQUIREMENT]
 UID: LLR-001
 TITLE: Clap Derive Macro for CLI
 STATEMENT: The system shall use clap's derive macro to define CLI argument structure.
 RATIONALE: Derive macro provides type-safe and maintainable CLI definition.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-011
 
 [REQUIREMENT]
 UID: LLR-002
 TITLE: Container Argument Structure
 STATEMENT: The --container argument shall accept exactly three values: schema path, template path, and data path.
 RATIONALE: Fixed argument count ensures all required inputs are provided.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-011
 
 [REQUIREMENT]
 UID: LLR-003
 TITLE: Test Case Argument Structure
 STATEMENT: The --test-case argument shall accept a verification methods directory followed by one or more test case files.
 RATIONALE: Directory path enables dynamic schema/template lookup, and multiple files allow batch processing.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-011
 
 [REQUIREMENT]
 UID: LLR-004
 TITLE: Exit Code 0 for Success
 STATEMENT: The system shall return exit code 0 when processing completes successfully.
 RATIONALE: Exit code 0 is the standard Unix convention for success.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-012
 
 [REQUIREMENT]
 UID: LLR-005
 TITLE: Exit Code 1 for Usage Errors
 STATEMENT: The system shall return exit code 1 for missing or invalid command-line arguments.
 RATIONALE: Distinguishes user errors from system errors.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-012
 
 [REQUIREMENT]
 UID: LLR-006
 TITLE: Exit Code 2 for File Errors
 STATEMENT: The system shall return exit code 2 when required files are not found.
 RATIONALE: File system errors should be distinguished from validation errors.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-012
 
 [REQUIREMENT]
 UID: LLR-007
 TITLE: Exit Code 3 for Validation Errors
 STATEMENT: The system shall return exit code 3 when schema validation fails.
 RATIONALE: Validation errors indicate data quality issues requiring user attention.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-012
 
 [REQUIREMENT]
 UID: LLR-008
 TITLE: JSONSchema Crate
 STATEMENT: The system shall use the jsonschema crate for JSON Schema validation.
 RATIONALE: jsonschema crate provides comprehensive JSON Schema specification support.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-004
 
 [REQUIREMENT]
 UID: LLR-009
 TITLE: Validation Before Rendering
 STATEMENT: The system shall validate all data files against their schemas before beginning template rendering.
 RATIONALE: Early validation prevents wasted processing on invalid data.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-005
+- TYPE: Parent
+  VALUE: HLR-006
 
 [REQUIREMENT]
 UID: LLR-010
 TITLE: Type Field Lookup
 STATEMENT: The system shall read the 'type' field from each test case YAML file to determine the verification method.
 RATIONALE: Type field enables dynamic schema and template selection.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-007
+- TYPE: Parent
+  VALUE: HLR-008
+- TYPE: Parent
+  VALUE: HLR-009
+- TYPE: Parent
+  VALUE: HLR-010
 
 [REQUIREMENT]
 UID: LLR-011
 TITLE: Verification Method Directory Structure
 STATEMENT: The system shall expect verification method directories to contain 'schema.json' and 'template.j2' or 'template.adoc' files.
 RATIONALE: Standard naming convention simplifies file lookup logic.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-007
+- TYPE: Parent
+  VALUE: HLR-008
+- TYPE: Parent
+  VALUE: HLR-009
+- TYPE: Parent
+  VALUE: HLR-010
 
 [REQUIREMENT]
 UID: LLR-012
 TITLE: Test Case Rendering Order
 STATEMENT: The system shall render test cases in the order they are specified on the command line.
 RATIONALE: Preserves user-specified ordering in the output documentation.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-015
 
 [REQUIREMENT]
 UID: LLR-013
 TITLE: Rendered Test Cases Variable
 STATEMENT: The system shall provide rendered test cases to the container template as 'test_cases_md' or 'test_cases_adoc' variable.
 RATIONALE: Variable naming indicates the content format and purpose.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-014
+- TYPE: Parent
+  VALUE: HLR-015
 
 [REQUIREMENT]
 UID: LLR-014
 TITLE: Strip Filter Implementation
 STATEMENT: The system shall implement a 'strip' filter that removes leading and trailing whitespace.
 RATIONALE: Common operation for cleaning YAML data values.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-016
 
 [REQUIREMENT]
 UID: LLR-015
 TITLE: Replace Filter Implementation
 STATEMENT: The system shall implement a 'replace' filter that replaces substring occurrences with support for 'old', 'new', and optional 'times' parameters.
 RATIONALE: Enables simple text substitution in templates.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-016
 
 [REQUIREMENT]
 UID: LLR-016
 TITLE: Replace Regex Filter Implementation
 STATEMENT: The system shall implement a 'replace_regex' filter that replaces regex pattern matches with support for 'old', 'new', and optional 'times' parameters.
 RATIONALE: Enables advanced pattern-based text transformations.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-016
 
 [REQUIREMENT]
 UID: LLR-017
 TITLE: Tera Context Population
 STATEMENT: The system shall populate the Tera context with all fields from YAML data files as top-level variables.
 RATIONALE: Direct field access simplifies template syntax.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-003
 
 [REQUIREMENT]
 UID: LLR-018
 TITLE: Output File Writing
 STATEMENT: The system shall write rendered output to the file specified by --output argument, or stdout if not specified.
 RATIONALE: Flexibility in output destination supports both file generation and piping.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-011
 
 [REQUIREMENT]
 UID: LLR-019
 TITLE: Template Extension Selection
 STATEMENT: The system shall select templates with '.j2' extension for markdown format and '.adoc' extension for asciidoc format.
 RATIONALE: File extension indicates template content type and syntax.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-001
+- TYPE: Parent
+  VALUE: HLR-002
 
 [REQUIREMENT]
 UID: LLR-020
 TITLE: Requirements Summary Template
 STATEMENT: The system shall optionally render a requirements_aggregation_template file if present in the verification methods directory.
 RATIONALE: Provides consolidated requirements coverage view.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-013
 
 [REQUIREMENT]
 UID: LLR-021
 TITLE: YAML Deserialization
 STATEMENT: The system shall use serde_yaml to deserialize YAML data files into serde_json::Value objects.
 RATIONALE: Unified Value representation simplifies template context handling.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-003
 
 [REQUIREMENT]
 UID: LLR-022
 TITLE: Error Message Formatting
 STATEMENT: The system shall provide descriptive error messages including file paths and validation details.
 RATIONALE: Clear error messages improve debugging and user experience.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-012
 
 [REQUIREMENT]
 UID: LLR-023
 TITLE: Temporary File for Test Cases
 STATEMENT: The system shall write rendered test cases to a temporary file and provide its path to the container template.
 RATIONALE: Allows container template to reference test cases content multiple times if needed.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-014
 
 [REQUIREMENT]
 UID: LLR-024
 TITLE: Format Argument Validation
 STATEMENT: The system shall accept only 'markdown' or 'asciidoc' as valid values for the --format argument.
 RATIONALE: Restricts to supported output formats.
+REFS:
+- TYPE: Parent
+  VALUE: HLR-001
+- TYPE: Parent
+  VALUE: HLR-002

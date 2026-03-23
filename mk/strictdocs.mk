@@ -91,7 +91,7 @@ strictdoc-export:
 # ------------------------------------------------------------------------------
 strictdoc-validate:
 	@echo "Validating StrictDoc requirements..."
-	strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
+	$(STRICTDOC) export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
 	#@$(STRICTDOC) export requirements/ --output-dir /tmp/strictdoc-validate-$$$$ > /dev/null 2>&1 && rm -rf /tmp/strictdoc-validate-$$$$ && echo "✓ Requirements validation passed" || (echo "✗ Requirements validation failed"; exit 1)
 .PHONY: strictdoc-validate
 
