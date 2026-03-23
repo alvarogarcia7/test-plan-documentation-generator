@@ -1,12 +1,20 @@
+[project]
+name = "tpdg-utils"
+version = "0.1.0"
+description = "Python utilities for Test Plan Documentation Generator"
+requires-python = ">=3.14"
+dependencies = [
+    "jsonschema>=4.0.0",
+    "pyyaml>=6.0",
+    "strictdoc",
+]
+
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
-[project]
-name = "tpdg-requirements"
-version = "0.1.0"
-description = "Requirements documentation support for Test Plan Documentation Generator"
-dependencies = ["strictdoc"]
-
 [project.optional-dependencies]
 requirements = ["strictdoc"]
+
+[tool.uv]
+dev-dependencies = []

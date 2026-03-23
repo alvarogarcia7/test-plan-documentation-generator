@@ -3,6 +3,38 @@
   "title": "Test Results Container",
   "description": "Schema for overall test results document containing multiple test case results",
   "type": "object",
+  "definitions": {
+    "TestStepExecution": {
+      "type": "object",
+      "description": "Expected and actual value pair",
+      "properties": {
+        "expected": {},
+        "actual": {}
+      },
+      "required": ["expected", "actual"]
+    },
+    "expectedOnlyPair": {
+      "type": "object",
+      "description": "Expected value only",
+      "properties": {
+        "expected": {}
+      },
+      "required": ["expected"]
+    },
+    "passFailResult": {
+      "type": "object",
+      "description": "Result structure with expected and actual for Pass/Fail",
+      "properties": {
+        "result": {
+          "$ref": "#/definitions/TestStepExecution"
+        },
+        "output": {
+          "$ref": "#/definitions/TestStepExecution"
+        }
+      },
+      "required": ["result"]
+    }
+  },
   "properties": {
     "title": {
       "type": "string",
@@ -67,15 +99,22 @@
                         "properties": {
                           "Pass": {
                             "type": "object",
-                            "properties": {
-                              "step": {
-                                "type": "integer"
+                            "allOf": [
+                              {
+                                "properties": {
+                                  "step": {
+                                    "type": "integer"
+                                  },
+                                  "description": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": ["step", "description"]
                               },
-                              "description": {
-                                "type": "string"
+                              {
+                                "$ref": "#/definitions/passFailResult"
                               }
-                            },
-                            "required": ["step", "description"]
+                            ]
                           }
                         },
                         "required": ["Pass"]
@@ -84,39 +123,25 @@
                         "properties": {
                           "Fail": {
                             "type": "object",
-                            "properties": {
-                              "step": {
-                                "type": "integer"
-                              },
-                              "description": {
-                                "type": "string"
-                              },
-                              "expected": {
-                                "type": "object",
+                            "allOf": [
+                              {
                                 "properties": {
-                                  "success": {
-                                    "type": ["boolean", "null"]
+                                  "step": {
+                                    "type": "integer"
                                   },
-                                  "result": {
+                                  "description": {
                                     "type": "string"
                                   },
-                                  "output": {
+                                  "reason": {
                                     "type": "string"
                                   }
                                 },
-                                "required": ["result", "output"]
+                                "required": ["step", "description", "reason"]
                               },
-                              "actual_result": {
-                                "type": "string"
-                              },
-                              "actual_output": {
-                                "type": "string"
-                              },
-                              "reason": {
-                                "type": "string"
+                              {
+                                "$ref": "#/definitions/passFailResult"
                               }
-                            },
-                            "required": ["step", "description", "expected", "actual_result", "actual_output", "reason"]
+                            ]
                           }
                         },
                         "required": ["Fail"]
@@ -131,9 +156,15 @@
                               },
                               "description": {
                                 "type": "string"
+                              },
+                              "result": {
+                                "$ref": "#/definitions/expectedOnlyPair"
+                              },
+                              "output": {
+                                "$ref": "#/definitions/expectedOnlyPair"
                               }
                             },
-                            "required": ["step", "description"]
+                            "required": ["step", "description", "result"]
                           }
                         },
                         "required": ["NotExecuted"]

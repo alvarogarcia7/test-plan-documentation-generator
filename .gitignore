@@ -50,3 +50,6 @@ venv/
 # StrictDoc
 /output/server/
 /output/
+
+# uv
+uv.lock
