@@ -124,26 +124,30 @@ StrictDoc is installed as an optional dependency using Python's package manageme
 
 ### Installation Steps
 
-The project includes a `pyproject.toml` file that defines StrictDoc as an optional dependency. Install it using:
+The project includes a `pyproject.toml` file that defines StrictDoc as a dependency. Install it using:
 
 ```bash
 # Using uv (recommended - faster installation)
-uv pip install --system .[requirements]
+uv sync
 
 # Or using standard pip
-pip install .[requirements]
+pip install .
 ```
 
 This command:
 1. Reads the `pyproject.toml` file in the project root
-2. Installs the `strictdoc` package from the `[project.optional-dependencies]` section
-3. Uses `--system` flag to install at the system level (outside a virtual environment)
+2. Installs the `strictdoc` package and its dependencies
+3. Creates a virtual environment with all required packages
 
 ### Verify Installation
 
 Check that StrictDoc is installed correctly:
 
 ```bash
+# If using uv sync
+uv run strictdoc --version
+
+# If using pip
 strictdoc --version
 ```
 
@@ -155,7 +159,7 @@ The project's requirements are organized in the following structure:
 
 ```
 requirements/
-├── strictdoc.toml              # StrictDoc project configuration
+├── strictdoc_config.py         # StrictDoc project configuration
 ├── sysreq/                     # System Requirements
 │   └── system_requirements.sdoc
 ├── hlr/                        # High-Level Requirements
@@ -169,32 +173,29 @@ requirements/
 
 ### Configuration File
 
-The `strictdoc.toml` file configures the StrictDoc project:
+The `strictdoc_config.py` file configures the StrictDoc project:
 
-```toml
-[project]
-title = "Test Plan Documentation Generator"
+```python
+from strictdoc.backend.sdoc.models.document_config import DocumentConfig
+from strictdoc.backend.sdoc.models.project_config import ProjectConfig
 
-[project.config]
-dir_for_sdoc_files = "requirements"
-output_dir = "requirements/output"
-
-[project.requirements]
-include = ["REQUIREMENT", "SECTION"]
-
-[project.traceability]
-enable = true
-
-[project.source_code]
-paths = ["src"]
+project_config = ProjectConfig(
+    project_title="Test Plan Documentation Generator",
+    dir_for_sdoc_files="requirements",
+    output_dir="requirements/output",
+    enable_traceability=True,
+    include_doc_types=["REQUIREMENT", "SECTION"],
+    source_root_path_for_code_traceability="src",
+)
 ```
 
 **Key settings:**
+- `project_title`: Title of the StrictDoc project
 - `dir_for_sdoc_files`: Root directory for `.sdoc` files
 - `output_dir`: Where generated documentation is written
-- `include`: Types of requirement elements to process
-- `enable` (traceability): Enables traceability checking
-- `paths` (source_code): Directories to scan for source code traceability
+- `enable_traceability`: Enables traceability checking
+- `include_doc_types`: Types of requirement elements to process
+- `source_root_path_for_code_traceability`: Directories to scan for source code traceability
 
 ## Creating Requirements
 
@@ -208,6 +209,10 @@ The web interface provides a user-friendly way to create and edit requirements w
 
 ```bash
 cd requirements
+# If using uv
+uv run strictdoc server
+
+# Or if using pip/venv
 strictdoc server
 ```
 
@@ -412,6 +417,8 @@ StrictDoc automatically validates traceability when generating documentation. If
 
 StrictDoc can export requirements as HTML or PDF documentation.
 
+**Note:** If you installed StrictDoc using `uv sync`, prefix all `strictdoc` commands with `uv run`, for example: `uv run strictdoc export .`
+
 ### Export HTML Documentation
 
 Generate a complete HTML documentation website:
@@ -473,7 +480,7 @@ strictdoc export . --output-dir custom-output
 strictdoc export requirements/sysreq/system_requirements.sdoc
 
 # Export with custom project config
-strictdoc export . --config custom-strictdoc.toml
+strictdoc export . --config custom-strictdoc_config.py
 ```
 
 ### Viewing Generated Documentation
@@ -731,24 +738,23 @@ Add missing requirements, remove obsolete ones, update outdated statements.
 **Solution:**
 ```bash
 # Install StrictDoc
-uv pip install --system .[requirements]
+uv sync
 
 # Verify installation
-which strictdoc
-strictdoc --version
+uv run strictdoc --version
 ```
 
 #### Issue: `ModuleNotFoundError: No module named 'strictdoc'`
 
-**Cause:** StrictDoc installed in wrong Python environment.
+**Cause:** StrictDoc not installed in current environment.
 
 **Solution:**
 ```bash
-# Install with --system flag
-uv pip install --system .[requirements]
+# Install dependencies
+uv sync
 
-# Or install in active virtual environment
-uv pip install .[requirements]
+# Or if using pip
+pip install .
 ```
 
 #### Issue: Server won't start - "Address already in use"
@@ -766,18 +772,18 @@ strictdoc server --port 5112
 
 #### Issue: "Document not found" error
 
-**Cause:** Running `strictdoc` from wrong directory or `strictdoc.toml` misconfigured.
+**Cause:** Running `strictdoc` from wrong directory or `strictdoc_config.py` misconfigured.
 
 **Solution:**
 ```bash
 # Ensure you're in project root or requirements directory
 cd /path/to/project/requirements
 
-# Verify strictdoc.toml exists
-ls strictdoc.toml
+# Verify strictdoc_config.py exists
+ls strictdoc_config.py
 
 # Check configuration
-cat strictdoc.toml
+cat strictdoc_config.py
 ```
 
 #### Issue: Broken traceability references
@@ -839,9 +845,8 @@ strictdoc export .
 **Solution:**
 ```bash
 # Temporarily disable source code scanning
-# Edit strictdoc.toml and remove or comment out:
-# [project.source_code]
-# paths = ["src"]
+# Edit strictdoc_config.py and remove or comment out:
+# source_root_path_for_code_traceability="src",
 
 # Or export specific documents
 strictdoc export requirements/sysreq/system_requirements.sdoc

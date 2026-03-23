@@ -6,9 +6,17 @@
 # maintain structured requirements in .sdoc files.
 #
 # Prerequisites:
-#   - StrictDoc must be installed (pip install strictdoc)
+#   - StrictDoc must be installed (uv sync or pip install .)
 #   - Requirements must be located in the requirements/ directory
+#   - If installed with uv, commands will use 'uv run strictdoc'
 # ==============================================================================
+
+# Detect if uv is being used (uv.lock exists)
+ifeq ($(shell test -f uv.lock && echo yes),yes)
+    STRICTDOC := uv run strictdoc
+else
+    STRICTDOC := strictdoc
+endif
 
 # ------------------------------------------------------------------------------
 # strictdoc-server: Launch StrictDoc Web Interface
@@ -28,7 +36,7 @@
 # Press Ctrl+C to stop the server.
 # ------------------------------------------------------------------------------
 strictdoc-server:
-	strictdoc server requirements/
+	$(STRICTDOC) server requirements/
 .PHONY: strictdoc-server
 
 # ------------------------------------------------------------------------------
@@ -51,13 +59,13 @@ strictdoc-server:
 #   - Committed to version control for documentation archival
 # ------------------------------------------------------------------------------
 strictdoc-export:
-	strictdoc export requirements/ --output-dir requirements/output/
+	$(STRICTDOC) export requirements/ --output-dir requirements/output/
 .PHONY: strictdoc-export
 
 # ------------------------------------------------------------------------------
 # strictdoc-validate: Validate Requirements Syntax and Consistency
 # ------------------------------------------------------------------------------
-# Checks the validity of .sdoc requirements files without generating output.
+# Checks the validity of .sdoc requirements files by performing a dry-run export.
 #
 # Usage:
 #   make strictdoc-validate
@@ -82,7 +90,9 @@ strictdoc-export:
 #   Non-zero - Validation errors found (see output for details)
 # ------------------------------------------------------------------------------
 strictdoc-validate:
+	@echo "Validating StrictDoc requirements..."
 	strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
+	#@$(STRICTDOC) export requirements/ --output-dir /tmp/strictdoc-validate-$$$$ > /dev/null 2>&1 && rm -rf /tmp/strictdoc-validate-$$$$ && echo "✓ Requirements validation passed" || (echo "✗ Requirements validation failed"; exit 1)
 .PHONY: strictdoc-validate
 
 # ------------------------------------------------------------------------------

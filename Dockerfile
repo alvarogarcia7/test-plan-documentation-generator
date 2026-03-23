@@ -15,16 +15,16 @@ RUN sccache --version
 ENV HOME="/root"
 ENV PATH="$PATH:$HOME/.cargo/bin"
 
-# Install uv and setup Python environment
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install uv via COPY instruction
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 ENV PATH="$HOME/.local/bin:$PATH"
 
-# Copy pyproject.toml and install StrictDoc
-COPY pyproject.toml ./
-RUN uv pip install --system --no-cache .[requirements]
+# Copy pyproject.toml, uv.lock and sync dependencies
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
 
 # Verify StrictDoc installation
-RUN strictdoc --version
+RUN uv run strictdoc --version
 
 # Create cache directory and copy host cache if it exists
 RUN mkdir -p /app/.sccache/docker
