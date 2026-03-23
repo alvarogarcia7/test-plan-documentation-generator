@@ -4,8 +4,9 @@ title: 'Gitlab pipeline: one single docker layer'
 status: Done
 assignee: []
 created_date: '2026-03-11 13:44'
-updated_date: '2026-03-12 07:52'
+updated_date: '2026-03-23 10:09'
 labels: []
+milestone: m-0
 dependencies: []
 ---
 
