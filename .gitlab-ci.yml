@@ -87,7 +87,8 @@ ci:
     - cargo --version
     - rustup component add rustfmt
     - rustup component add clippy
-    - apt update && apt install -y sccache
+    - apt update && apt install -y sccache python3-pip
+    - pip3 install --break-system-packages strictdoc
   image: rust:1.92-bookworm
   stage: build
   script:
@@ -95,6 +96,7 @@ ci:
     - cargo clippy --all-targets --all-features -- -D warnings
     - cargo build --release
     - cargo test --release --verbose
+    - strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
   artifacts:
     paths:
       - target/release/tpdg
