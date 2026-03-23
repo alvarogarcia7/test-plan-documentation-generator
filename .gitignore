@@ -49,3 +49,4 @@ venv/
 
 # StrictDoc
 /output/server/
+/output/
