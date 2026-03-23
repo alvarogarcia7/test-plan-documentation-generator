@@ -31,3 +31,6 @@ release_notes.md
 artifacts/
 
 /vendor/
+
+# StrictDoc output
+/requirements/output/

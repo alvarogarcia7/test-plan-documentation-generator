@@ -1,0 +1,15 @@
+[project]
+title = "Test Plan Documentation Generator"
+
+[project.config]
+dir_for_sdoc_files = "requirements"
+output_dir = "requirements/output"
+
+[project.requirements]
+include = ["REQUIREMENT", "SECTION"]
+
+[project.traceability]
+enable = true
+
+[project.source_code]
+paths = ["src"]
