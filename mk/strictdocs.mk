@@ -82,7 +82,7 @@ strictdoc-export:
 #   Non-zero - Validation errors found (see output for details)
 # ------------------------------------------------------------------------------
 strictdoc-validate:
-	strictdoc check requirements/
+	strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
 .PHONY: strictdoc-validate
 
 # ------------------------------------------------------------------------------

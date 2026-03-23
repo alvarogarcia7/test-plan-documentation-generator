@@ -58,11 +58,13 @@ COPY .sccache/host /app/.sccache/docker/
 COPY Cargo.toml Cargo.lock ./
 
 COPY Makefile ./
+COPY mk ./mk
 
 # Copy full source
 COPY src ./src
 COPY tests ./tests
 COPY data ./data
+COPY requirements ./requirements
 
 RUN mkdir -p ".cargo"; cargo vendor --locked > .cargo/config.toml
 
