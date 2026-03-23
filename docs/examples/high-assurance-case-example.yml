@@ -1,0 +1,394 @@
+# ============================================================================
+# HIGH ASSURANCE VERIFICATION EXAMPLE (Aerospace Standards)
+# ============================================================================
+# This example demonstrates a complete high assurance verification case
+# following DO-178C/DO-254 aerospace standards for safety-critical software.
+#
+# Schema: data/verification_methods/high_assurance/schema.json
+# Template: data/verification_methods/high_assurance/template.j2
+# Template (AsciiDoc): data/verification_methods/high_assurance/template_asciidoc.adoc
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Must be exactly "high_assurance" for high assurance verification method.
+type: high_assurance
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this verification to a specific high-level requirement.
+requirement: "HLRS-001"
+
+# ----------------------------------------------------------------------------
+# VERIFICATION IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this high assurance verification case.
+id: 'DO178C-4.5.1 HA_Navigation_Algorithm_Verification'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of the verification activity and its scope.
+description: |
+  This high assurance verification activity validates the navigation algorithm
+  software component that provides flight-critical position calculation and
+  guidance functionality. The verification is performed according to DO-178C
+  guidelines for Design Assurance Level A (DAL-A) software, which applies to
+  software whose anomalous behavior could cause or contribute to a failure of
+  system function resulting in a catastrophic failure condition for the aircraft.
+  
+  The verification covers requirements-based testing, structural coverage analysis,
+  traceability verification, and independence criteria as specified in DO-178C
+  Section 6.4.
+
+# ----------------------------------------------------------------------------
+# DESIGN ASSURANCE LEVEL (Required)
+# ----------------------------------------------------------------------------
+# DAL level per DO-178C: A (most critical) through E (least critical).
+# DAL-A: Catastrophic failure condition
+# DAL-B: Hazardous/Severe-Major failure condition
+# DAL-C: Major failure condition
+# DAL-D: Minor failure condition
+# DAL-E: No safety effect
+dal_level: "A"
+
+# ----------------------------------------------------------------------------
+# VERIFICATION OBJECTIVES (Required, Array)
+# ----------------------------------------------------------------------------
+# Lists the specific verification objectives per DO-178C Table A-6/A-7.
+# Each objective specifies the independence level required.
+verification_objectives:
+  
+  - objective_id: "VO-6.4.4.1"
+    description: "High-level requirements are compatible with target computer"
+    independence_level: "organizational"
+    verification_methods: ["Review", "Analysis"]
+  
+  - objective_id: "VO-6.4.4.2"
+    description: "Low-level requirements comply with high-level requirements"
+    independence_level: "organizational"
+    verification_methods: ["Review", "Analysis", "Traceability"]
+  
+  - objective_id: "VO-6.4.4.3"
+    description: "Software architecture is compatible with high-level requirements"
+    independence_level: "organizational"
+    verification_methods: ["Review", "Analysis"]
+  
+  - objective_id: "VO-6.4.4.4"
+    description: "Source code complies with low-level requirements and software architecture"
+    independence_level: "organizational"
+    verification_methods: ["Review", "Analysis"]
+  
+  - objective_id: "VO-6.4.4.5"
+    description: "Source code is verifiable, conform to standards, traceable to requirements"
+    independence_level: "organizational"
+    verification_methods: ["Review", "Static Analysis"]
+  
+  - objective_id: "VO-6.4.4.6"
+    description: "Requirements-based test cases and procedures are correct and complete"
+    independence_level: "independent"
+    verification_methods: ["Review", "Analysis"]
+  
+  - objective_id: "VO-6.4.4.7"
+    description: "Requirements-based test results are correct and discrepancies resolved"
+    independence_level: "independent"
+    verification_methods: ["Test Execution", "Review"]
+  
+  - objective_id: "VO-6.4.4.8"
+    description: "Modified Condition/Decision Coverage (MC/DC) achieved"
+    independence_level: "independent"
+    verification_methods: ["Structural Coverage Analysis"]
+
+# ----------------------------------------------------------------------------
+# TRACEABILITY (Required)
+# ----------------------------------------------------------------------------
+# Bi-directional traceability per DO-178C Section 6.3.4.
+traceability:
+  
+  high_level_requirements:
+    - "HLRS-001: Navigation system shall compute aircraft position with accuracy better than 10 meters CEP"
+    - "HLRS-002: Navigation algorithm shall fuse GPS, INS, and radio navigation inputs"
+    - "HLRS-003: Navigation system shall provide position update at minimum 10Hz rate"
+    - "HLRS-004: Navigation system shall detect and annunciate sensor failures within 500ms"
+  
+  low_level_requirements:
+    - "LLRS-001.1: GPS position data shall be validated for integrity before fusion"
+    - "LLRS-001.2: Kalman filter shall be implemented with 15-state extended model"
+    - "LLRS-001.3: Position uncertainty shall be computed and propagated"
+    - "LLRS-002.1: INS gyro drift compensation shall be applied using GPS corrections"
+    - "LLRS-002.2: Sensor fusion weights shall adapt based on signal quality metrics"
+    - "LLRS-003.1: Position computation cycle shall complete within 95ms worst-case"
+    - "LLRS-004.1: GPS signal loss shall trigger integrity flag within 100ms"
+    - "LLRS-004.2: Built-in test shall monitor sensor health every cycle"
+  
+  design_components:
+    - "DC-NAV-001: GPS_Validator module (gps_validator.c)"
+    - "DC-NAV-002: Kalman_Filter module (kalman_filter.c)"
+    - "DC-NAV-003: Sensor_Fusion_Manager module (sensor_fusion.c)"
+    - "DC-NAV-004: Position_Output module (position_output.c)"
+    - "DC-NAV-005: Health_Monitor module (health_monitor.c)"
+  
+  source_code:
+    - "src/navigation/gps_validator.c (lines 45-892)"
+    - "src/navigation/kalman_filter.c (lines 23-1456)"
+    - "src/navigation/sensor_fusion.c (lines 78-1023)"
+    - "src/navigation/position_output.c (lines 12-345)"
+    - "src/navigation/health_monitor.c (lines 34-567)"
+    - "include/navigation/nav_types.h"
+
+# ----------------------------------------------------------------------------
+# STRUCTURAL COVERAGE (Required)
+# ----------------------------------------------------------------------------
+# Structural coverage analysis results per DO-178C Table A-7.
+# For DAL-A: Statement, Decision, and MC/DC coverage required.
+structural_coverage:
+  
+  # Statement coverage: every statement executed at least once
+  statement_coverage: 100.0
+  
+  # Decision coverage: every decision outcome exercised
+  decision_coverage: 100.0
+  
+  # MC/DC coverage: Modified Condition/Decision Coverage (required for DAL-A)
+  # Each condition within a decision shown to independently affect the outcome
+  mc_dc_coverage: 100.0
+  
+  # Data coupling analysis: verification of data flow between modules
+  data_coupling: |
+    All data coupling between navigation modules verified. Global data usage
+    minimized and controlled through defined interfaces. No unintended data
+    sharing detected. Data flow analysis confirmed correct parameter passing
+    and return value usage across all module boundaries.
+  
+  # Control coupling analysis: verification of control flow dependencies
+  control_coupling: |
+    Control coupling analysis performed using LDRA tool suite. All control
+    flow paths analyzed for correctness. No unintended control dependencies
+    identified. Function call sequences validated against design architecture.
+    No dead code or unreachable code segments found.
+
+# ----------------------------------------------------------------------------
+# VERIFICATION ACTIVITIES (Required, Array)
+# ----------------------------------------------------------------------------
+# Detailed verification activities performed per DO-178C objectives.
+verification_activities:
+  
+  - activity_id: "VA-001"
+    activity_name: "Requirements Review and Traceability Analysis"
+    do178c_reference: "DO-178C Section 6.3.1, 6.3.4"
+    description: |
+      Comprehensive review of high-level and low-level requirements to verify
+      completeness, accuracy, consistency, and traceability. Bi-directional
+      traceability established between system requirements, high-level software
+      requirements, low-level requirements, design, and source code.
+    completion_criteria:
+      - "All high-level requirements traced to system requirements"
+      - "All low-level requirements traced to high-level requirements"
+      - "All design components traced to low-level requirements"
+      - "All source code modules traced to design components"
+      - "Reverse traceability verified (source to requirements)"
+      - "Requirements review checklist 100% complete"
+    evidence:
+      - "Requirements Traceability Matrix (RTM-NAV-001 v2.3)"
+      - "High-Level Requirements Review Report (HLRR-NAV-001 v1.5)"
+      - "Low-Level Requirements Review Report (LLRR-NAV-001 v2.1)"
+      - "Traceability Analysis Report (TAR-NAV-001 v1.2)"
+  
+  - activity_id: "VA-002"
+    activity_name: "Software Architecture and Design Review"
+    do178c_reference: "DO-178C Section 6.3.2"
+    description: |
+      Independent review of software architecture and detailed design to verify
+      compliance with high-level requirements and architectural standards. Review
+      includes partitioning, timing analysis, resource allocation, and interface
+      definitions.
+    completion_criteria:
+      - "Architecture complies with all high-level requirements"
+      - "Module interfaces clearly defined and documented"
+      - "Partitioning provides adequate fault isolation"
+      - "Timing analysis shows all deadlines met with 20% margin"
+      - "Resource usage within allocated budgets (CPU, memory, I/O)"
+      - "Design review checklist 100% complete"
+    evidence:
+      - "Software Architecture Document (SAD-NAV-001 v3.0)"
+      - "Design Review Report (DRR-NAV-001 v1.4)"
+      - "Timing Analysis Report (TAR-NAV-002 v1.1)"
+      - "Resource Budget Analysis (RBA-NAV-001 v1.0)"
+  
+  - activity_id: "VA-003"
+    activity_name: "Source Code Review and Standards Compliance"
+    do178c_reference: "DO-178C Section 6.3.3"
+    description: |
+      Code-level review to verify compliance with low-level requirements, software
+      architecture, and coding standards (MISRA-C 2012). Review includes algorithm
+      correctness, defensive programming, error handling, and code complexity.
+    completion_criteria:
+      - "Source code complies with all low-level requirements"
+      - "Code follows software architecture design"
+      - "100% compliance with MISRA-C 2012 (all required rules)"
+      - "Cyclomatic complexity below threshold (V(G) <= 20 per function)"
+      - "Code review checklist 100% complete"
+      - "All code review findings resolved and closed"
+    evidence:
+      - "Source Code Review Report (SCRR-NAV-001 v2.0)"
+      - "MISRA-C Compliance Report (MISRA-NAV-001 v1.3)"
+      - "Static Analysis Report - LDRA (SAR-NAV-001 v1.1)"
+      - "Complexity Analysis Report (CAR-NAV-001 v1.0)"
+  
+  - activity_id: "VA-004"
+    activity_name: "Requirements-Based Testing"
+    do178c_reference: "DO-178C Section 6.4.1, 6.4.2"
+    description: |
+      Comprehensive requirements-based test campaign to verify all high-level
+      and low-level requirements. Testing performed under normal, boundary, and
+      robustness conditions. Independent test team executed all test procedures
+      on target hardware.
+    completion_criteria:
+      - "Test cases cover 100% of high-level requirements"
+      - "Test cases cover 100% of low-level requirements"
+      - "All normal operational scenarios tested"
+      - "All boundary conditions tested"
+      - "All robustness/error cases tested"
+      - "All tests executed on target hardware"
+      - "All test discrepancies resolved or waived"
+    evidence:
+      - "Test Plan (TP-NAV-001 v2.5)"
+      - "Test Procedures (TPR-NAV-001 through TPR-NAV-045)"
+      - "Test Results Report (TRR-NAV-001 v1.8)"
+      - "Test Coverage Analysis (TCA-NAV-001 v1.2)"
+      - "Problem Reports and Resolution (PR-NAV-xxx series)"
+  
+  - activity_id: "VA-005"
+    activity_name: "Structural Coverage Analysis (MC/DC)"
+    do178c_reference: "DO-178C Section 6.4.4.2, Table A-7"
+    description: |
+      Structural coverage analysis using LDRA TBrun to measure and achieve
+      Modified Condition/Decision Coverage (MC/DC) as required for DAL-A software.
+      Additional test cases developed to achieve 100% MC/DC coverage.
+    completion_criteria:
+      - "100% statement coverage achieved"
+      - "100% decision coverage achieved"
+      - "100% MC/DC coverage achieved"
+      - "All uncovered code justified (dead code analysis)"
+      - "Additional test cases added to coverage test suite"
+    evidence:
+      - "Structural Coverage Analysis Report (SCAR-NAV-001 v2.1)"
+      - "MC/DC Analysis Report (MCDC-NAV-001 v1.4)"
+      - "Coverage Test Procedures (CTP-NAV-001 through CTP-NAV-012)"
+      - "Dead Code Analysis Report (DCAR-NAV-001 v1.0)"
+  
+  - activity_id: "VA-006"
+    activity_name: "Data and Control Coupling Analysis"
+    do178c_reference: "DO-178C Section 6.4.4.3"
+    description: |
+      Analysis of data and control coupling between software components to verify
+      correct data flow and control flow. Identifies unintended coupling and
+      verifies intended coupling is correct.
+    completion_criteria:
+      - "All inter-module data coupling identified and verified correct"
+      - "All control coupling identified and verified correct"
+      - "No unintended data sharing or global variable misuse"
+      - "No unintended control dependencies"
+    evidence:
+      - "Data Coupling Analysis Report (DCAR-NAV-002 v1.0)"
+      - "Control Coupling Analysis Report (CCAR-NAV-001 v1.0)"
+
+# ----------------------------------------------------------------------------
+# CONFIGURATION MANAGEMENT (Required)
+# ----------------------------------------------------------------------------
+# Configuration management data per DO-178C Section 7.
+configuration_management:
+  
+  # Software baseline identifier
+  baseline_id: "NAV-SW-v2.5.0-Release-Candidate-3"
+  
+  # Change tracking for this baseline
+  change_tracking:
+    - "CR-NAV-234: GPS validation timeout increased from 50ms to 100ms"
+    - "CR-NAV-245: Kalman filter state initialization corrected for cold start"
+    - "CR-NAV-251: Health monitor thresholds adjusted per system test results"
+  
+  # Related problem reports
+  problem_reports:
+    - "PR-NAV-089: Position discontinuity during GPS signal loss - CLOSED"
+    - "PR-NAV-102: Sensor fusion weight calculation overflow - CLOSED"
+    - "PR-NAV-115: Memory allocation failure in health monitor - CLOSED"
+
+# ----------------------------------------------------------------------------
+# ACCEPTANCE CRITERIA (Required, Array)
+# ----------------------------------------------------------------------------
+# Overall acceptance criteria for this high assurance verification activity.
+acceptance_criteria:
+  
+  # Requirements and Traceability
+  - "100% bi-directional traceability established from system requirements through source code"
+  - "All high-level requirements verified through requirements-based testing"
+  - "All low-level requirements verified through requirements-based testing"
+  
+  # Design and Code Quality
+  - "Software architecture review completed with all findings resolved"
+  - "Source code review completed with all findings resolved"
+  - "100% compliance with MISRA-C 2012 mandatory and required rules"
+  - "Cyclomatic complexity within limits for all functions (V(G) <= 20)"
+  
+  # Testing
+  - "Requirements-based testing achieves 100% high-level requirement coverage"
+  - "Requirements-based testing achieves 100% low-level requirement coverage"
+  - "All requirements-based tests pass on target hardware"
+  - "All test discrepancies resolved or accepted with waiver"
+  
+  # Structural Coverage (DAL-A specific)
+  - "100% statement coverage achieved and verified"
+  - "100% decision coverage achieved and verified"
+  - "100% Modified Condition/Decision Coverage (MC/DC) achieved and verified"
+  - "All unexecuted code justified as deactivated code or protective code"
+  
+  # Coupling Analysis
+  - "Data coupling analysis complete with no unintended data sharing"
+  - "Control coupling analysis complete with no unintended control dependencies"
+  
+  # Process and Documentation
+  - "All verification activities completed per DO-178C Plan for Software Aspects of Certification"
+  - "All Software Accomplishment Summary (SAS) sections complete"
+  - "All verification evidence archived in configuration management"
+  - "Independent verification performed for all activities requiring independence"
+
+# ============================================================================
+# AEROSPACE STANDARDS REFERENCE
+# ============================================================================
+#
+# DO-178C: Software Considerations in Airborne Systems and Equipment Certification
+# - Primary standard for airborne software certification
+# - Defines software development and verification processes
+# - Specifies DAL-based objectives and verification independence
+#
+# DO-254: Design Assurance Guidance for Airborne Electronic Hardware
+# - Companion to DO-178C for hardware verification
+# - Similar DAL-based assurance levels
+#
+# ARP4754A: Guidelines for Development of Civil Aircraft and Systems
+# - System-level development and safety assessment
+# - Integrates with DO-178C and DO-254
+#
+# DESIGN ASSURANCE LEVELS (DAL):
+# DAL-A: Catastrophic - Software failure could cause fatalities
+# DAL-B: Hazardous/Severe-Major - Serious or fatal injuries
+# DAL-C: Major - Significant operational limitations
+# DAL-D: Minor - Operating limitations, increased crew workload
+# DAL-E: No Safety Effect
+#
+# INDEPENDENCE REQUIREMENTS:
+# - Independent: Performed by person/organization different from developer
+# - Organizational: Performed by different group within same organization
+# - System: No specific independence required
+#
+# STRUCTURAL COVERAGE REQUIREMENTS:
+# DAL-A: Statement, Decision, MC/DC coverage
+# DAL-B: Statement, Decision coverage
+# DAL-C: Statement coverage
+# DAL-D: No specific structural coverage required
+# DAL-E: No specific structural coverage required
+#
+# ============================================================================
