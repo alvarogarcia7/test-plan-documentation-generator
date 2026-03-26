@@ -1,10 +1,20 @@
 == Test Case: {{ test_case_id | strip }}
 
-*Description*: {{ description | strip }}
+*Description:* {{ description | strip }}
 
-*Overall Status*: {% if overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
+{% if requirement is defined %}*Requirement:* {{ requirement }}
 
-== Execution Summary
+{% endif -%}
+{% if item is defined %}*Item:* {{ item }}
+
+{% endif -%}
+{% if tc is defined %}*TC:* {{ tc }}
+
+{% endif -%}
+
+*Overall Status:* {% if overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
+
+=== Execution Summary
 
 [cols="1,1", options="header"]
 |===
@@ -26,45 +36,65 @@
 |===
 
 {% for sequence in sequences %}
-== Test Sequence {{ sequence.sequence_id }}: {{ sequence.name | strip }}
+=== Test Sequence {{ sequence.sequence_id }}: {{ sequence.name | strip }}
 
-*Sequence Status*: {% if sequence.all_steps_passed %}✓ PASS{% else %}✗ FAIL{% endif %}
+*Sequence Status:* {% if sequence.all_steps_passed %}✓ PASS{% else %}✗ FAIL{% endif %}
 
-=== Step Results
+==== Step-by-Step Results
 
-[cols="1,3,2", options="header"]
+[cols="1,2,1,2,2", options="header"]
 |===
 | Step
 | Description
 | Status
+| Expected
+| Actual
 
 {% for step_result in sequence.step_results -%}
 {% if step_result.Pass -%}
 | {{ step_result.Pass.step }}
 | {{ step_result.Pass.description | strip }}
 | ✓ Pass
+| 
+| 
 
 {% elif step_result.Fail -%}
 | {{ step_result.Fail.step }}
 | {{ step_result.Fail.description | strip }}
 | ✗ Fail
+| 
+| 
 
 {% elif step_result.NotExecuted -%}
 | {{ step_result.NotExecuted.step }}
 | {{ step_result.NotExecuted.description | strip }}
 | ⊘ Not Executed
+| 
+| 
 
 {% endif -%}
 {% endfor %}
+
+|===
+
+==== Expected vs Actual Comparison
+
+[cols="1,1,2,2", options="header"]
+|===
+| Step
+| Property
+| Expected
+| Actual
+
 |===
 
 {% for step_result in sequence.step_results -%}
 {% if step_result.Fail %}
-=== Step {{ step_result.Fail.step }} - Failure Details
+==== Step {{ step_result.Fail.step }} - Failure Details
 
-*Description*: {{ step_result.Fail.description | strip }}
+*Description:* {{ step_result.Fail.description | strip }}
 
-*Reason*: {{ step_result.Fail.reason | strip }}
+*Reason:* {{ step_result.Fail.reason | strip }}
 
 [cols="1,2,2", options="header"]
 |===
@@ -91,3 +121,4 @@
 {% endif -%}
 {% endfor %}
 {% endfor %}
+

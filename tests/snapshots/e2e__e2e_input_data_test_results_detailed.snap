@@ -140,7 +140,6 @@ This document presents the results of test execution for Input Data Verification
 | true
 | N/A
 |===
-<<<
 == Test Case: TEST_PASSING_001
 *Description:* Test case with all passing verifications
 *Requirement:* TEST_REQ_001

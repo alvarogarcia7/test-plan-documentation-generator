@@ -49,71 +49,9 @@ This document presents the results of test execution for {{ project }}.
 
 # Detailed Test Results
 
-{% for test_result in test_results %}
-## Test Case: {{ test_result.test_case_id }}
-
-**Description:** {{ test_result.description }}
-
-{% if test_result.requirement is defined %}**Requirement:** {{ test_result.requirement }}
-{% endif %}
-{% if test_result.item is defined %}**Item:** {{ test_result.item }}
-{% endif %}
-{% if test_result.tc is defined %}**TC:** {{ test_result.tc }}
-{% endif %}
-
-**Overall Status:** {% if test_result.overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
-
-### Execution Summary
-
-| Metric | Count |
-|--------|-------|
-| Total Steps | {{ test_result.total_steps }} |
-| Passed Steps | {{ test_result.passed_steps }} |
-| Failed Steps | {{ test_result.failed_steps }} |
-| Not Executed Steps | {{ test_result.not_executed_steps }} |
-
-{% for sequence in test_result.sequences %}
-### Test Sequence {{ sequence.sequence_id }}: {{ sequence.name }}
-
-**Sequence Status:** {% if sequence.all_steps_passed %}✓ PASS{% else %}✗ FAIL{% endif %}
-
-#### Step-by-Step Results
-
-| Step | Description | Status |
-|------|-------------|--------|
-{% for step_result in sequence.step_results -%}
-{% if step_result.Pass -%}
-| {{ step_result.Pass.step }} | {{ step_result.Pass.description }} | ✓ Pass |
-{% elif step_result.Fail -%}
-| {{ step_result.Fail.step }} | {{ step_result.Fail.description }} | ✗ Fail |
-{% elif step_result.NotExecuted -%}
-| {{ step_result.NotExecuted.step }} | {{ step_result.NotExecuted.description }} | ⊘ Not Executed |
-{% endif -%}
-{% endfor %}
-
-{% for step_result in sequence.step_results -%}
-{% if step_result.Fail %}
-#### Step {{ step_result.Fail.step }} - Failure Details
-
-**Description:** {{ step_result.Fail.description }}
-
-**Reason:** {{ step_result.Fail.reason }}
-
-| Property | Expected | Actual |
-|----------|----------|--------|
-| Result | {{ step_result.Fail.expected.result }} | {{ step_result.Fail.actual_result }} |
-| Output | {{ step_result.Fail.expected.output }} | {{ step_result.Fail.actual_output }} |
-{% if step_result.Fail.expected.success is defined -%}
-| Success | {{ step_result.Fail.expected.success }} | N/A |
-{% endif -%}
-
-{% endif -%}
-{% endfor %}
-{% endfor %}
+{{ test_cases_md }}
 
 ---
-
-{% endfor %}
 
 ## Final Verification Verdict
 

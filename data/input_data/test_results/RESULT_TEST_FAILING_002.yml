@@ -1,5 +1,7 @@
 type: result
 requirement: "TEST_REQ_002"
+item: 1
+tc: 2
 test_case_id: 'TEST_FAILING_002'
 description: 'Test case with some failing verifications'
 sequences:
@@ -18,7 +20,7 @@ sequences:
             output: "expected"
           actual_result: "0"
           actual_output: "wrong"
-          reason: "Output mismatch: expected 'expected' but got 'wrong'"
+          reason: "Output mismatch: expected 'expected', got 'wrong'"
       - Fail:
           step: 3
           description: "Exit code mismatch"
@@ -28,7 +30,7 @@ sequences:
             output: ""
           actual_result: "1"
           actual_output: ""
-          reason: "Exit code mismatch: expected 0 but got 1"
+          reason: "Success mismatch: expected true, got false"
     all_steps_passed: false
 total_steps: 3
 passed_steps: 1

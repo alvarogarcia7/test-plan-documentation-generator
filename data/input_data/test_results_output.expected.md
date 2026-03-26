@@ -40,7 +40,6 @@ This document presents the results of test execution for Input Data Verification
 
 # Detailed Test Results
 
-
 ## Test Case: TEST_FAILING_002
 
 **Description:** Test case with some failing verifications
@@ -50,7 +49,6 @@ This document presents the results of test execution for Input Data Verification
 **Item:** 1
 
 **TC:** 2
-
 
 **Overall Status:** ✗ FAIL
 
@@ -104,8 +102,6 @@ This document presents the results of test execution for Input Data Verification
 
 
 
----
-
 
 ## Test Case: TEST_PASSING_001
 
@@ -116,7 +112,6 @@ This document presents the results of test execution for Input Data Verification
 **Item:** 1
 
 **TC:** 1
-
 
 **Overall Status:** ✓ PASS
 
@@ -158,9 +153,8 @@ This document presents the results of test execution for Input Data Verification
 
 
 
+
 ---
-
-
 
 ## Final Verification Verdict
 
