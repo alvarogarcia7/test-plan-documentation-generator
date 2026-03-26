@@ -35,6 +35,16 @@ This document presents the results of test execution for Input Data Verification
 | Failed Test Cases
 | 1
 |===
+=== Test Cases Status
+[cols="1,1", options="header"]
+|===
+| Test Case ID
+| Status
+| TEST_FAILING_002
+| ✗ FAIL
+| TEST_PASSING_001
+| ✓ PASS
+|===
 === Pass/Fail Summary
 *Pass Rate:* 50%
 *Overall Status:* ✗ *FAIL*
@@ -63,20 +73,36 @@ This document presents the results of test execution for Input Data Verification
 === Test Sequence 1: Mixed Results Sequence
 *Sequence Status:* ✗ FAIL
 ==== Step-by-Step Results
-[cols="1,3,2", options="header"]
+[cols="1,2,1,2,2", options="header"]
 |===
 | Step
 | Description
 | Status
+| Expected
+| Actual
 | 1
 | Echo that passes
 | ✓ Pass
+| 
+| 
 | 2
 | Command that should fail
 | ✗ Fail
+| 
+| 
 | 3
 | Exit code mismatch
 | ✗ Fail
+| 
+| 
+|===
+==== Expected vs Actual Comparison
+[cols="1,1,2,2", options="header"]
+|===
+| Step
+| Property
+| Expected
+| Actual
 |===
 ==== Step 2 - Failure Details
 *Description:* Command that should fail
@@ -138,29 +164,55 @@ This document presents the results of test execution for Input Data Verification
 === Test Sequence 1: Passing Sequence
 *Sequence Status:* ✓ PASS
 ==== Step-by-Step Results
-[cols="1,3,2", options="header"]
+[cols="1,2,1,2,2", options="header"]
 |===
 | Step
 | Description
 | Status
+| Expected
+| Actual
 | 1
 | Echo hello
 | ✓ Pass
+| 
+| 
 | 2
 | True command
 | ✓ Pass
+| 
+| 
+|===
+==== Expected vs Actual Comparison
+[cols="1,1,2,2", options="header"]
+|===
+| Step
+| Property
+| Expected
+| Actual
 |===
 === Test Sequence 2: Second Passing Sequence
 *Sequence Status:* ✓ PASS
 ==== Step-by-Step Results
-[cols="1,3,2", options="header"]
+[cols="1,2,1,2,2", options="header"]
 |===
 | Step
 | Description
 | Status
+| Expected
+| Actual
 | 1
 | Echo world
 | ✓ Pass
+| 
+| 
+|===
+==== Expected vs Actual Comparison
+[cols="1,1,2,2", options="header"]
+|===
+| Step
+| Property
+| Expected
+| Actual
 |===
 <<<
 == Final Verification Verdict

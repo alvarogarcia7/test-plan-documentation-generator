@@ -49,6 +49,20 @@ This document presents the results of test execution for {{ project }}.
 
 |===
 
+=== Test Cases Status
+
+[cols="1,1", options="header"]
+|===
+| Test Case ID
+| Status
+
+{% for test_result in test_results -%}
+| {{ test_result.test_case_id }}
+| {% if test_result.overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
+
+{% endfor -%}
+|===
+
 === Pass/Fail Summary
 
 {% set total = metadata.total_test_cases | default(value=test_results | length) -%}
@@ -111,28 +125,89 @@ This document presents the results of test execution for {{ project }}.
 
 ==== Step-by-Step Results
 
-[cols="1,3,2", options="header"]
+[cols="1,2,1,2,2", options="header"]
 |===
 | Step
 | Description
 | Status
+| Expected
+| Actual
 
 {% for step_result in sequence.step_results -%}
 {% if step_result.Pass -%}
 | {{ step_result.Pass.step }}
 | {{ step_result.Pass.description }}
 | ✓ Pass
+| {% if step_result.Pass.result.expected is defined %}Result: {{ step_result.Pass.result.expected }}{% endif %}{% if step_result.Pass.output.expected is defined %}{% if step_result.Pass.result.expected is defined %}, {% endif %}Output: {{ step_result.Pass.output.expected }}{% endif %}
+| {% if step_result.Pass.result.actual is defined %}Result: {{ step_result.Pass.result.actual }}{% endif %}{% if step_result.Pass.output.actual is defined %}{% if step_result.Pass.result.actual is defined %}, {% endif %}Output: {{ step_result.Pass.output.actual }}{% endif %}
 
 {% elif step_result.Fail -%}
 | {{ step_result.Fail.step }}
 | {{ step_result.Fail.description }}
 | ✗ Fail
+| {% if step_result.Fail.result.expected is defined %}Result: {{ step_result.Fail.result.expected }}{% endif %}{% if step_result.Fail.output.expected is defined %}{% if step_result.Fail.result.expected is defined %}, {% endif %}Output: {{ step_result.Fail.output.expected }}{% endif %}
+| {% if step_result.Fail.result.actual is defined %}Result: {{ step_result.Fail.result.actual }}{% endif %}{% if step_result.Fail.output.actual is defined %}{% if step_result.Fail.result.actual is defined %}, {% endif %}Output: {{ step_result.Fail.output.actual }}{% endif %}
 
 {% elif step_result.NotExecuted -%}
 | {{ step_result.NotExecuted.step }}
 | {{ step_result.NotExecuted.description }}
 | ⊘ Not Executed
+| {% if step_result.NotExecuted.result.expected is defined %}Result: {{ step_result.NotExecuted.result.expected }}{% endif %}{% if step_result.NotExecuted.output.expected is defined %}{% if step_result.NotExecuted.result.expected is defined %}, {% endif %}Output: {{ step_result.NotExecuted.output.expected }}{% endif %}
+| {% if step_result.NotExecuted.result.actual is defined %}Result: {{ step_result.NotExecuted.result.actual }}{% endif %}{% if step_result.NotExecuted.output.actual is defined %}{% if step_result.NotExecuted.result.actual is defined %}, {% endif %}Output: {{ step_result.NotExecuted.output.actual }}{% endif %}
 
+{% endif -%}
+{% endfor %}
+|===
+
+==== Expected vs Actual Comparison
+
+[cols="1,1,2,2", options="header"]
+|===
+| Step
+| Property
+| Expected
+| Actual
+
+{% for step_result in sequence.step_results -%}
+{% if step_result.Pass -%}
+{% if step_result.Pass.result.expected is defined or step_result.Pass.output.expected is defined -%}
+| {{ step_result.Pass.step }}
+| Result
+| {% if step_result.Pass.result.expected is defined %}{{ step_result.Pass.result.expected }}{% else %}N/A{% endif %}
+| {% if step_result.Pass.result.actual is defined %}{{ step_result.Pass.result.actual }}{% else %}N/A{% endif %}
+
+| {{ step_result.Pass.step }}
+| Output
+| {% if step_result.Pass.output.expected is defined %}{{ step_result.Pass.output.expected }}{% else %}N/A{% endif %}
+| {% if step_result.Pass.output.actual is defined %}{{ step_result.Pass.output.actual }}{% else %}N/A{% endif %}
+
+{% endif -%}
+{% elif step_result.Fail -%}
+{% if step_result.Fail.result.expected is defined or step_result.Fail.output.expected is defined -%}
+| {{ step_result.Fail.step }}
+| Result
+| {% if step_result.Fail.result.expected is defined %}{{ step_result.Fail.result.expected }}{% else %}N/A{% endif %}
+| {% if step_result.Fail.result.actual is defined %}{{ step_result.Fail.result.actual }}{% else %}N/A{% endif %}
+
+| {{ step_result.Fail.step }}
+| Output
+| {% if step_result.Fail.output.expected is defined %}{{ step_result.Fail.output.expected }}{% else %}N/A{% endif %}
+| {% if step_result.Fail.output.actual is defined %}{{ step_result.Fail.output.actual }}{% else %}N/A{% endif %}
+
+{% endif -%}
+{% elif step_result.NotExecuted -%}
+{% if step_result.NotExecuted.result.expected is defined or step_result.NotExecuted.output.expected is defined -%}
+| {{ step_result.NotExecuted.step }}
+| Result
+| {% if step_result.NotExecuted.result.expected is defined %}{{ step_result.NotExecuted.result.expected }}{% else %}N/A{% endif %}
+| {% if step_result.NotExecuted.result.actual is defined %}{{ step_result.NotExecuted.result.actual }}{% else %}N/A{% endif %}
+
+| {{ step_result.NotExecuted.step }}
+| Output
+| {% if step_result.NotExecuted.output.expected is defined %}{{ step_result.NotExecuted.output.expected }}{% else %}N/A{% endif %}
+| {% if step_result.NotExecuted.output.actual is defined %}{{ step_result.NotExecuted.output.actual }}{% else %}N/A{% endif %}
+
+{% endif -%}
 {% endif -%}
 {% endfor %}
 |===
