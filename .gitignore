@@ -31,3 +31,22 @@ release_notes.md
 artifacts/
 
 /vendor/
+
+# StrictDoc output and cache
+requirements/output/
+requirements/.strictdoc/
+.strictdoc_cache/
+
+# Python
+*.pyc
+__pycache__/
+
+# Virtual environments
+.venv/
+venv/
+
+*.egg-info/
+
+# StrictDoc
+/output/server/
+/output/

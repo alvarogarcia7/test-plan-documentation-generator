@@ -1,3 +1,5 @@
+include mk/strictdocs.mk
+
 init: install-prek-hooks
 .PHONY: init
 
@@ -31,6 +33,9 @@ help:
 	@echo "  make sccache-clean   - Clean sccache directories"
 	@echo "  make verify-github-actions - Verify GitHub Actions CI pipeline status"
 	@echo "  make check-gitlab-pipeline - Check GitLab CI pipeline status"
+	@echo ""
+	@echo "StrictDoc requirements management:"
+	@echo "  make strictdoc-help  - Show StrictDoc-specific commands"
 .PHONY: help
 
 build:
@@ -48,6 +53,7 @@ test: build
 	$(MAKE) test-e2e-input-data
 	$(MAKE) test-e2e-input-data-asciidoc
 	$(MAKE) test-logging-example
+	$(MAKE) strictdoc-validate
 	echo "All steps in test passing"
 .PHONY: test
 

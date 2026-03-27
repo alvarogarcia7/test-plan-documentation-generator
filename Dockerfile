@@ -6,7 +6,7 @@ WORKDIR /app
 COPY scripts/install-sccache.sh scripts/lib/logger.sh /tmp/scripts/
 COPY scripts/lib /tmp/scripts/lib/
 RUN apt-get update && \
-    apt-get install -y sccache && \
+    apt-get install -y sccache python3 && \
     rm -rf /var/lib/apt/lists/*
 
 RUN whereis sccache
@@ -14,6 +14,17 @@ RUN sccache --version
 
 ENV HOME="/root"
 ENV PATH="$PATH:$HOME/.cargo/bin"
+
+# Install uv via COPY instruction
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ENV PATH="$HOME/.local/bin:$PATH"
+
+# Copy pyproject.toml, uv.lock and sync dependencies
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev
+
+# Verify StrictDoc installation
+RUN uv run strictdoc --version
 
 # Create cache directory and copy host cache if it exists
 RUN mkdir -p /app/.sccache/docker
@@ -47,11 +58,13 @@ COPY .sccache/host /app/.sccache/docker/
 COPY Cargo.toml Cargo.lock ./
 
 COPY Makefile ./
+COPY mk ./mk
 
 # Copy full source
 COPY src ./src
 COPY tests ./tests
 COPY data ./data
+COPY requirements ./requirements
 
 RUN mkdir -p ".cargo"; cargo vendor --locked > .cargo/config.toml
 

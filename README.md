@@ -544,6 +544,38 @@ make check-gitlab-pipeline
 
 For detailed information, see [PIPELINE_VERIFICATION.md](PIPELINE_VERIFICATION.md).
 
+## Requirements Management
+
+The project integrates with [StrictDoc](https://strictdoc.readthedocs.io/) for requirements management and traceability. StrictDoc enables you to author, view, and manage requirements in a structured format with full traceability.
+
+### Integration Overview
+
+- Requirements are stored in `.sdoc` files using StrictDoc's markup language
+- The `make test` command now includes requirements syntax validation via `strictdoc check`
+- Requirements can be viewed in a web interface or exported to various formats
+
+For detailed information on working with requirements, see [docs/STRICTDOC_GUIDE.md](docs/STRICTDOC_GUIDE.md).
+
+### Quick Start Commands
+
+**View Requirements in Web Browser:**
+```bash
+make strictdoc-server
+```
+Opens a local web server to browse and navigate requirements documentation.
+
+**Export Requirements to HTML:**
+```bash
+make strictdoc-export
+```
+Generates static HTML documentation from requirements files.
+
+**Validate Requirements Syntax:**
+```bash
+make strictdoc-validate
+```
+Checks all `.sdoc` files for syntax errors and structural issues.
+
 ## Tech Stack
 
 - **Language**: Rust 2021 edition

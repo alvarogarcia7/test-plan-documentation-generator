@@ -94,6 +94,12 @@ jobs:
           3>log_3.log
         diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 
+    - name: Install StrictDoc
+      run: pip install strictdoc
+
+    - name: Validate StrictDoc requirements
+      run: strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
+
 #    - name: Build Docker image
 #      run: |
 #        mkdir -p .sccache/host

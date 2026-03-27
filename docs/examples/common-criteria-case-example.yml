@@ -1,0 +1,577 @@
+# ============================================================================
+# COMMON CRITERIA EVALUATION EXAMPLE (Aerospace Security)
+# ============================================================================
+# This example demonstrates a complete Common Criteria evaluation case for
+# aerospace security-critical systems requiring formal security certification.
+#
+# Schema: data/verification_methods/common_criteria/schema.json
+# Template: data/verification_methods/common_criteria/template.j2
+# Template (AsciiDoc): data/verification_methods/common_criteria/template_asciidoc.adoc
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# TYPE FIELD (Required)
+# ----------------------------------------------------------------------------
+# Must be exactly "common_criteria" for Common Criteria verification method.
+type: common_criteria
+
+# ----------------------------------------------------------------------------
+# REQUIREMENT IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Links this evaluation to a specific security requirement.
+requirement: "SEC-REQ-001"
+
+# ----------------------------------------------------------------------------
+# EVALUATION IDENTIFIER (Required)
+# ----------------------------------------------------------------------------
+# Unique identifier for this Common Criteria evaluation.
+id: 'CC-EAL5-ACS-001 Aircraft_Communication_Security_System'
+
+# ----------------------------------------------------------------------------
+# DESCRIPTION (Required)
+# ----------------------------------------------------------------------------
+# High-level description of the TOE (Target of Evaluation) and evaluation scope.
+description: |
+  This Common Criteria evaluation assesses the Aircraft Communication Security
+  System (ACSS) that provides cryptographic protection for air-to-ground and
+  air-to-air data communications in commercial aviation. The system implements
+  secure voice and data channels using FIPS 140-3 validated cryptographic modules,
+  ensures authentication of communication endpoints, and protects against
+  eavesdropping, tampering, and replay attacks.
+  
+  The evaluation is performed at EAL5 (Semiformally Designed and Tested) to
+  provide high assurance appropriate for protecting sensitive aviation data
+  including flight plans, weather updates, air traffic control communications,
+  and operational messages.
+
+# ----------------------------------------------------------------------------
+# EVALUATION ASSURANCE LEVEL (Required)
+# ----------------------------------------------------------------------------
+# EAL level per Common Criteria: EAL1 through EAL7.
+# EAL1: Functionally Tested
+# EAL2: Structurally Tested
+# EAL3: Methodically Tested and Checked
+# EAL4: Methodically Designed, Tested, and Reviewed
+# EAL5: Semiformally Designed and Tested
+# EAL6: Semiformally Verified Design and Tested
+# EAL7: Formally Verified Design and Tested
+evaluation_assurance_level: "EAL5"
+
+# ----------------------------------------------------------------------------
+# PROTECTION PROFILE (Required)
+# ----------------------------------------------------------------------------
+# Reference to the Protection Profile or Security Target being evaluated against.
+protection_profile: "PP-ACSS-v2.1: Protection Profile for Aircraft Communication Security Systems"
+
+# ----------------------------------------------------------------------------
+# SECURITY FUNCTIONAL REQUIREMENTS (Required, Array)
+# ----------------------------------------------------------------------------
+# SFRs define the security functions that the TOE must provide.
+# Organized by CC Part 2 families.
+security_functional_requirements:
+  
+  - sfr_id: "FCS_CKM.1"
+    family: "Cryptographic Key Management"
+    component: "Cryptographic Key Generation"
+    description: |
+      The TSF shall generate cryptographic keys in accordance with NIST SP 800-133
+      using FIPS 186-4 approved algorithms with a minimum strength of 256 bits for
+      symmetric keys and 3072 bits for asymmetric keys. Key generation shall use
+      hardware random number generator meeting NIST SP 800-90B requirements.
+    evaluation_activities:
+      - "Examine key generation implementation in cryptographic module source code"
+      - "Verify FIPS 186-4 ECDSA and RSA key generation algorithms used"
+      - "Confirm minimum key lengths enforced (AES-256, RSA-3072, ECDSA P-256)"
+      - "Validate hardware RNG entropy source meets NIST SP 800-90B"
+      - "Test key generation produces statistically random keys"
+  
+  - sfr_id: "FCS_CKM.4"
+    family: "Cryptographic Key Management"
+    component: "Cryptographic Key Destruction"
+    description: |
+      The TSF shall destroy cryptographic keys in accordance with NIST SP 800-88
+      guidelines by overwriting memory locations with random data followed by zeros,
+      with final verification that key material is no longer recoverable.
+    evaluation_activities:
+      - "Review key destruction procedures in design documentation"
+      - "Examine source code implementing key zeroization"
+      - "Test that keys are overwritten with random data then zeros"
+      - "Verify destroyed keys cannot be recovered from memory dumps"
+      - "Confirm key destruction invoked on system shutdown and key expiration"
+  
+  - sfr_id: "FCS_COP.1(1)"
+    family: "Cryptographic Operation"
+    component: "Cryptographic Operation - Encryption/Decryption"
+    description: |
+      The TSF shall perform encryption and decryption in accordance with AES-256-GCM
+      as specified in FIPS 197 and NIST SP 800-38D. Initialization vectors shall be
+      96-bit randomly generated for each encryption operation.
+    evaluation_activities:
+      - "Examine cryptographic module implementation of AES-256-GCM"
+      - "Verify FIPS 197 AES algorithm correctly implemented"
+      - "Confirm GCM mode implementation follows NIST SP 800-38D"
+      - "Test IV generation produces unique 96-bit values for each operation"
+      - "Validate encryption/decryption interoperability with reference implementation"
+  
+  - sfr_id: "FCS_COP.1(2)"
+    family: "Cryptographic Operation"
+    component: "Cryptographic Operation - Digital Signature"
+    description: |
+      The TSF shall perform digital signature operations in accordance with ECDSA
+      using NIST P-384 curve as specified in FIPS 186-4 with SHA-384 hash function.
+    evaluation_activities:
+      - "Review ECDSA implementation in cryptographic module"
+      - "Verify NIST P-384 elliptic curve parameters correctly implemented"
+      - "Confirm signature generation and verification per FIPS 186-4"
+      - "Test signature operations with known test vectors"
+      - "Validate signature verification rejects invalid signatures"
+  
+  - sfr_id: "FIA_UAU.2"
+    family: "Identification and Authentication"
+    component: "User Authentication Before Any Action"
+    description: |
+      The TSF shall require each user to be successfully authenticated before allowing
+      any TSF-mediated actions. Authentication uses mutual TLS 1.3 with certificate-based
+      authentication for both aircraft and ground station endpoints.
+    evaluation_activities:
+      - "Examine authentication flow in design and source code"
+      - "Verify mutual TLS 1.3 handshake implementation"
+      - "Confirm certificate validation includes path validation and revocation checking"
+      - "Test that unauthenticated users cannot access any TSF functions"
+      - "Validate authentication failure handling and logging"
+  
+  - sfr_id: "FTP_TRP.1"
+    family: "Trusted Path/Channels"
+    component: "Trusted Path"
+    description: |
+      The TSF shall provide a trusted communication path between itself and remote
+      users that is logically distinct from other paths using TLS 1.3 with perfect
+      forward secrecy (PFS) cipher suites only.
+    evaluation_activities:
+      - "Review TLS 1.3 implementation and cipher suite configuration"
+      - "Verify only PFS cipher suites enabled (ECDHE-based)"
+      - "Confirm session keys derived independently per session"
+      - "Test channel provides confidentiality and integrity protection"
+      - "Validate downgrade attack prevention mechanisms"
+
+# ----------------------------------------------------------------------------
+# SECURITY ASSURANCE REQUIREMENTS (Required, Array)
+# ----------------------------------------------------------------------------
+# SARs define the assurance activities that must be performed.
+# For EAL5, includes semiformal specifications and design.
+security_assurance_requirements:
+  
+  - sar_id: "ADV_ARC.1"
+    class: "Development"
+    family: "Security Architecture"
+    component: "Security Architecture Description"
+    description: |
+      The developer shall provide a security architecture description that identifies
+      and explains the security domains maintained by the TOE, describes how TSF
+      initialization is secure, and addresses all security functional requirements.
+    developer_actions:
+      - "Provide security architecture document describing security domains"
+      - "Document TSF initialization sequence and security properties"
+      - "Identify all security enforcement functions and their interactions"
+      - "Describe protection mechanisms for TSF data and code"
+    evaluator_actions:
+      - "Examine security architecture for completeness and consistency"
+      - "Verify all SFRs addressed by security architecture"
+      - "Assess domain separation and protection mechanisms"
+      - "Evaluate TSF initialization security properties"
+  
+  - sar_id: "ADV_FSP.5"
+    class: "Development"
+    family: "Functional Specification"
+    component: "Complete Semiformal Functional Specification with Additional Error Information"
+    description: |
+      The developer shall provide a complete semiformal functional specification
+      using structured notation (e.g., UML, Z notation) describing all TSF interfaces,
+      error messages, and exceptions.
+    developer_actions:
+      - "Provide semiformal specification of all TSFI (TSF Interfaces)"
+      - "Document all interface parameters, data types, and behaviors"
+      - "Specify error conditions and exception handling"
+      - "Trace TSFI to SFRs demonstrating complete coverage"
+    evaluator_actions:
+      - "Examine functional specification for completeness and correctness"
+      - "Verify semiformal notation used consistently"
+      - "Assess traceability from TSFI to SFRs"
+      - "Evaluate error handling and exception specifications"
+  
+  - sar_id: "ADV_IMP.1"
+    class: "Development"
+    family: "Implementation Representation"
+    component: "Implementation Representation of the TSF"
+    description: |
+      The developer shall provide the implementation representation (source code)
+      for all TSF components, along with mapping to the design.
+    developer_actions:
+      - "Provide complete source code for all TSF modules"
+      - "Document mapping between source code and low-level design"
+      - "Identify all TSF-related code and data structures"
+      - "Provide build instructions and configuration"
+    evaluator_actions:
+      - "Examine source code for consistency with design"
+      - "Verify all TSF functionality implemented in source code"
+      - "Assess code quality and adherence to secure coding practices"
+      - "Sample inspect code for vulnerabilities"
+  
+  - sar_id: "ADV_INT.2"
+    class: "Development"
+    family: "TSF Internals"
+    component: "Well-Structured Internals"
+    description: |
+      The developer shall provide a description of the TSF internals demonstrating
+      layered architecture, minimized complexity, and well-defined module interfaces.
+    developer_actions:
+      - "Document TSF internal architecture and module structure"
+      - "Describe layering and abstraction boundaries"
+      - "Identify module dependencies and interface definitions"
+      - "Explain complexity minimization approaches"
+    evaluator_actions:
+      - "Examine TSF internals documentation for clarity"
+      - "Assess architectural layering and separation"
+      - "Evaluate module complexity and cohesion"
+      - "Verify interface definitions are well-specified"
+  
+  - sar_id: "ATE_COV.2"
+    class: "Tests"
+    family: "Coverage"
+    component: "Analysis of Coverage"
+    description: |
+      The developer shall demonstrate that all TSF interfaces and SFRs are covered
+      by the test suite, with analysis showing test completeness.
+    developer_actions:
+      - "Provide test coverage analysis mapping tests to TSFI"
+      - "Demonstrate all SFRs covered by test cases"
+      - "Provide coverage metrics for interfaces and functionality"
+      - "Justify any untested TSF interfaces or SFRs"
+    evaluator_actions:
+      - "Examine test coverage analysis for completeness"
+      - "Verify all TSFI exercised by test suite"
+      - "Assess SFR test coverage adequacy"
+      - "Evaluate justifications for untested items"
+  
+  - sar_id: "ATE_DPT.3"
+    class: "Tests"
+    family: "Depth"
+    component: "Testing - Moderately Complex Mechanisms"
+    description: |
+      The developer shall test security mechanisms of moderate complexity to
+      demonstrate they operate correctly under normal and abnormal conditions.
+    developer_actions:
+      - "Identify moderately complex security mechanisms (e.g., crypto, authentication)"
+      - "Develop comprehensive test cases for identified mechanisms"
+      - "Test normal operation, boundary conditions, and error cases"
+      - "Provide test results and analysis"
+    evaluator_actions:
+      - "Examine test cases for moderately complex mechanisms"
+      - "Verify adequate depth of testing for security functions"
+      - "Assess test results for correctness"
+      - "Independently test selected mechanisms"
+  
+  - sar_id: "AVA_VAN.5"
+    class: "Vulnerability Assessment"
+    family: "Vulnerability Analysis"
+    component: "Advanced Methodical Vulnerability Analysis"
+    description: |
+      The developer shall perform advanced vulnerability analysis considering
+      publicly known vulnerabilities, attack potential, and security mechanisms.
+      Independent testing shall confirm resistance to attackers with high attack potential.
+    developer_actions:
+      - "Conduct vulnerability analysis of TOE and environment"
+      - "Identify potential vulnerabilities and assess exploitability"
+      - "Perform penetration testing with advanced techniques"
+      - "Document vulnerabilities found and mitigations"
+    evaluator_actions:
+      - "Examine developer vulnerability analysis for thoroughness"
+      - "Independently conduct vulnerability analysis"
+      - "Perform penetration testing with high attack potential"
+      - "Assess TOE resistance to identified attack vectors"
+
+# ----------------------------------------------------------------------------
+# TOE SECURITY FUNCTIONS (Required, Array)
+# ----------------------------------------------------------------------------
+# Describes the specific security functions implemented by the TOE.
+toe_security_functions:
+  
+  - tsf_id: "TSF-001"
+    name: "Cryptographic Engine"
+    description: |
+      Hardware-accelerated cryptographic module providing AES-256-GCM encryption,
+      ECDSA P-384 signatures, SHA-384 hashing, and HMAC-SHA-384. Implements key
+      generation, storage in tamper-resistant memory, and secure key destruction.
+    sfr_mapping: ["FCS_CKM.1", "FCS_CKM.4", "FCS_COP.1(1)", "FCS_COP.1(2)"]
+  
+  - tsf_id: "TSF-002"
+    name: "TLS 1.3 Protocol Stack"
+    description: |
+      Secure communication protocol implementation providing mutual authentication,
+      perfect forward secrecy, and encrypted channel establishment. Enforces minimum
+      TLS 1.3 with approved cipher suites only.
+    sfr_mapping: ["FIA_UAU.2", "FTP_TRP.1"]
+  
+  - tsf_id: "TSF-003"
+    name: "Certificate Validation Module"
+    description: |
+      X.509 certificate path validation engine implementing RFC 5280 with extensions
+      for aviation PKI. Performs chain validation, revocation checking via OCSP,
+      and certificate policy enforcement.
+    sfr_mapping: ["FIA_UAU.2"]
+  
+  - tsf_id: "TSF-004"
+    name: "Audit and Logging Subsystem"
+    description: |
+      Secure audit logging facility recording all security-relevant events including
+      authentication attempts, key lifecycle events, cryptographic operations, and
+      errors. Logs are integrity-protected and stored in tamper-evident storage.
+    sfr_mapping: []
+  
+  - tsf_id: "TSF-005"
+    name: "Secure Boot and Integrity Verification"
+    description: |
+      Boot-time integrity verification using cryptographic hashes and digital
+      signatures to ensure only authentic firmware executes. Implements measured
+      boot with TPM-based attestation.
+    sfr_mapping: []
+
+# ----------------------------------------------------------------------------
+# TEST COVERAGE ANALYSIS (Required)
+# ----------------------------------------------------------------------------
+# Coverage metrics demonstrating test completeness.
+test_coverage_analysis:
+  
+  # Percentage of TOE functionality covered by tests
+  functional_coverage: 98.5
+  
+  # Percentage of external interfaces covered by tests
+  interface_coverage: 100.0
+  
+  # Percentage of SFRs covered by tests
+  sfr_coverage: 100.0
+  
+  # Security mechanisms that have been tested
+  security_mechanisms_tested:
+    - "AES-256-GCM encryption and decryption"
+    - "ECDSA P-384 signature generation and verification"
+    - "TLS 1.3 handshake and session establishment"
+    - "Mutual certificate-based authentication"
+    - "X.509 certificate path validation"
+    - "OCSP revocation checking"
+    - "Key generation using hardware RNG"
+    - "Secure key storage and zeroization"
+    - "Perfect forward secrecy key derivation"
+    - "Audit log generation and integrity protection"
+    - "Secure boot and firmware verification"
+    - "Error handling and exception paths"
+
+# ----------------------------------------------------------------------------
+# VULNERABILITY ASSESSMENT (Required)
+# ----------------------------------------------------------------------------
+# Results of vulnerability analysis and penetration testing.
+vulnerability_assessment:
+  
+  # Penetration testing results
+  penetration_testing:
+    
+    - test_id: "PEN-001"
+      attack_vector: "TLS downgrade attack to TLS 1.2 or lower"
+      result: "PASS - TOE rejects connections with protocol version < TLS 1.3"
+      mitigation: "Hardcoded minimum version check in TLS state machine"
+    
+    - test_id: "PEN-002"
+      attack_vector: "Man-in-the-middle with forged certificate"
+      result: "PASS - TOE rejects certificates not signed by trusted CA"
+      mitigation: "Strict certificate chain validation per RFC 5280"
+    
+    - test_id: "PEN-003"
+      attack_vector: "Replay attack using captured encrypted messages"
+      result: "PASS - TOE detects replayed messages via sequence numbers"
+      mitigation: "TLS record sequence number validation and anti-replay checks"
+    
+    - test_id: "PEN-004"
+      attack_vector: "Key extraction via memory dump after power loss"
+      result: "PASS - Keys zeroized from volatile memory, persistent keys encrypted"
+      mitigation: "Automatic key zeroization on power down, encrypted key storage"
+    
+    - test_id: "PEN-005"
+      attack_vector: "Timing attack on ECDSA signature verification"
+      result: "PASS - Constant-time implementation prevents timing leakage"
+      mitigation: "Cryptographic operations use constant-time algorithms"
+    
+    - test_id: "PEN-006"
+      attack_vector: "Fault injection during cryptographic operations"
+      result: "PASS - Fault detection mechanisms trigger security shutdown"
+      mitigation: "Dual computation and comparison for critical crypto operations"
+    
+    - test_id: "PEN-007"
+      attack_vector: "Bypass authentication by exploiting error handling"
+      result: "PASS - All error paths enforce authentication requirements"
+      mitigation: "Fail-secure design with mandatory authentication checks"
+    
+    - test_id: "PEN-008"
+      attack_vector: "Denial of service via malformed TLS handshake"
+      result: "PASS - Malformed messages rejected, connection terminated gracefully"
+      mitigation: "Input validation and resource limits prevent DoS"
+  
+  # Covert channel analysis
+  covert_channel_analysis:
+    - "Timing covert channel analysis performed - no exploitable timing channels identified"
+    - "Storage covert channel analysis performed - no shared storage between security domains"
+    - "Network packet timing analysis shows jitter within acceptable tolerance"
+  
+  # Side channel analysis
+  side_channel_analysis:
+    - "Power analysis testing (SPA/DPA) performed on cryptographic module - no key leakage detected"
+    - "Electromagnetic emanation testing per TEMPEST standards - emissions within limits"
+    - "Cache timing attack analysis - constant-time crypto prevents cache-based leakage"
+
+# ----------------------------------------------------------------------------
+# EVIDENCE DOCUMENTS (Required, Array)
+# ----------------------------------------------------------------------------
+# Supporting documentation provided as evaluation evidence.
+evidence_documents:
+  
+  - doc_id: "ST-ACSS-001"
+    title: "Security Target for Aircraft Communication Security System"
+    version: "v2.1"
+    relevance: "Defines TOE, security objectives, SFRs, and SARs"
+  
+  - doc_id: "SAD-ACSS-001"
+    title: "Security Architecture Description"
+    version: "v1.5"
+    relevance: "Describes security domains, TSF initialization, protection mechanisms"
+  
+  - doc_id: "FSP-ACSS-001"
+    title: "Functional Specification (Semiformal)"
+    version: "v2.0"
+    relevance: "Complete TSFI specification in UML/Z notation"
+  
+  - doc_id: "HLD-ACSS-001"
+    title: "High-Level Design"
+    version: "v1.8"
+    relevance: "Describes TSF subsystems, modules, and interactions"
+  
+  - doc_id: "LLD-ACSS-001"
+    title: "Low-Level Design"
+    version: "v2.2"
+    relevance: "Detailed module design and algorithms"
+  
+  - doc_id: "SRC-ACSS-001"
+    title: "Source Code Package"
+    version: "v2.5.0"
+    relevance: "Complete TSF implementation in C and assembly"
+  
+  - doc_id: "TP-ACSS-001"
+    title: "Test Plan"
+    version: "v1.4"
+    relevance: "Comprehensive test strategy and test cases"
+  
+  - doc_id: "TR-ACSS-001"
+    title: "Test Results Report"
+    version: "v1.6"
+    relevance: "Results of all developer and evaluator testing"
+  
+  - doc_id: "COV-ACSS-001"
+    title: "Test Coverage Analysis"
+    version: "v1.2"
+    relevance: "Coverage metrics for TSFI, SFRs, and functionality"
+  
+  - doc_id: "VA-ACSS-001"
+    title: "Vulnerability Analysis Report"
+    version: "v1.3"
+    relevance: "Developer vulnerability analysis and penetration test results"
+  
+  - doc_id: "UG-ACSS-001"
+    title: "User Guidance and Administration Guide"
+    version: "v1.1"
+    relevance: "Secure operation and configuration guidance"
+  
+  - doc_id: "CM-ACSS-001"
+    title: "Configuration Management Plan"
+    version: "v1.0"
+    relevance: "TOE configuration items and version control procedures"
+
+# ----------------------------------------------------------------------------
+# ACCEPTANCE CRITERIA (Required, Array)
+# ----------------------------------------------------------------------------
+# Overall criteria for accepting this Common Criteria evaluation.
+acceptance_criteria:
+  
+  # Security Functional Requirements
+  - "All SFRs implemented correctly and completely in the TOE"
+  - "All SFRs covered by functional tests with passing results"
+  - "Cryptographic implementations validated against FIPS 140-3 standards"
+  - "Authentication mechanisms enforce mutual TLS 1.3 with certificate validation"
+  
+  # Security Assurance Requirements (EAL5)
+  - "Security architecture description complete and consistent"
+  - "Semiformal functional specification provided for all TSFI"
+  - "Complete source code provided with traceability to design"
+  - "TSF internals demonstrate well-structured, layered architecture"
+  - "Test coverage analysis shows 100% TSFI and SFR coverage"
+  - "Testing demonstrates correct operation of moderately complex mechanisms"
+  - "Advanced vulnerability analysis performed with no exploitable vulnerabilities"
+  
+  # Testing and Coverage
+  - "Functional coverage >= 95%"
+  - "Interface coverage = 100%"
+  - "SFR coverage = 100%"
+  - "All security mechanisms tested under normal and abnormal conditions"
+  
+  # Vulnerability Assessment
+  - "Penetration testing performed with high attack potential"
+  - "All identified vulnerabilities mitigated or demonstrated as non-exploitable"
+  - "Covert channel analysis shows no exploitable channels"
+  - "Side channel analysis (power, EM, timing) shows no key leakage"
+  
+  # Documentation
+  - "All required evaluation evidence documents delivered and complete"
+  - "Evidence traceability maintained throughout evaluation"
+  - "User guidance provides sufficient information for secure operation"
+  
+  # Certification
+  - "Independent evaluation team confirms TOE meets all EAL5 requirements"
+  - "No critical or high-severity findings remain unresolved"
+  - "TOE awarded Common Criteria EAL5 certification"
+
+# ============================================================================
+# COMMON CRITERIA REFERENCE
+# ============================================================================
+#
+# Common Criteria for Information Technology Security Evaluation (CC)
+# - ISO/IEC 15408 - International standard for security certification
+# - Three parts: Introduction and General Model, Security Functional Requirements,
+#   Security Assurance Requirements
+#
+# EVALUATION ASSURANCE LEVELS (EAL):
+# EAL1: Functionally Tested - Basic assurance
+# EAL2: Structurally Tested - Low to moderate assurance
+# EAL3: Methodically Tested and Checked - Moderate assurance
+# EAL4: Methodically Designed, Tested, and Reviewed - Moderate to high assurance
+# EAL5: Semiformally Designed and Tested - High assurance
+# EAL6: Semiformally Verified Design and Tested - Very high assurance
+# EAL7: Formally Verified Design and Tested - Extremely high assurance
+#
+# KEY CONCEPTS:
+# - TOE: Target of Evaluation (the product being certified)
+# - PP: Protection Profile (reusable security requirements)
+# - ST: Security Target (TOE-specific security claims)
+# - SFR: Security Functional Requirements (what security functions TOE provides)
+# - SAR: Security Assurance Requirements (how TOE is developed and evaluated)
+# - TSF: TOE Security Functions (implementation of SFRs)
+# - TSFI: TSF Interfaces (external interfaces to security functions)
+#
+# AEROSPACE APPLICATION:
+# Common Criteria certification is increasingly required for aerospace systems
+# handling sensitive data, particularly:
+# - Cockpit communications security
+# - Flight data protection
+# - Air traffic control data links
+# - Avionics network security
+# - Satellite communication security
+#
+# Often combined with DO-178C for comprehensive safety and security assurance.
+#
+# ============================================================================
