@@ -1,10 +1,20 @@
 ## Test Case: {{ test_case_id | strip }}
 
-**Description**: {{ description | strip }}
+**Description:** {{ description | strip }}
 
-**Overall Status**: {% if overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
+{% if requirement is defined %}**Requirement:** {{ requirement }}
 
-## Execution Summary
+{% endif -%}
+{% if item is defined %}**Item:** {{ item }}
+
+{% endif -%}
+{% if tc is defined %}**TC:** {{ tc }}
+
+{% endif -%}
+
+**Overall Status:** {% if overall_pass %}✓ PASS{% else %}✗ FAIL{% endif %}
+
+### Execution Summary
 
 | Metric | Count |
 |--------|-------|
@@ -14,11 +24,11 @@
 | Not Executed Steps | {{ not_executed_steps }} |
 
 {% for sequence in sequences %}
-## Test Sequence {{ sequence.sequence_id }}: {{ sequence.name | strip }}
+### Test Sequence {{ sequence.sequence_id }}: {{ sequence.name | strip }}
 
-**Sequence Status**: {% if sequence.all_steps_passed %}✓ PASS{% else %}✗ FAIL{% endif %}
+**Sequence Status:** {% if sequence.all_steps_passed %}✓ PASS{% else %}✗ FAIL{% endif %}
 
-### Step Results
+#### Step-by-Step Results
 
 | Step | Description | Status |
 |------|-------------|--------|
@@ -34,11 +44,11 @@
 
 {% for step_result in sequence.step_results -%}
 {% if step_result.Fail %}
-### Step {{ step_result.Fail.step }} - Failure Details
+#### Step {{ step_result.Fail.step }} - Failure Details
 
-**Description**: {{ step_result.Fail.description | strip }}
+**Description:** {{ step_result.Fail.description | strip }}
 
-**Reason**: {{ step_result.Fail.reason | strip }}
+**Reason:** {{ step_result.Fail.reason | strip }}
 
 | Property | Expected | Actual |
 |----------|----------|--------|

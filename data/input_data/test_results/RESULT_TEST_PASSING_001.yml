@@ -1,5 +1,7 @@
 type: result
 requirement: "TEST_REQ_001"
+item: 1
+tc: 1
 test_case_id: 'TEST_PASSING_001'
 description: 'Test case with all passing verifications'
 sequences:

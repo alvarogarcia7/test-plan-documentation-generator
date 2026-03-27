@@ -50,6 +50,7 @@ test: build
 	cargo test --release --all-features --tests
 	$(MAKE) test-e2e
 	$(MAKE) test-e2e-asciidoc
+	$(MAKE) validate-testcases-data
 	$(MAKE) test-e2e-input-data
 	$(MAKE) test-e2e-input-data-asciidoc
 	$(MAKE) test-logging-example
@@ -151,6 +152,13 @@ test-e2e-input-data-test-results-md:
 	3>log_3.log
 	diff ./data/input_data/test_results_output.actual.md ./data/input_data/test_results_output.expected.md
 .PHONY: test-e2e-input-data-test-results-md
+
+validate-testcases-data:
+	@echo "Validating testcases_results_container data against schema..."
+	@uv run python scripts/validate_schema.py \
+		./data/testcase_results_container/schema.json \
+		./data/testcase_results_container/data_sample.yml
+.PHONY: validate-testcases-data
 
 fmt:
 	cargo fmt

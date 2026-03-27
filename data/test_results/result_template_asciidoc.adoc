@@ -58,36 +58,41 @@
 {% endfor %}
 |===
 
-{% for step_result in sequence.step_results -%}
-{% if step_result.Fail %}
-=== Step {{ step_result.Fail.step }} - Failure Details
-
-*Description*: {{ step_result.Fail.description }}
-
-*Reason*: {{ step_result.Fail.reason }}
+=== Expected vs Actual Results
 
 [cols="1,2,2", options="header"]
 |===
-| Property
+| Step
 | Expected
 | Actual
 
-| Result
-| {{ step_result.Fail.expected.result }}
-| {{ step_result.Fail.actual_result }}
-
-| Output
-| {{ step_result.Fail.expected.output }}
-| {{ step_result.Fail.actual_output }}
-
-{% if step_result.Fail.expected.success is defined -%}
-| Success
-| {{ step_result.Fail.expected.success }}
+{% for step_result in sequence.step_results -%}
+{% if step_result.Pass -%}
+| {{ step_result.Pass.step }}
 | N/A
+| ✓ Pass
 
-{% endif -%}
-|===
+{% elif step_result.Fail -%}
+| {{ step_result.Fail.step }}
+| *Result:* {{ step_result.Fail.expected.result }}
+
+*Output:* {{ step_result.Fail.expected.output }}
+{% if step_result.Fail.expected.success is defined %}
+*Success:* {{ step_result.Fail.expected.success }}
+{% endif %}
+| *Result:* {{ step_result.Fail.actual_result }}
+
+*Output:* {{ step_result.Fail.actual_output }}
+
+*Reason:* {{ step_result.Fail.reason }}
+
+{% elif step_result.NotExecuted -%}
+| {{ step_result.NotExecuted.step }}
+| N/A
+| ⊘ Not Executed
 
 {% endif -%}
 {% endfor %}
+|===
+
 {% endfor %}

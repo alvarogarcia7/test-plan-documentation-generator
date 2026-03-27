@@ -76,6 +76,19 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Fetch 'XX'
 | ✓ Pass
 |===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
+| ✓ Pass
+|===
 == Test Sequence 2: Test Sequence #02 Nominal: Unset PPPR2 and update icon
 *Sequence Status*: ✓ PASS
 === Step Results
@@ -89,6 +102,19 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | ✓ Pass
 | 2
 | Fetch 'XX'
+| ✓ Pass
+|===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
 | ✓ Pass
 |===
 == Test Case: 4.2.2.3 ANOTHER ONE
@@ -123,23 +149,22 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Fetch 'XX'
 | ✗ Fail
 |===
-=== Step 2 - Failure Details
-*Description*: Fetch 'XX'
-*Reason*: Expected success status code 0x9000 but received error code 0x6985 indicating security validation failure
+=== Expected vs Actual Results
 [cols="1,2,2", options="header"]
 |===
-| Property
+| Step
 | Expected
 | Actual
-| Result
-| MTD_CHECK_SMS_POR(0x9000)
-| MTD_CHECK_SMS_POR(0x6985)
-| Output
-| This operation was successful.
-| Command not allowed - security status not satisfied
-| Success
-| 
+| 1
 | N/A
+| ✓ Pass
+| 2
+| *Result:* MTD_CHECK_SMS_POR(0x9000)
+*Output:* This operation was successful.
+*Success:* 
+| *Result:* MTD_CHECK_SMS_POR(0x6985)
+*Output:* Command not allowed - security status not satisfied
+*Reason:* Expected success status code 0x9000 but received error code 0x6985 indicating security validation failure
 |===
 == Test Sequence 2: Test Sequence #02 Nominal: Unset PPPR2 and update icon
 *Sequence Status*: ✗ FAIL
@@ -154,6 +179,19 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | ⊘ Not Executed
 | 2
 | Fetch 'XX'
+| ⊘ Not Executed
+|===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ⊘ Not Executed
+| 2
+| N/A
 | ⊘ Not Executed
 |===
 == Test Case: 4.2.2.4 AN_eUICC_Performance_Analysis
@@ -194,6 +232,25 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Confirm predicted failure rate is less than 0.01% under normal load
 | ✓ Pass
 |===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
+| ✓ Pass
+| 3
+| N/A
+| ✓ Pass
+| 4
+| N/A
+| ✓ Pass
+|===
 == Test Sequence 2: Load Balancing Model Verification
 *Sequence Status*: ✓ PASS
 === Step Results
@@ -207,6 +264,19 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | ✓ Pass
 | 2
 | Verify multi-channel processing efficiency meets requirements
+| ✓ Pass
+|===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
 | ✓ Pass
 |===
 == Test Sequence 3: Resource Utilization Analysis
@@ -225,6 +295,22 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | ✓ Pass
 | 3
 | Validate resource utilization predictions against observed data
+| ✓ Pass
+|===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
+| ✓ Pass
+| 3
+| N/A
 | ✓ Pass
 |===
 == Test Case: 4.2.2.5 DM_eUICC_Profile_Management
@@ -268,6 +354,28 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Verify profile is listed in available profiles
 | ✓ Pass
 |===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
+| ✓ Pass
+| 3
+| N/A
+| ✓ Pass
+| 4
+| N/A
+| ✓ Pass
+| 5
+| N/A
+| ✓ Pass
+|===
 == Test Sequence 2: Profile Lifecycle Operations
 *Sequence Status*: ✓ PASS
 === Step Results
@@ -286,6 +394,22 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Disable profile and switch to another profile
 | ✓ Pass
 |===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 6
+| N/A
+| ✓ Pass
+| 7
+| N/A
+| ✓ Pass
+| 8
+| N/A
+| ✓ Pass
+|===
 == Test Sequence 3: Profile Deletion
 *Sequence Status*: ✓ PASS
 === Step Results
@@ -299,6 +423,19 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | ✓ Pass
 | 10
 | Verify profile removal from eUICC
+| ✓ Pass
+|===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 9
+| N/A
+| ✓ Pass
+| 10
+| N/A
 | ✓ Pass
 |===
 == Test Case: 4.2.2.6 IN_eUICC_Security_Compliance
@@ -339,6 +476,25 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Validate private keys are stored in secure element with no external access
 | ✓ Pass
 |===
+=== Expected vs Actual Results
+[cols="1,2,2", options="header"]
+|===
+| Step
+| Expected
+| Actual
+| 1
+| N/A
+| ✓ Pass
+| 2
+| N/A
+| ✓ Pass
+| 3
+| N/A
+| ✓ Pass
+| 4
+| N/A
+| ✓ Pass
+|===
 == Test Sequence 2: Authentication and Communication Security
 *Sequence Status*: ✗ FAIL
 === Step Results
@@ -357,23 +513,25 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Verify secure boot implementation and firmware signature validation
 | ✓ Pass
 |===
-=== Step 6 - Failure Details
-*Description*: Inspect error handling to ensure no sensitive information leakage
-*Reason*: Security vulnerability detected: error logs expose authentication tokens in plaintext when connection failures occur
+=== Expected vs Actual Results
 [cols="1,2,2", options="header"]
 |===
-| Property
+| Step
 | Expected
 | Actual
-| Result
-| No sensitive data in error messages
-| Sensitive data exposed in error logs
-| Output
-| Error handling properly sanitizes all outputs
-| Error messages contain authentication tokens and internal system paths
-| Success
-| 
+| 5
 | N/A
+| ✓ Pass
+| 6
+| *Result:* No sensitive data in error messages
+*Output:* Error handling properly sanitizes all outputs
+*Success:* 
+| *Result:* Sensitive data exposed in error logs
+*Output:* Error messages contain authentication tokens and internal system paths
+*Reason:* Security vulnerability detected: error logs expose authentication tokens in plaintext when connection failures occur
+| 7
+| N/A
+| ✓ Pass
 |===
 == Test Sequence 3: Memory Protection and Code Security
 *Sequence Status*: ✗ FAIL
@@ -399,23 +557,31 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 | Check compliance with side-channel attack mitigation requirements
 | ✓ Pass
 |===
-=== Step 10 - Failure Details
-*Description*: Review source code for common vulnerabilities (buffer overflow, injection, etc.)
-*Reason*: Critical security vulnerability: insufficient bounds checking in X.509 certificate parser allows potential remote code execution
+=== Expected vs Actual Results
 [cols="1,2,2", options="header"]
 |===
-| Property
+| Step
 | Expected
 | Actual
-| Result
-| No critical or high severity vulnerabilities
-| Critical vulnerability found
-| Output
-| Code passes security review
-| Buffer overflow vulnerability detected in certificate parsing routine (CVE-2024-XXXXX equivalent)
-| Success
-| 
+| 8
 | N/A
+| ✓ Pass
+| 9
+| N/A
+| ✓ Pass
+| 10
+| *Result:* No critical or high severity vulnerabilities
+*Output:* Code passes security review
+*Success:* 
+| *Result:* Critical vulnerability found
+*Output:* Buffer overflow vulnerability detected in certificate parsing routine (CVE-2024-XXXXX equivalent)
+*Reason:* Critical security vulnerability: insufficient bounds checking in X.509 certificate parser allows potential remote code execution
+| 11
+| N/A
+| ✓ Pass
+| 12
+| N/A
+| ✓ Pass
 |===
 <<<
 == Final Verification Verdict
