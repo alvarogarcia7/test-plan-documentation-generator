@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use clap::ValueEnum;
 use jsonschema::JSONSchema;
 use log::{debug, error, info, warn};
 use regex::Regex;
@@ -13,6 +14,37 @@ use std::process::exit;
 use tera::Context;
 use tera::Tera;
 use tera::{Filter, Function, Value};
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum OutputFormat {
+    #[value(name = "md")]
+    Markdown,
+    #[value(name = "adoc")]
+    Asciidoc,
+}
+
+impl OutputFormat {
+    fn template_suffix(&self) -> &'static str {
+        match self {
+            OutputFormat::Markdown => ".j2",
+            OutputFormat::Asciidoc => "_asciidoc.adoc",
+        }
+    }
+
+    fn context_key(&self) -> &'static str {
+        match self {
+            OutputFormat::Markdown => "requirements_summary_md",
+            OutputFormat::Asciidoc => "requirements_summary_adoc",
+        }
+    }
+
+    fn requirement_aggregation_filename(&self) -> &'static str {
+        match self {
+            OutputFormat::Asciidoc => "requirement_aggregation_template.adoc",
+            OutputFormat::Markdown => "requirement_aggregation_template.j2",
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "tpdg")]
@@ -30,10 +62,9 @@ struct Args {
     #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required = true)]
     test_case: Vec<PathBuf>,
 
-    /// Output format (markdown or asciidoc)
-    #[arg(long = "format", default_value = "markdown", value_parser = ["markdown", "asciidoc"])]
-    // 33D5404A-DE4B-45CA-9337-3D5A0B6ACBF1
-    format: String,
+    /// Output format (md or adoc)
+    #[arg(long = "format", default_value = "adoc")]
+    format: OutputFormat,
 }
 
 struct ReplaceFilter;
@@ -238,12 +269,30 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
-fn get_template_suffix(format: &str) -> &str {
-    match format {
-        "markdown" => ".j2",
-        "asciidoc" => "_asciidoc.adoc",
-        _ => ".j2",
-    }
+// Logging macro - logs to file descriptor 3 if available (Unix-like systems)
+macro_rules! log_fd3 {
+    ($($arg:tt)*) => {{
+        // Skip logging in test mode to avoid FD conflicts
+        #[cfg(all(unix, not(test)))]
+        {
+            use std::io::Write;
+            use std::os::unix::io::FromRawFd;
+            unsafe {
+                // Check if FD 3 is valid using fcntl
+                let fd = 3;
+                let flags = libc::fcntl(fd, libc::F_GETFD);
+                if flags != -1 {
+                    // FD 3 is valid, duplicate it to avoid taking ownership
+                    let dup_fd = libc::dup(fd);
+                    if dup_fd != -1 {
+                        let mut file = std::fs::File::from_raw_fd(dup_fd);
+                        let _ = writeln!(file, $($arg)*);
+                        // File will be closed when it goes out of scope
+                    }
+                }
+            }
+        }
+    }};
 }
 
 fn main() -> Result<()> {
@@ -345,7 +394,7 @@ fn main() -> Result<()> {
     }
 
     // Build a map of type -> (schema_path, template_path)
-    let template_suffix = get_template_suffix(&args.format);
+    let template_suffix = args.format.template_suffix();
     let mut type_resources: HashMap<String, (PathBuf, PathBuf)> = HashMap::new();
     for type_name in file_types.values() {
         if !type_resources.contains_key(type_name) {
@@ -635,11 +684,7 @@ fn main() -> Result<()> {
     );
 
     // Load and render requirement aggregation template (format-specific)
-    let req_agg_filename = match args.format.as_str() {
-        "asciidoc" => "requirement_aggregation_template.adoc",
-        "markdown" => "requirement_aggregation_template.j2",
-        _ => "requirement_aggregation_template.adoc",
-    };
+    let req_agg_filename = args.format.requirement_aggregation_filename();
     let req_agg_template_path = verification_methods_dir.join(req_agg_filename);
     if req_agg_template_path.exists() {
         debug!(
@@ -667,11 +712,7 @@ fn main() -> Result<()> {
         });
         match req_tera.render("req_agg_template", &context) {
             Ok(requirements_summary) => {
-                let context_key = match args.format.as_str() {
-                    "asciidoc" => "requirements_summary_adoc",
-                    "markdown" => "requirements_summary_md",
-                    _ => "requirements_summary",
-                };
+                let context_key = args.format.context_key();
                 context.insert(context_key, &requirements_summary);
                 debug!(
                     "Requirements summary rendered and added to context as '{}'",
@@ -1154,15 +1195,15 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "markdown");
+        assert!(matches!(args.format, OutputFormat::Asciidoc));
     }
 
     #[test]
-    fn test_parse_format_markdown() {
+    fn test_parse_format_md() {
         let args = Args::try_parse_from([
             "tpdg",
             "--format",
-            "markdown",
+            "md",
             "--container",
             "schema.json",
             "template.tera",
@@ -1174,15 +1215,15 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "markdown");
+        assert!(matches!(args.format, OutputFormat::Markdown));
     }
 
     #[test]
-    fn test_parse_format_asciidoc() {
+    fn test_parse_format_adoc() {
         let args = Args::try_parse_from([
             "tpdg",
             "--format",
-            "asciidoc",
+            "adoc",
             "--container",
             "schema.json",
             "template.tera",
@@ -1194,7 +1235,7 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "asciidoc");
+        assert!(matches!(args.format, OutputFormat::Asciidoc));
     }
 
     #[test]
@@ -1216,10 +1257,33 @@ mod tests {
     }
 
     #[test]
-    fn test_get_template_suffix() {
-        assert_eq!(get_template_suffix("markdown"), ".j2");
-        assert_eq!(get_template_suffix("asciidoc"), "_asciidoc.adoc");
-        assert_eq!(get_template_suffix("unknown"), ".j2");
+    fn test_output_format_template_suffix() {
+        assert_eq!(OutputFormat::Markdown.template_suffix(), ".j2");
+        assert_eq!(OutputFormat::Asciidoc.template_suffix(), "_asciidoc.adoc");
+    }
+
+    #[test]
+    fn test_output_format_context_key() {
+        assert_eq!(
+            OutputFormat::Markdown.context_key(),
+            "requirements_summary_md"
+        );
+        assert_eq!(
+            OutputFormat::Asciidoc.context_key(),
+            "requirements_summary_adoc"
+        );
+    }
+
+    #[test]
+    fn test_output_format_requirement_aggregation_filename() {
+        assert_eq!(
+            OutputFormat::Markdown.requirement_aggregation_filename(),
+            "requirement_aggregation_template.j2"
+        );
+        assert_eq!(
+            OutputFormat::Asciidoc.requirement_aggregation_filename(),
+            "requirement_aggregation_template.adoc"
+        );
     }
 
     mod test_schema_validation {

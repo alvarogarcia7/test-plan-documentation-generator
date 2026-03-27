@@ -66,6 +66,8 @@ fn test_e2e_basic_yaml_rendering() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -124,6 +126,8 @@ fn test_e2e_stdout_output() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .output()
         .expect("failed to run binary");
 
@@ -188,6 +192,8 @@ fn test_e2e_complex_yaml_structure() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -246,6 +252,8 @@ fn test_e2e_multiple_test_case_files() {
         .arg(tc_file1.to_str().unwrap())
         .arg(tc_file2.to_str().unwrap())
         .arg(tc_file3.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -297,6 +305,8 @@ fn test_e2e_empty_yaml() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -351,6 +361,8 @@ fn test_e2e_template_with_filters() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -552,7 +564,10 @@ fn test_e2e_dataset_4_gsma() {
     // Use a tempdir to avoid interfering with parallel tests
     let td = tempdir().unwrap();
     let report_path = td.path().join("report.md");
-    cmd.arg("-o").arg(report_path.as_os_str());
+    cmd.arg("--format")
+        .arg("md")
+        .arg("-o")
+        .arg(report_path.as_os_str());
 
     // Execute
     let status = cmd.status().expect("failed to execute tpdg");
@@ -657,7 +672,7 @@ fn test_e2e_requirement_aggregation() {
         cmd.arg(tc_file);
     }
     cmd.arg("--format")
-        .arg("asciidoc")
+        .arg("adoc")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -789,6 +804,8 @@ fn test_e2e_custom_tera_filters() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -897,7 +914,10 @@ fn test_e2e_input_data() {
     }
     let td = tempdir().unwrap();
     let report_path = td.path().join("report.md");
-    cmd.arg("-o").arg(report_path.as_os_str());
+    cmd.arg("--format")
+        .arg("md")
+        .arg("-o")
+        .arg(report_path.as_os_str());
 
     let status = cmd.status().expect("failed to execute tpdg");
     assert!(status.success(), "binary exited with non-zero status");
@@ -973,7 +993,7 @@ fn test_e2e_input_data_test_results() {
         cmd.arg(result_file);
     }
     cmd.arg("--format")
-        .arg("asciidoc")
+        .arg("adoc")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1017,7 +1037,7 @@ fn test_e2e_input_data_test_results_detailed() {
         .arg(tc_passing)
         .arg(tc_failing)
         .arg("--format")
-        .arg("asciidoc")
+        .arg("adoc")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1180,6 +1200,8 @@ fn test_e2e_template_injection_test_cases_md() {
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg(tc_file2.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -1303,7 +1325,7 @@ fn test_e2e_template_injection_requirements_summary_adoc() {
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg("--format")
-        .arg("asciidoc")
+        .arg("adoc")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1405,7 +1427,7 @@ fn test_e2e_template_injection_missing_requirement_aggregation_template() {
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg("--format")
-        .arg("asciidoc")
+        .arg("adoc")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1505,6 +1527,8 @@ fn test_e2e_template_injection_nested_include_file() {
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg(tc_file2.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1614,6 +1638,8 @@ fn test_e2e_template_injection_nested_include_with_filters() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.as_os_str());
 
@@ -1709,6 +1735,8 @@ fn test_e2e_template_injection_multiple_levels_nested_include() {
         .arg("--test-case")
         .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
         .arg("-o")
         .arg(output_path.as_os_str());
 
