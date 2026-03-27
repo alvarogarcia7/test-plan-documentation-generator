@@ -1,0 +1,190 @@
+document_id: "PSAC-001"
+title: "Plan for Software Aspects of Certification"
+project_name: "Flight Management System"
+version: "1.0"
+date: "2024-01-15"
+author: "Software Certification Team"
+organization: "Avionics Systems Inc."
+certification_authority: "FAA"
+
+system_overview:
+  description: |
+    The Flight Management System (FMS) is an integrated avionics system that provides automated flight control, 
+    navigation, and performance management for commercial aircraft. The system interfaces with various aircraft 
+    sensors, navigation databases, and control surfaces to optimize flight operations.
+  system_functions:
+    - "Automated flight path computation and guidance"
+    - "Navigation database management"
+    - "Performance optimization and fuel management"
+    - "Flight plan execution and monitoring"
+    - "Interface with autopilot and flight control systems"
+  hardware_components:
+    - "Flight Management Computer (FMC)"
+    - "Control Display Unit (CDU)"
+    - "Navigation sensors (GPS, IRS)"
+    - "Datalink communication unit"
+  safety_features:
+    - "Redundant processing channels"
+    - "Built-in self-test capabilities"
+    - "Fault detection and isolation mechanisms"
+    - "Safe mode degradation strategies"
+
+software_overview:
+  description: |
+    The FMS software consists of multiple integrated components responsible for navigation, guidance, 
+    performance calculations, and pilot interface. The software implements partitioning to isolate 
+    safety-critical functions from less critical operations.
+  software_components:
+    - name: "Navigation Manager"
+      description: "Processes sensor data and computes aircraft position"
+      level: "A"
+    - name: "Guidance Controller"
+      description: "Computes flight path and steering commands"
+      level: "A"
+    - name: "Performance Calculator"
+      description: "Optimizes flight performance and fuel consumption"
+      level: "B"
+    - name: "Database Manager"
+      description: "Manages navigation and airport databases"
+      level: "C"
+    - name: "Display Interface"
+      description: "Provides pilot interface and displays"
+      level: "C"
+  partitioning: |
+    The system implements spatial partitioning between Level A navigation and guidance functions 
+    and lower criticality functions. Temporal partitioning ensures deterministic execution of 
+    safety-critical tasks.
+  redundancy: |
+    The FMS implements dual-channel redundancy with cross-channel monitoring. Independent 
+    processing channels execute identical software with comparison logic to detect and isolate faults.
+
+certification_considerations:
+  software_level: "A"
+  failure_conditions:
+    - condition: "Total loss of navigation capability"
+      classification: "Catastrophic"
+      software_contribution: "Software failure leading to incorrect position computation"
+    - condition: "Misleading navigation information"
+      classification: "Hazardous"
+      software_contribution: "Software error causing incorrect guidance commands"
+    - condition: "Loss of performance optimization"
+      classification: "Major"
+      software_contribution: "Performance calculator malfunction"
+  deactivated_code: |
+    No deactivated code is present in the delivered software configuration. All code is active 
+    and verified according to Level A requirements.
+
+software_lifecycle:
+  model: |
+    The software follows a modified V-model lifecycle with iterative development phases. 
+    Requirements flow from system to software to design, with corresponding verification 
+    activities at each level.
+  processes:
+    - name: "Software Planning Process"
+      description: "Establishes plans for development, verification, configuration management, and quality assurance"
+    - name: "Software Development Process"
+      description: "Transforms requirements into verified software through requirements analysis, design, and coding"
+    - name: "Software Verification Process"
+      description: "Demonstrates correctness and completeness through reviews, analyses, and testing"
+    - name: "Software Configuration Management Process"
+      description: "Controls and tracks software items throughout the lifecycle"
+    - name: "Software Quality Assurance Process"
+      description: "Provides confidence that processes are performed correctly"
+
+software_lifecycle_data:
+  - document: "Software Development Plan (SDP)"
+    description: "Defines development processes and standards"
+    responsible: "Software Engineering"
+  - document: "Software Verification Plan (SVP)"
+    description: "Defines verification strategy and procedures"
+    responsible: "Verification Team"
+  - document: "Software Configuration Management Plan (SCMP)"
+    description: "Defines CM processes and tools"
+    responsible: "Configuration Management"
+  - document: "Software Quality Assurance Plan (SQAP)"
+    description: "Defines QA processes and records"
+    responsible: "Quality Assurance"
+  - document: "Software Requirements Data (SRD)"
+    description: "High-level software requirements"
+    responsible: "Requirements Team"
+  - document: "Software Design Description (SDD)"
+    description: "Software architecture and low-level requirements"
+    responsible: "Design Team"
+  - document: "Source Code"
+    description: "Implementation in qualified programming language"
+    responsible: "Development Team"
+  - document: "Executable Object Code"
+    description: "Compiled software for target hardware"
+    responsible: "Build Team"
+  - document: "Software Verification Cases and Procedures (SVCP)"
+    description: "Test cases and procedures"
+    responsible: "Test Team"
+  - document: "Software Verification Results (SVR)"
+    description: "Verification evidence and results"
+    responsible: "Verification Team"
+  - document: "Software Life Cycle Environment Configuration Index (SECI)"
+    description: "Development and verification tools"
+    responsible: "Configuration Management"
+  - document: "Software Configuration Index (SCI)"
+    description: "Software baseline identification"
+    responsible: "Configuration Management"
+  - document: "Software Accomplishment Summary (SAS)"
+    description: "Certification compliance summary"
+    responsible: "Certification Team"
+
+schedule:
+  milestones:
+    - name: "Software Requirements Review"
+      date: "2024-03-15"
+      deliverables:
+        - "Software Requirements Data (SRD)"
+        - "Requirements traceability to system requirements"
+    - name: "Software Design Review"
+      date: "2024-06-30"
+      deliverables:
+        - "Software Design Description (SDD)"
+        - "Low-level requirements traceability"
+    - name: "Code Complete"
+      date: "2024-09-30"
+      deliverables:
+        - "Source code baseline"
+        - "Unit test results"
+    - name: "Software Integration Complete"
+      date: "2024-11-15"
+      deliverables:
+        - "Integration test results"
+        - "Software/hardware integration results"
+    - name: "Software Verification Complete"
+      date: "2025-01-30"
+      deliverables:
+        - "Software Verification Results (SVR)"
+        - "All verification evidence"
+    - name: "Certification Audit"
+      date: "2025-03-15"
+      deliverables:
+        - "Software Accomplishment Summary (SAS)"
+        - "All lifecycle data"
+
+additional_considerations:
+  previously_developed_software: |
+    The FMS reuses navigation algorithms from a previously certified system (Level B). 
+    This software will be reverified to Level A standards with additional structural 
+    coverage analysis and robustness testing.
+  tool_qualification: |
+    The following development tools require qualification per DO-330:
+    - Compiler: Qualified as TQL-5 (verification tool)
+    - Static analyzer: Qualified as TQL-5 (verification tool)
+    - Requirements management tool: Does not require qualification (no credit taken)
+  alternative_methods: |
+    Formal methods will be applied to the navigation state machine to demonstrate 
+    correctness per DO-333 supplement. This will satisfy certain verification objectives 
+    with analysis rather than testing.
+
+supplier_oversight:
+  suppliers:
+    - name: "Database Provider Inc."
+      role: "Navigation database development and updates"
+      oversight_activities: "Quarterly audits of database quality processes and delivery verification"
+    - name: "Hardware Systems Corp."
+      role: "Flight Management Computer hardware"
+      oversight_activities: "Software/hardware integration testing and interface verification"

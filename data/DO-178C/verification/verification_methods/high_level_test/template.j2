@@ -1,0 +1,40 @@
+### Test Case: {{ test_id }}
+
+**Requirement ID:** {{ requirement_id }}  
+**Test Objective:** {{ test_objective | strip }}  
+{% if test_level -%}
+**Test Level:** {{ test_level }}  
+{% endif %}
+
+{% if prerequisites -%}
+#### Prerequisites
+
+{% for prereq in prerequisites -%}
+- {{ prereq }}
+{% endfor %}
+{% endif %}
+
+#### Test Procedure
+
+| Step | Action | Input | Expected Output |
+|------|--------|-------|-----------------|
+{% for step in test_procedure -%}
+| {{ step.step }} | {{ step.action }} | {% if step.input %}{{ step.input }}{% else %}N/A{% endif %} | {{ step.expected_output }} |
+{% endfor %}
+
+#### Pass Criteria
+
+{{ pass_criteria | strip }}
+
+{% if traceability -%}
+#### Traceability
+
+{% if traceability.requirements -%}
+**Requirements:** {{ traceability.requirements | join(sep=", ") }}  
+{% endif -%}
+{% if traceability.design_components -%}
+**Design Components:** {{ traceability.design_components | join(sep=", ") }}  
+{% endif -%}
+{% endif %}
+
+---

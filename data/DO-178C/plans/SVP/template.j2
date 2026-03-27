@@ -1,0 +1,134 @@
+# {{ title }}
+
+**Document ID:** {{ document_id }}  
+**Version:** {{ version }}  
+**Date:** {{ date }}  
+**Project:** {{ project_name }}  
+{% if author -%}
+**Author:** {{ author }}  
+{% endif -%}
+**Software Level:** {{ software_level }}
+
+---
+
+## Document Purpose
+
+This Software Verification Plan describes the verification strategy and procedures used to satisfy the verification objectives for Design Assurance Level {{ software_level }} software. It establishes the approach for demonstrating that the software requirements are satisfied and that the software does not contain errors.
+
+## 1. Organization and Independence
+
+### 1.1 Development Organization
+
+{{ organization.development_team | strip }}
+
+### 1.2 Verification Organization
+
+{{ organization.verification_team | strip }}
+
+### 1.3 Independence
+
+{{ organization.independence_statement | strip }}
+
+## 2. Verification Methods
+
+The following verification methods will be employed to satisfy the DO-178C objectives:
+
+{% for method in verification_methods -%}
+### 2.{{ loop.index }} {{ method.method }}
+
+{{ method.description | strip }}
+
+{% if method.applicability -%}
+**Applicability:** {{ method.applicability | strip }}
+{% endif %}
+{% endfor %}
+
+## 3. Verification Environment
+
+### 3.1 Environment Description
+
+{{ verification_environment.test_environment_description | strip }}
+
+{% if verification_environment.hardware -%}
+### 3.2 Hardware
+
+The verification environment includes the following hardware:
+
+{% for hw in verification_environment.hardware -%}
+- {{ hw }}
+{% endfor %}
+{% endif %}
+
+{% if verification_environment.software_tools -%}
+### 3.3 Software Tools
+
+The following tools are used for verification activities:
+
+| Tool | Purpose | Qualification Required |
+|------|---------|------------------------|
+{% for tool in verification_environment.software_tools -%}
+| {{ tool.name }} | {{ tool.purpose }} | {% if tool.qualification_required %}Yes{% else %}No{% endif %} |
+{% endfor %}
+{% endif %}
+
+## 4. Transition Criteria
+
+The following criteria must be met to transition between software lifecycle phases:
+
+{% for tc in transition_criteria -%}
+### 4.{{ loop.index }} {{ tc.phase }}
+
+{% for criterion in tc.criteria -%}
+- {{ criterion }}
+{% endfor %}
+{% endfor %}
+
+{% if partitioning_verification -%}
+## 5. Partitioning Verification
+
+{{ partitioning_verification | strip }}
+{% endif %}
+
+{% if compiler_assumptions -%}
+## 6. Compiler and Linker Assumptions
+
+{{ compiler_assumptions | strip }}
+{% endif %}
+
+{% if reverification -%}
+## 7. Reverification Methods
+
+### 7.1 Reverification Strategy
+
+{{ reverification.strategy | strip }}
+
+{% if reverification.impact_analysis_process -%}
+### 7.2 Impact Analysis Process
+
+{{ reverification.impact_analysis_process | strip }}
+{% endif %}
+{% endif %}
+
+{% if previously_developed_software -%}
+## 8. Previously Developed Software
+
+{{ previously_developed_software | strip }}
+{% endif %}
+
+{{ test_cases_md }}
+
+---
+
+## Approval
+
+This Software Verification Plan has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Verification Manager | | | |
+| Software Manager | | | |
+| Quality Assurance | | | |
+
+---
+
+**End of Document**

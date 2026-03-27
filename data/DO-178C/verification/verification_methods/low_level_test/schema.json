@@ -1,0 +1,98 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Low-Level Test Schema",
+  "description": "Schema for DO-178C low-level (unit) test cases",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["low_level_test"],
+      "description": "Test case type"
+    },
+    "test_id": {
+      "type": "string",
+      "description": "Unique test identifier"
+    },
+    "requirement_id": {
+      "type": "string",
+      "description": "Low-level requirement being verified"
+    },
+    "unit_under_test": {
+      "type": "string",
+      "description": "Software unit (function/module) being tested"
+    },
+    "test_objective": {
+      "type": "string",
+      "description": "Objective of the test"
+    },
+    "test_type": {
+      "type": "string",
+      "enum": ["Normal Range", "Boundary", "Robustness", "Error Handling"],
+      "description": "Type of test case"
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "stubs": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "initialization": {"type": "string"}
+      }
+    },
+    "test_inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parameter": {"type": "string"},
+          "value": {"type": "string"},
+          "description": {"type": "string"}
+        },
+        "required": ["parameter", "value"]
+      }
+    },
+    "expected_outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "parameter": {"type": "string"},
+          "value": {"type": "string"},
+          "description": {"type": "string"}
+        },
+        "required": ["parameter", "value"]
+      }
+    },
+    "coverage_requirements": {
+      "type": "object",
+      "properties": {
+        "statement_coverage": {"type": "boolean"},
+        "decision_coverage": {"type": "boolean"},
+        "mcdc_coverage": {"type": "boolean"}
+      }
+    },
+    "traceability": {
+      "type": "object",
+      "properties": {
+        "low_level_requirements": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "high_level_requirements": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  },
+  "required": [
+    "type",
+    "test_id",
+    "requirement_id",
+    "unit_under_test",
+    "test_objective",
+    "test_inputs",
+    "expected_outputs"
+  ]
+}

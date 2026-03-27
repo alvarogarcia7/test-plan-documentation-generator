@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Software Accomplishment Summary Schema",
+  "description": "Schema for DO-178C SAS document data",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Unique document identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project/system"
+    },
+    "version": {
+      "type": "string",
+      "description": "Document version"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Document date"
+    },
+    "certification_authority": {
+      "type": "string",
+      "description": "Certification authority"
+    },
+    "software_identification": {
+      "type": "object",
+      "properties": {
+        "part_number": {"type": "string"},
+        "version": {"type": "string"},
+        "configuration_index": {"type": "string"},
+        "checksum": {"type": "string"}
+      },
+      "required": ["part_number", "version"]
+    },
+    "system_overview": {
+      "type": "string",
+      "description": "Brief system description"
+    },
+    "software_overview": {
+      "type": "string",
+      "description": "Brief software description"
+    },
+    "software_level": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"],
+      "description": "Software design assurance level"
+    },
+    "lifecycle_data_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document": {"type": "string"},
+          "version": {"type": "string"},
+          "status": {"type": "string", "enum": ["Complete", "Incomplete", "N/A"]}
+        },
+        "required": ["document", "status"]
+      }
+    },
+    "compliance_summary": {
+      "type": "object",
+      "properties": {
+        "objectives_satisfied": {"type": "integer"},
+        "objectives_total": {"type": "integer"},
+        "deviations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "objective": {"type": "string"},
+              "rationale": {"type": "string"}
+            },
+            "required": ["objective", "rationale"]
+          }
+        }
+      },
+      "required": ["objectives_satisfied", "objectives_total"]
+    },
+    "change_history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "version": {"type": "string"},
+          "date": {"type": "string"},
+          "description": {"type": "string"}
+        },
+        "required": ["version", "date", "description"]
+      }
+    },
+    "open_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "issue_id": {"type": "string"},
+          "description": {"type": "string"},
+          "status": {"type": "string"}
+        },
+        "required": ["issue_id", "description", "status"]
+      }
+    }
+  },
+  "required": [
+    "document_id",
+    "title",
+    "project_name",
+    "version",
+    "date",
+    "software_identification",
+    "software_level",
+    "compliance_summary"
+  ]
+}

@@ -1,0 +1,221 @@
+= {{ title }}
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+
+[cols="1,3"]
+|===
+| Document ID | {{ document_id }}
+| Version | {{ version }}
+| Date | {{ date }}
+| Project | {{ project_name }}
+{% if certification_authority -%}
+| Certification Authority | {{ certification_authority }}
+{% endif -%}
+|===
+
+<<<
+
+== Executive Summary
+
+This Software Accomplishment Summary provides evidence that the {{ project_name }} software has been developed in accordance with DO-178C requirements for Design Assurance Level {{ software_level }} software. This document demonstrates compliance with the Plan for Software Aspects of Certification (PSAC) and serves as the primary compliance artifact for certification.
+
+== Software Identification
+
+*Part Number:* {{ software_identification.part_number }}  
+*Software Version:* {{ software_identification.version }}  
+{% if software_identification.configuration_index -%}
+*Configuration Index:* {{ software_identification.configuration_index }}  
+{% endif -%}
+{% if software_identification.checksum -%}
+*CRC Checksum:* {{ software_identification.checksum }}  
+{% endif %}
+
+== System Overview
+
+{% if system_overview -%}
+{{ system_overview | strip }}
+{% else -%}
+See Plan for Software Aspects of Certification (PSAC) for detailed system overview.
+{% endif %}
+
+== Software Overview
+
+{% if software_overview -%}
+{{ software_overview | strip }}
+{% else -%}
+See Plan for Software Aspects of Certification (PSAC) for detailed software overview.
+{% endif %}
+
+== Certification Considerations
+
+The software is certified to *Design Assurance Level {{ software_level }}* per DO-178C.
+
+<<<
+
+== Software Life Cycle
+
+The software was developed using a modified V-model lifecycle as defined in the Software Development Plan (SDP). All software lifecycle processes defined in DO-178C have been applied:
+
+* Software Planning Process
+* Software Development Process
+* Software Verification Process
+* Software Configuration Management Process
+* Software Quality Assurance Process
+
+== Software Life Cycle Data
+
+The following software lifecycle data has been produced:
+
+{% if lifecycle_data_summary -%}
+[cols="3,1,1"]
+|===
+| Document | Version | Status
+
+{% for item in lifecycle_data_summary -%}
+| {{ item.document }}
+| {% if item.version %}{{ item.version }}{% else %}N/A{% endif %}
+| {{ item.status }}
+
+{% endfor -%}
+|===
+{% else -%}
+All required lifecycle data per PSAC has been produced and is available for audit.
+{% endif %}
+
+<<<
+
+== Compliance Statement
+
+=== Objectives Summary
+
+*Total Objectives for Level {{ software_level }}:* {{ compliance_summary.objectives_total }}  
+*Objectives Satisfied:* {{ compliance_summary.objectives_satisfied }}  
+*Compliance Rate:* {{ (compliance_summary.objectives_satisfied * 100 / compliance_summary.objectives_total) | round(1) }}%
+
+{% if compliance_summary.deviations -%}
+=== Deviations and Alternative Compliance
+
+The following deviations from standard verification methods were approved:
+
+{% for deviation in compliance_summary.deviations -%}
+==== {{ deviation.objective }}
+
+*Rationale:* {{ deviation.rationale | strip }}
+{% endfor %}
+{% else -%}
+=== Deviations
+
+No deviations from DO-178C objectives. All objectives satisfied with standard methods.
+{% endif %}
+
+<<<
+
+== Software Characteristics
+
+* *Programming Language:* C (ISO/IEC 9899:1999)
+* *Target Hardware:* Flight Management Computer
+* *Code Size:* Documented in Software Design Description
+* *Complexity Metrics:* Within limits defined in coding standards
+* *Memory Usage:* Within allocated budgets per design
+
+== Change History
+
+{% if change_history -%}
+[cols="1,1,4"]
+|===
+| Version | Date | Description
+
+{% for change in change_history -%}
+| {{ change.version }}
+| {{ change.date }}
+| {{ change.description }}
+
+{% endfor -%}
+|===
+{% else -%}
+This is the initial release. No change history applicable.
+{% endif %}
+
+<<<
+
+== Software Status
+
+{% if open_issues and open_issues | length > 0 -%}
+=== Open Problem Reports
+
+The following problem reports remain open at time of certification:
+
+[cols="1,4,1"]
+|===
+| Issue ID | Description | Status
+
+{% for issue in open_issues -%}
+| {{ issue.issue_id }}
+| {{ issue.description }}
+| {{ issue.status }}
+
+{% endfor -%}
+|===
+
+All open issues have been reviewed and determined to not affect software safety or certification.
+{% else -%}
+All problem reports have been resolved. No open issues remain.
+{% endif %}
+
+=== Verification Status
+
+All verification activities defined in the Software Verification Plan (SVP) have been completed:
+
+* ✓ Requirements-based testing complete
+* ✓ Low-level testing complete  
+* ✓ Structural coverage analysis complete (MC/DC achieved)
+* ✓ Robustness testing complete
+* ✓ Software/hardware integration testing complete
+* ✓ All reviews and analyses complete
+
+<<<
+
+== Certification Statement
+
+Based on the evidence contained in the software lifecycle data, the {{ project_name }} software version {{ software_identification.version }} has been developed in compliance with DO-178C requirements for Design Assurance Level {{ software_level }}.
+
+All software verification objectives have been satisfied, and the software is suitable for certification and operational use in accordance with the approved system safety assessment.
+
+<<<
+
+== Approval
+
+This Software Accomplishment Summary has been reviewed and approved by:
+
+[cols="1,2,2,1"]
+|===
+| Role | Name | Signature | Date
+
+| Software Manager
+|
+|
+|
+
+| Verification Manager
+|
+|
+|
+
+| Quality Assurance Manager
+|
+|
+|
+
+| Certification Authority
+|
+|
+|
+
+|===
+
+<<<
+
+*End of Document*

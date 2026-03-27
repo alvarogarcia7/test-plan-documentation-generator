@@ -1,0 +1,68 @@
+type: "low_level_test"
+test_id: "LLT-NAV-001"
+requirement_id: "LLR-NAV-1001"
+unit_under_test: "computePosition()"
+test_objective: "Verify position computation with valid GPS data in normal range"
+test_type: "Normal Range"
+
+setup:
+  stubs:
+    - "getGPSData() - returns stubbed GPS position"
+    - "getIRSData() - returns stubbed IRS position"
+  initialization: "Initialize navigation state to READY, sensor fusion weights to default (GPS=0.7, IRS=0.3)"
+
+test_inputs:
+  - parameter: "gps_latitude"
+    value: "40.0"
+    description: "GPS latitude in degrees"
+  - parameter: "gps_longitude"
+    value: "-74.0"
+    description: "GPS longitude in degrees"
+  - parameter: "gps_altitude"
+    value: "10000.0"
+    description: "GPS altitude in feet"
+  - parameter: "gps_valid"
+    value: "true"
+    description: "GPS validity flag"
+  - parameter: "irs_latitude"
+    value: "40.0"
+    description: "IRS latitude in degrees"
+  - parameter: "irs_longitude"
+    value: "-74.0"
+    description: "IRS longitude in degrees"
+  - parameter: "irs_altitude"
+    value: "10000.0"
+    description: "IRS altitude in feet"
+  - parameter: "irs_valid"
+    value: "true"
+    description: "IRS validity flag"
+
+expected_outputs:
+  - parameter: "position.latitude"
+    value: "40.0"
+    description: "Computed latitude (weighted blend)"
+  - parameter: "position.longitude"
+    value: "-74.0"
+    description: "Computed longitude (weighted blend)"
+  - parameter: "position.altitude"
+    value: "10000.0"
+    description: "Computed altitude (weighted blend)"
+  - parameter: "position.valid"
+    value: "true"
+    description: "Position validity flag"
+  - parameter: "return_value"
+    value: "NAV_SUCCESS"
+    description: "Function return status"
+
+coverage_requirements:
+  statement_coverage: true
+  decision_coverage: true
+  mcdc_coverage: true
+
+traceability:
+  low_level_requirements:
+    - "LLR-NAV-1001"
+    - "LLR-NAV-1002"
+  high_level_requirements:
+    - "SRS-NAV-100"
+    - "SRS-NAV-110"
