@@ -107,11 +107,7 @@ test-e2e-test-plan-asciidoc:
 	--multiple-by-type .type ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
-	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp
-	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.adoc
-	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
-	@sed 's/^/  /' .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.adoc >> .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
-	@cat ./data/container/data.yml >> .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
+	cp .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc ./data/container/
 	RUST_LOG=debug ./target/release/tpdg \
 	--format adoc \
 	--output ./data/test_plan_output.actual.adoc \
