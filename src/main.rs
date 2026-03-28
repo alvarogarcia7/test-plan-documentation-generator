@@ -55,11 +55,11 @@ struct Args {
     output: Option<PathBuf>,
 
     /// Container schema file
-    #[arg(long = "container", value_names = ["CONTAINER_SCHEMA", "CONTAINER_TEMPLATE", "CONTAINER_FILE"], num_args = 3, required_unless_present = "single")]
+    #[arg(long = "container", value_names = ["CONTAINER_SCHEMA", "CONTAINER_TEMPLATE", "CONTAINER_FILE"], num_args = 3, required_unless_present_any = ["single", "multiple"])]
     container: Vec<PathBuf>,
 
     /// Test case verification methods directory and files
-    #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required_unless_present = "single")]
+    #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required_unless_present_any = ["single", "multiple"])]
     test_case: Vec<PathBuf>,
 
     /// Output format (md or adoc)
@@ -69,6 +69,10 @@ struct Args {
     /// Single mode: validate and render a single template
     #[arg(long = "single", value_names = ["SCHEMA", "TEMPLATE", "INPUT"], num_args = 3)]
     single: Vec<PathBuf>,
+
+    /// Multiple mode: validate and render multiple input files with a single schema and template
+    #[arg(long = "multiple", value_names = ["SCHEMA", "TEMPLATE", "INPUT_FILES"], num_args = 3..)]
+    multiple: Vec<PathBuf>,
 }
 
 struct ReplaceFilter;
@@ -399,6 +403,146 @@ fn handle_single_mode(
     Ok(())
 }
 
+fn handle_multiple_mode(
+    schema_path: &Path,
+    template_path: &Path,
+    input_paths: &[PathBuf],
+    output: Option<&Path>,
+) -> Result<()> {
+    debug!("Running in multiple mode");
+    debug!("Schema: {}", schema_path.display());
+    debug!("Template: {}", template_path.display());
+    debug!("Number of input files: {}", input_paths.len());
+
+    if !schema_path.exists() {
+        let message = format!(
+            "Error: Schema file does not exist: {}",
+            schema_path.display()
+        );
+        error!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
+    if !template_path.exists() {
+        let message = format!(
+            "Error: Template file does not exist: {}",
+            template_path.display()
+        );
+        error!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
+    for input_path in input_paths {
+        if !input_path.exists() {
+            let message = format!("Error: Input file does not exist: {}", input_path.display());
+            error!("{}", message);
+            eprintln!("{}", message);
+            exit(2);
+        }
+    }
+
+    let mut sorted_input_paths = input_paths.to_vec();
+    sorted_input_paths.sort();
+
+    let template_extension = template_path
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    let is_adoc = template_extension == "adoc";
+
+    debug!("Loading template from: {}", template_path.display());
+    let absolute_template_path = template_path
+        .canonicalize()
+        .unwrap_or_else(|_| template_path.to_path_buf());
+    eprintln!("Loading template: {}", absolute_template_path.display());
+    let template_str = fs::read_to_string(template_path)?;
+
+    let mut tera = Tera::default();
+    register_custom_filters_and_functions(
+        &mut tera,
+        template_path.parent().map(|p| p.to_path_buf()),
+    );
+
+    let template_name = if is_adoc {
+        "template.adoc"
+    } else {
+        "template.j2"
+    };
+    tera.add_raw_template(template_name, &template_str)?;
+
+    let mut rendered_outputs = Vec::new();
+
+    for input_path in &sorted_input_paths {
+        debug!("Processing input file: {}", input_path.display());
+        debug!("Reading input YAML from: {}", input_path.display());
+        let yaml_str = fs::read_to_string(input_path)?;
+        let yaml_data: YamlValue = serde_yaml::from_str(&yaml_str)?;
+
+        let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
+
+        debug!("Validating input file: {}", input_path.display());
+        debug!("\tAgainst schema: {}", schema_path.display());
+        let validation_result: Result<(), Vec<String>> =
+            validate_json_schema(schema_path, &json_value);
+        match validation_result {
+            Ok(_) => {
+                debug!("\tValidation successful.");
+            }
+            Err(errors) => {
+                let message = format!(
+                    "Error: Validation failed for file: {}\nAgainst schema: {}",
+                    input_path.display(),
+                    schema_path.display()
+                );
+                error!("{}", message);
+                eprintln!("{}", message);
+                for error in &errors {
+                    let error_msg = format!("  - {}", error);
+                    error!("{}", error_msg);
+                    eprintln!("{}", error_msg);
+                }
+                exit(3);
+            }
+        }
+
+        let mut context = Context::new();
+        if let YamlValue::Mapping(map) = yaml_data {
+            for (key, value) in map {
+                if let Some(key_str) = key.as_str() {
+                    debug!("\tFound key: {}", key_str);
+                    let json_str = serde_json::to_string(&value)?;
+                    let json_value: JsonValue = serde_json::from_str(&json_str)?;
+                    context.insert(key_str, &json_value);
+                }
+            }
+        }
+
+        debug!("Rendering template for: {}", input_path.display());
+        CONTEXT_HOLDER.with(|holder| {
+            *holder.borrow_mut() = Some(context.clone());
+        });
+        let rendered = tera.render(template_name, &context)?;
+        rendered_outputs.push(rendered);
+    }
+
+    let final_output = rendered_outputs.join("\n");
+
+    if let Some(output_path) = output {
+        debug!("Writing output to: {}", output_path.display());
+        fs::write(output_path, &final_output)?;
+        eprintln!(
+            "Templates rendered successfully to {}",
+            output_path.display()
+        );
+    } else {
+        println!("{}", final_output);
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     env_logger::init();
     info!("Starting tpdg");
@@ -424,6 +568,24 @@ fn main() -> Result<()> {
             schema_path,
             template_path,
             input_path,
+            args.output.as_deref(),
+        );
+    }
+
+    if !args.multiple.is_empty() {
+        if args.multiple.len() < 3 {
+            usage(
+                "Multiple mode requires at least 3 arguments: SCHEMA, TEMPLATE, INPUT_FILES...",
+                1,
+            )
+        }
+        let schema_path = &args.multiple[0];
+        let template_path = &args.multiple[1];
+        let input_paths = &args.multiple[2..];
+        return handle_multiple_mode(
+            schema_path,
+            template_path,
+            input_paths,
             args.output.as_deref(),
         );
     }
