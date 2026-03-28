@@ -44,32 +44,62 @@ chmod +x tpdg
 
 ## Quick Start Guide
 
-### Basic Usage Example
+The tool supports three modes of operation for different use cases:
+
+### Single Mode - Render One Input File
+
+For rendering a single input file with a schema and template:
 
 ```bash
 ./target/release/tpdg \
-  --output ./test_plan.md \
-  --container ./data/container/schema.json \
-             ./data/container/template.j2 \
-             ./data/container/data.yml \
-  --test-case ./data/verification_methods \
-              ./data/test_case/test1.yml \
-              ./data/test_case/test2.yml
+  --single ./schemas/test_case.json \
+           ./templates/test_case.j2 \
+           ./data/test_case/tc001.yml \
+  --output ./output/tc001.md
 ```
 
-This command:
-1. Validates `data.yml` against `schema.json`
-2. Validates each test case file against its type-specific schema
-3. Renders test cases using their type-specific templates
-4. Renders the final output using the container template
-5. Writes the result to `test_plan.md`
+This validates `tc001.yml` against the schema and renders it using the template.
 
-### Example with AsciiDoc Format
+### Multiple Mode - Render Many Files with Same Schema
+
+For rendering multiple input files that share the same schema and template:
 
 ```bash
 ./target/release/tpdg \
-  --format asciidoc \
+  --multiple ./schemas/test_case.json \
+             ./templates/test_case.j2 \
+             ./data/test_case/tc001.yml \
+             ./data/test_case/tc002.yml \
+             ./data/test_case/tc003.yml \
+  --output ./output/all_tests.md
+```
+
+All test cases are validated against the same schema, rendered with the same template, and concatenated into a single output.
+
+### Multiple-by-Type Mode - Render Files with Type-Specific Templates
+
+For rendering multiple files where each has a `type` attribute that determines which schema and template to use:
+
+```bash
+./target/release/tpdg \
+  --multiple-by-type type \
+                     ./data/verification_methods \
+                     ./data/test_case/tc001.yml \
+                     ./data/test_case/tc002.yml \
+                     ./data/test_case/an001.yml \
+  --output ./output/mixed_cases.md
+```
+
+Each input file is validated against `<template_dir>/<type>/schema.json` and rendered with `<template_dir>/<type>/template.j2` (or `.adoc`), then all outputs are concatenated.
+
+### Container Aggregation Workflow (Legacy)
+
+For full test plan generation with container-level metadata:
+
+```bash
+./target/release/tpdg \
   --output ./test_plan.adoc \
+  --format adoc \
   --container ./data/container/schema.json \
              ./data/container/template_asciidoc.adoc \
              ./data/container/data.yml \
@@ -78,28 +108,57 @@ This command:
               ./data/test_case/test2.yml
 ```
 
-### Output to stdout
+This mode:
+1. Validates each test case against its type-specific schema
+2. Renders test cases using their type-specific templates
+3. Aggregates rendered test cases and requirements
+4. Renders the final output using the container template
 
-Omit the `--output` flag to print results to stdout:
+### Chaining Commands for Container-Level Aggregation
+
+You can chain the new modes with container processing:
 
 ```bash
+# Step 1: Generate test cases using multiple-by-type mode
 ./target/release/tpdg \
-  --container ./data/container/schema.json \
-             ./data/container/template.j2 \
-             ./data/container/data.yml \
-  --test-case ./data/verification_methods \
-              ./data/test_case/test1.yml
+  --multiple-by-type type \
+                     ./data/verification_methods \
+                     ./data/test_case/*.yml \
+  --output ./tmp/test_cases.md
+
+# Step 2: Use the generated test cases in a container template
+./target/release/tpdg \
+  --single ./data/container/schema.json \
+           ./data/container/template.j2 \
+           ./data/container/data.yml \
+  --output ./test_plan.md
 ```
+
+Note: The container template can reference the generated test cases file via the `test_cases_path` variable or by reading the intermediate file.
 
 ## CLI Reference
 
 ### Synopsis
 
 ```
+# Single mode
+tpdg [OPTIONS] --single <SCHEMA> <TEMPLATE> <INPUT>
+
+# Multiple mode
+tpdg [OPTIONS] --multiple <SCHEMA> <TEMPLATE> <INPUT_FILES>...
+
+# Multiple-by-type mode
+tpdg [OPTIONS] --multiple-by-type <TYPE_ATTR_PATH> <TEMPLATE_DIR> <INPUT_FILES>...
+
+# Container aggregation mode (legacy)
 tpdg [OPTIONS] --container <FILES> --test-case <FILES>
 ```
 
-### Options
+### Operating Modes
+
+The tool has four mutually exclusive operating modes. You must specify exactly one of: `--single`, `--multiple`, `--multiple-by-type`, or both `--container` and `--test-case`.
+
+### Common Options
 
 #### `-o, --output <FILE>`
 
@@ -111,50 +170,133 @@ Specifies the output file path. If not provided, output is written to stdout.
 -o ./docs/test_plan.adoc
 ```
 
-#### `--container <SCHEMA> <TEMPLATE> <DATA>`
-
-**Required.** Specifies the container-level schema, template, and data file (in that order).
-
-**Arguments:**
-- `SCHEMA` - JSON schema file for validating the container data
-- `TEMPLATE` - Tera template file (`.j2` for Markdown, `.adoc` for AsciiDoc)
-- `DATA` - YAML data file containing test plan metadata
-
-**Example:**
-```bash
---container ./schemas/container.json \
-            ./templates/container.j2 \
-            ./data/test_plan_data.yml
-```
-
-#### `--test-case <DIR> <FILE> [FILES...]`
-
-**Required.** Specifies the verification methods directory followed by one or more test case data files.
-
-**Arguments:**
-- `DIR` - Directory containing verification method subdirectories (test, analysis, demonstration, inspection)
-- `FILE` - One or more YAML test case data files
-
-Each test case file must have a `type` field that corresponds to a subdirectory under the verification methods directory.
-
-**Example:**
-```bash
---test-case ./verification_methods \
-            ./test_cases/tc001.yml \
-            ./test_cases/tc002.yml \
-            ./test_cases/tc003.yml
-```
-
 #### `--format <FORMAT>`
 
-Specifies the output format. Accepted values: `markdown`, `asciidoc`
+Specifies the output format. Accepted values: `md`, `adoc`
 
-**Default:** `markdown`
+**Default:** `adoc`
 
 **Example:**
 ```bash
---format markdown
---format asciidoc
+--format md
+--format adoc
+```
+
+### Mode: Single
+
+**Synopsis:**
+```bash
+tpdg --single <SCHEMA> <TEMPLATE> <INPUT> [OPTIONS]
+```
+
+Validates and renders a single input file using the provided schema and template.
+
+**Arguments:**
+- `SCHEMA` - JSON schema file for validation
+- `TEMPLATE` - Tera template file (`.j2` or `.adoc`)
+- `INPUT` - YAML input data file
+
+**Example:**
+```bash
+./target/release/tpdg \
+  --single ./schemas/test_case.json \
+           ./templates/test_case.j2 \
+           ./data/test_case/tc001.yml \
+  --output ./output/tc001.md
+```
+
+### Mode: Multiple
+
+**Synopsis:**
+```bash
+tpdg --multiple <SCHEMA> <TEMPLATE> <INPUT_FILES>... [OPTIONS]
+```
+
+Validates and renders multiple input files using a single schema and template. All rendered outputs are concatenated.
+
+**Arguments:**
+- `SCHEMA` - JSON schema file for validation (shared by all inputs)
+- `TEMPLATE` - Tera template file (shared by all inputs)
+- `INPUT_FILES` - One or more YAML input data files
+
+**Example:**
+```bash
+./target/release/tpdg \
+  --multiple ./schemas/test_case.json \
+             ./templates/test_case.j2 \
+             ./data/test_case/tc001.yml \
+             ./data/test_case/tc002.yml \
+             ./data/test_case/tc003.yml \
+  --output ./output/all_tests.md
+```
+
+### Mode: Multiple-by-Type
+
+**Synopsis:**
+```bash
+tpdg --multiple-by-type <TYPE_ATTR_PATH> <TEMPLATE_DIR> <INPUT_FILES>... [OPTIONS]
+```
+
+Validates and renders multiple input files where each file contains a `type` attribute that determines which schema and template to use. Each input is validated against `<TEMPLATE_DIR>/<type>/schema.json` and rendered with `<TEMPLATE_DIR>/<type>/template.{j2|adoc}`.
+
+**Arguments:**
+- `TYPE_ATTR_PATH` - Path to the type attribute in the YAML (e.g., `type` or `metadata.type`)
+- `TEMPLATE_DIR` - Directory containing subdirectories for each type
+- `INPUT_FILES` - One or more YAML input data files
+
+**Example:**
+```bash
+./target/release/tpdg \
+  --multiple-by-type type \
+                     ./data/verification_methods \
+                     ./data/test_case/tc001.yml \
+                     ./data/test_case/tc002.yml \
+                     ./data/test_case/an001.yml \
+  --output ./output/mixed_cases.md
+```
+
+**Directory Structure Expected:**
+```
+./data/verification_methods/
+├── test/
+│   ├── schema.json
+│   └── template.j2
+├── analysis/
+│   ├── schema.json
+│   └── template.j2
+└── demonstration/
+    ├── schema.json
+    └── template.j2
+```
+
+### Mode: Container Aggregation (Legacy)
+
+**Synopsis:**
+```bash
+tpdg --container <SCHEMA> <TEMPLATE> <DATA> --test-case <DIR> <FILES>... [OPTIONS]
+```
+
+Full test plan generation with container-level metadata and test case aggregation. This mode combines multiple-by-type processing with a container template wrapper.
+
+**Arguments for `--container`:**
+- `SCHEMA` - JSON schema file for validating the container data
+- `TEMPLATE` - Tera template file for the container
+- `DATA` - YAML data file containing test plan metadata
+
+**Arguments for `--test-case`:**
+- `DIR` - Directory containing verification method subdirectories (test, analysis, demonstration, inspection)
+- `FILES` - One or more YAML test case data files
+
+**Example:**
+```bash
+./target/release/tpdg \
+  --container ./data/container/schema.json \
+              ./data/container/template.j2 \
+              ./data/container/data.yml \
+  --test-case ./data/verification_methods \
+              ./data/test_case/tc001.yml \
+              ./data/test_case/tc002.yml \
+  --output ./test_plan.md
 ```
 
 ### Exit Codes
