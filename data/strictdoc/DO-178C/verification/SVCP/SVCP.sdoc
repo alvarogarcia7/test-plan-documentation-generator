@@ -1,0 +1,440 @@
+[DOCUMENT]
+TITLE: Software Verification Cases and Procedures
+UID: SVCP-001
+VERSION: 2.0
+CLASSIFICATION: DO-178C Level A
+
+[SECTION]
+TITLE: Document Information
+
+[TEXT]
+STATEMENT: >>>
+**Document ID:** SVCP-001
+**Project:** Flight Management System
+**Version:** 2.0
+**Date:** 2024-02-01
+**Author:** Test Team
+**Software Level:** A
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: Document Purpose
+
+[TEXT]
+STATEMENT: >>>
+This document contains the software verification test cases and procedures for the Flight Management System. It defines the specific tests, analyses, and reviews used to verify that the software requirements are correctly and completely implemented.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1. Review and Analysis Procedures
+
+[SECTION]
+TITLE: 1.1 Review Procedures
+
+[TEXT]
+STATEMENT: >>>
+**Scope:** Reviews are conducted on all software lifecycle artifacts including requirements, design documents, source code, test procedures, and configuration management records. Reviews verify compliance with standards, correctness, completeness, and traceability.
+
+**Depth:** For Level A software, reviews are performed with detailed examination:
+- Requirements reviews verify correctness, completeness, consistency, and traceability
+- Design reviews verify architecture correctness and low-level requirement derivation
+- Code reviews verify compliance with coding standards and correct implementation
+- Test procedure reviews verify adequate coverage of requirements and robustness
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.2 Analysis Procedures
+
+[TEXT]
+STATEMENT: >>>
+**Scope:** Analysis activities include traceability analysis, data and control flow analysis, structural coverage analysis (MC/DC for Level A), timing analysis, and stack usage analysis.
+
+**Methods:**
+- Traceability Analysis: Verifies bidirectional traceability between requirements, design, code, and tests
+- Structural Coverage Analysis: Measures MC/DC coverage achieved by test cases
+- Data and Control Flow Analysis: Detects uninitialized variables, dead code, and boundary violations
+- Stack Usage Analysis: Determines worst-case stack depth
+- Timing Analysis: Worst-Case Execution Time (WCET) analysis
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2. Test Overview
+
+[SECTION]
+TITLE: 2.1 High-Level Tests
+
+[TEXT]
+STATEMENT: >>>
+High-Level Tests (HLTs) are requirements-based black-box tests that verify software requirements without detailed knowledge of internal structure. HLTs are executed on the integrated software in the target environment or high-fidelity simulator.
+
+Test coverage requirements for Level A:
+- Every software requirement is tested
+- Boundary conditions are tested
+- Error handling and robustness are tested
+- Normal operational scenarios are tested
+
+HLTs use the Hardware-in-the-Loop (HIL) simulator with representative sensor inputs and verify outputs against expected behavior defined in the requirements.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.2 Low-Level Tests
+
+[TEXT]
+STATEMENT: >>>
+Low-Level Tests (LLTs) are unit and integration tests that verify software design (low-level requirements) implementation. LLTs are white-box tests performed on individual software units with stubs for dependencies.
+
+Test coverage requirements for Level A:
+- Every low-level requirement is tested
+- MC/DC structural coverage is achieved
+- Boundary values are tested
+- Error conditions are tested
+
+LLTs are executed in the VectorCAST test environment with coverage instrumentation to measure structural coverage metrics.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.3 Test Environment
+
+[TEXT]
+STATEMENT: >>>
+**High-Level Test Environment:**
+- Flight Management Computer (target hardware)
+- Hardware-in-the-Loop (HIL) simulator
+- Sensor simulation models (GPS, IRS, air data)
+- Control Display Unit (CDU) interface
+- Test automation framework
+
+**Low-Level Test Environment:**
+- VectorCAST unit test framework
+- Host development workstation (Linux)
+- Cross-compiler for target processor
+- Coverage analysis tools
+- Stub and driver generation tools
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.4 Pass/Fail Criteria
+
+[TEXT]
+STATEMENT: >>>
+**Pass Criteria:**
+- All test steps execute without errors
+- Actual outputs match expected outputs within specified tolerances
+- No unexpected exceptions or error conditions occur
+- Coverage objectives are met (MC/DC for Level A)
+- Test log contains complete execution record
+
+**Fail Criteria:**
+- Any test step produces incorrect output
+- Software crashes, hangs, or behaves unexpectedly
+- Coverage objectives are not met
+- Test procedure cannot be executed due to software defects
+
+All test failures are documented in Problem Reports and tracked to closure.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3. High-Level Test Cases
+
+[SECTION]
+TITLE: 3.1 GPS Navigation Tests
+
+[TEST_CASE]
+UID: HLT-NAV-001
+LEVEL: A
+STATUS: Approved
+VERIFICATION_METHOD: Requirements-Based Test
+TITLE: GPS Position Computation Verification
+OBJECTIVE: >>>
+Verify that the Navigation Manager correctly computes aircraft position from GPS sensor data.
+<<<
+PREREQUISITES: >>>
+- FMS software loaded on target hardware
+- HIL simulator configured with GPS sensor model
+- GPS sensor providing valid position data
+- System initialized to ready state
+<<<
+PROCEDURE: >>>
+1. Initialize system and wait for navigation ready indication
+   Input: System power-on, GPS sensor valid
+   Expected: Navigation status indicates READY
+
+2. Inject GPS position data: Lat=37.7749°N, Lon=122.4194°W, Alt=100ft
+   Input: GPS latitude, longitude, altitude
+   Expected: FMS displays position: 37.7749°N, 122.4194°W, 100ft ±10ft
+
+3. Update GPS position to Lat=37.7800°N, Lon=122.4100°W, Alt=5000ft
+   Input: Updated GPS coordinates
+   Expected: FMS updates position to 37.7800°N, 122.4100°W, 5000ft ±10ft within 1 second
+
+4. Inject GPS invalid flag
+   Input: GPS sensor status = INVALID
+   Expected: Navigation status indicates GPS INVALID, position hold on last valid position
+<<<
+EXPECTED_RESULT: >>>
+All steps execute successfully with actual outputs matching expected outputs within specified tolerances. Navigation position accuracy within ±10 feet and position updates occur within 1 second of GPS data change.
+<<<
+PASS_CRITERIA: >>>
+Verifies requirements: SRS-NAV-100, SRS-NAV-101
+<<<
+
+[TEST_CASE]
+UID: HLT-NAV-002
+LEVEL: A
+STATUS: Approved
+VERIFICATION_METHOD: Requirements-Based Test
+TITLE: Multi-Sensor Navigation Verification
+OBJECTIVE: >>>
+Verify navigation position computation with multiple sensor sources (GPS and IRS).
+<<<
+PREREQUISITES: >>>
+- FMS software loaded on target hardware
+- HIL simulator configured with GPS and IRS sensor models
+- Both GPS and IRS providing valid data
+- System in dual-sensor navigation mode
+<<<
+PROCEDURE: >>>
+1. Initialize system with both GPS and IRS available
+   Input: GPS valid, IRS valid
+   Expected: Navigation mode = DUAL, status = READY
+
+2. Inject GPS position: 40.0°N, 74.0°W, Alt=10000ft; IRS position: 40.0°N, 74.0°W, Alt=10000ft
+   Input: GPS and IRS positions (aligned)
+   Expected: Computed position: 40.0°N, 74.0°W, 10000ft ±5ft (blended solution)
+
+3. Introduce GPS/IRS discrepancy: GPS=40.0°N, 74.0°W; IRS=40.001°N, 74.001°W
+   Input: GPS and IRS positions with 300ft separation
+   Expected: Position discrepancy warning generated, blended position computed
+
+4. Set GPS to invalid
+   Input: GPS status = INVALID
+   Expected: Navigation mode transitions to IRS-ONLY, position from IRS only
+
+5. Restore GPS to valid
+   Input: GPS status = VALID, GPS position = IRS position
+   Expected: Navigation mode returns to DUAL within 30 seconds
+<<<
+EXPECTED_RESULT: >>>
+- Dual-sensor navigation blends GPS and IRS correctly (±5ft accuracy)
+- Position discrepancy warnings generated when GPS/IRS differ by >200ft
+- System gracefully transitions to single-sensor mode when one source fails
+- Recovery to dual-sensor mode occurs within 30 seconds when source is restored
+<<<
+PASS_CRITERIA: >>>
+Verifies requirements: SRS-NAV-110, SRS-NAV-111, SRS-NAV-115, SRS-NAV-120
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4. Low-Level Test Cases
+
+[SECTION]
+TITLE: 4.1 Position Computation Unit Tests
+
+[LOW_LEVEL_TEST]
+UID: LLT-NAV-001
+LEVEL: A
+STATUS: Approved
+TITLE: Position Computation Normal Range Test
+UNIT_UNDER_TEST: computePosition()
+OBJECTIVE: >>>
+Verify position computation with valid GPS data in normal range.
+<<<
+TEST_TYPE: Normal Range
+SETUP: >>>
+Stubs:
+- getGPSData() - returns stubbed GPS position
+- getIRSData() - returns stubbed IRS position
+
+Initialization: Initialize navigation state to READY, sensor fusion weights to default (GPS=0.7, IRS=0.3)
+<<<
+TEST_INPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| gps_latitude | 40.0 | GPS latitude in degrees |
+| gps_longitude | -74.0 | GPS longitude in degrees |
+| gps_altitude | 10000.0 | GPS altitude in feet |
+| gps_valid | true | GPS validity flag |
+| irs_latitude | 40.0 | IRS latitude in degrees |
+| irs_longitude | -74.0 | IRS longitude in degrees |
+| irs_altitude | 10000.0 | IRS altitude in feet |
+| irs_valid | true | IRS validity flag |
+<<<
+EXPECTED_OUTPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| position.latitude | 40.0 | Computed latitude (weighted blend) |
+| position.longitude | -74.0 | Computed longitude (weighted blend) |
+| position.altitude | 10000.0 | Computed altitude (weighted blend) |
+| position.valid | true | Position validity flag |
+| return_value | NAV_SUCCESS | Function return status |
+<<<
+COVERAGE: >>>
+- Statement Coverage: Required
+- Decision Coverage: Required
+- MC/DC Coverage: Required
+<<<
+COMMENT: >>>
+Traces to requirements: SRS-NAV-100, SRS-NAV-110
+Traces to low-level requirements: LLR-NAV-1001, LLR-NAV-1002
+<<<
+
+[LOW_LEVEL_TEST]
+UID: LLT-NAV-002
+LEVEL: A
+STATUS: Approved
+TITLE: GPS Invalid Error Handling Test
+UNIT_UNDER_TEST: computePosition()
+OBJECTIVE: >>>
+Verify position computation handles GPS invalid condition correctly.
+<<<
+TEST_TYPE: Error Handling
+SETUP: >>>
+Stubs:
+- getGPSData() - returns GPS invalid
+- getIRSData() - returns valid IRS position
+
+Initialization: Initialize navigation state to DUAL mode
+<<<
+TEST_INPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| gps_valid | false | GPS validity flag set to invalid |
+| irs_latitude | 40.0 | IRS latitude in degrees |
+| irs_longitude | -74.0 | IRS longitude in degrees |
+| irs_altitude | 10000.0 | IRS altitude in feet |
+| irs_valid | true | IRS validity flag |
+<<<
+EXPECTED_OUTPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| position.latitude | 40.0 | Position from IRS only |
+| position.longitude | -74.0 | Position from IRS only |
+| position.altitude | 10000.0 | Altitude from IRS only |
+| position.valid | true | Position valid (IRS provides valid data) |
+| nav_mode | IRS_ONLY | Navigation mode switches to IRS-only |
+| return_value | NAV_SUCCESS | Function succeeds with degraded mode |
+<<<
+COVERAGE: >>>
+- Statement Coverage: Required
+- Decision Coverage: Required
+- MC/DC Coverage: Required
+<<<
+COMMENT: >>>
+Traces to requirements: SRS-NAV-115, SRS-NAV-120
+Traces to low-level requirements: LLR-NAV-1005, LLR-NAV-1010
+<<<
+
+[LOW_LEVEL_TEST]
+UID: LLT-NAV-003
+LEVEL: A
+STATUS: Approved
+TITLE: Coordinate Validation Boundary Test
+UNIT_UNDER_TEST: validateCoordinates()
+OBJECTIVE: >>>
+Verify coordinate validation rejects out-of-range latitude values.
+<<<
+TEST_TYPE: Boundary
+SETUP: >>>
+No special initialization required
+<<<
+TEST_INPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| latitude | 91.0 | Latitude exceeds maximum valid value (90.0 degrees) |
+| longitude | 0.0 | Valid longitude |
+| altitude | 10000.0 | Valid altitude |
+<<<
+EXPECTED_OUTPUTS: >>>
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| return_value | INVALID_LATITUDE | Function returns error code for invalid latitude |
+| error_logged | true | Error is logged to diagnostic system |
+<<<
+COVERAGE: >>>
+- Statement Coverage: Required
+- Decision Coverage: Required
+- MC/DC Coverage: Required
+<<<
+COMMENT: >>>
+Traces to requirements: SRS-NAV-130, SRS-NAV-131
+Traces to low-level requirements: LLR-NAV-1008, LLR-NAV-1009
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 5. Coverage Analysis
+
+[TEXT]
+STATEMENT: >>>
+Structural coverage analysis is performed using VectorCAST with MC/DC analysis plugin. For Level A software, the following coverage objectives must be achieved:
+
+- **Statement Coverage:** 100% of executable statements must be exercised
+- **Decision Coverage:** 100% of decision outcomes (true/false) must be exercised
+- **MC/DC Coverage:** 100% of conditions must be shown to independently affect decision outcomes
+
+Coverage analysis results are documented in the Software Verification Results (SVR) document.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 6. Traceability Matrix
+
+[TEXT]
+STATEMENT: >>>
+All test cases trace to software requirements. The complete traceability matrix is maintained in DOORS and shows:
+
+- Software requirements to test cases (verification coverage)
+- Test cases to software requirements (requirement satisfaction)
+- Test cases to low-level requirements (design verification)
+
+**Summary:**
+- High-Level Requirements: 15 requirements, 8 test cases
+- Low-Level Requirements: 25 requirements, 15 test cases
+- Verification Coverage: 100%
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7. Approval
+
+[TEXT]
+STATEMENT: >>>
+This Software Verification Cases and Procedures document has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Verification Manager | | | |
+| Software Manager | | | |
+| Quality Assurance | | | |
+<<<
+
+[/SECTION]

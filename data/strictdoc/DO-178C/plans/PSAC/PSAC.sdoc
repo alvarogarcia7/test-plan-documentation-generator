@@ -1,0 +1,538 @@
+[DOCUMENT]
+TITLE: Plan for Software Aspects of Certification
+UID: PSAC-001
+VERSION: 1.0
+CLASSIFICATION: DO-178C Level A
+OPTIONS:
+  REQUIREMENT_STYLE: Table
+  REQUIREMENT_IN_TOC: True
+
+[GRAMMAR]
+ELEMENTS:
+- TAG: PLAN
+  FIELDS:
+  - TITLE: UID
+    TYPE: String
+    REQUIRED: True
+  - TITLE: LEVEL
+    TYPE: String
+    REQUIRED: True
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+- TAG: SECTION
+  FIELDS:
+  - TITLE: TITLE
+    TYPE: String
+    REQUIRED: True
+- TAG: TEXT
+  FIELDS:
+  - TITLE: STATEMENT
+    TYPE: String
+    REQUIRED: True
+
+[SECTION]
+TITLE: Document Information
+
+[TEXT]
+STATEMENT: >>>
+**Document ID:** PSAC-001
+**Project:** Flight Management System
+**Version:** 1.0
+**Date:** 2024-01-15
+**Organization:** Avionics Systems Inc.
+**Certification Authority:** FAA
+**Software Level:** A
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1. System Overview
+
+[SECTION]
+TITLE: 1.1 System Description
+
+[TEXT]
+STATEMENT: >>>
+The Flight Management System (FMS) is an integrated avionics system that provides automated flight control, navigation, and performance management for commercial aircraft. The system interfaces with various aircraft sensors, navigation databases, and control surfaces to optimize flight operations.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.2 System Functions
+
+[PLAN]
+UID: PSAC-SYS-FUNC-001
+LEVEL: A
+STATEMENT: >>>
+Automated flight path computation and guidance
+<<<
+
+[PLAN]
+UID: PSAC-SYS-FUNC-002
+LEVEL: A
+STATEMENT: >>>
+Navigation database management
+<<<
+
+[PLAN]
+UID: PSAC-SYS-FUNC-003
+LEVEL: B
+STATEMENT: >>>
+Performance optimization and fuel management
+<<<
+
+[PLAN]
+UID: PSAC-SYS-FUNC-004
+LEVEL: A
+STATEMENT: >>>
+Flight plan execution and monitoring
+<<<
+
+[PLAN]
+UID: PSAC-SYS-FUNC-005
+LEVEL: A
+STATEMENT: >>>
+Interface with autopilot and flight control systems
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.3 Hardware Components
+
+[TEXT]
+STATEMENT: >>>
+- Flight Management Computer (FMC)
+- Control Display Unit (CDU)
+- Navigation sensors (GPS, IRS)
+- Datalink communication unit
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.4 Safety Features
+
+[TEXT]
+STATEMENT: >>>
+- Redundant processing channels
+- Built-in self-test capabilities
+- Fault detection and isolation mechanisms
+- Safe mode degradation strategies
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2. Software Overview
+
+[SECTION]
+TITLE: 2.1 Software Description
+
+[TEXT]
+STATEMENT: >>>
+The FMS software consists of multiple integrated components responsible for navigation, guidance, performance calculations, and pilot interface. The software implements partitioning to isolate safety-critical functions from less critical operations.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.2 Software Components
+
+[PLAN]
+UID: PSAC-SW-COMP-001
+LEVEL: A
+STATEMENT: >>>
+**Navigation Manager**
+
+Processes sensor data and computes aircraft position. This component is Design Assurance Level A due to its critical role in providing accurate position information for flight control.
+<<<
+
+[PLAN]
+UID: PSAC-SW-COMP-002
+LEVEL: A
+STATEMENT: >>>
+**Guidance Controller**
+
+Computes flight path and steering commands. This component is Design Assurance Level A as incorrect guidance could lead to catastrophic failure conditions.
+<<<
+
+[PLAN]
+UID: PSAC-SW-COMP-003
+LEVEL: B
+STATEMENT: >>>
+**Performance Calculator**
+
+Optimizes flight performance and fuel consumption. This component is Design Assurance Level B as performance degradation leads to hazardous conditions.
+<<<
+
+[PLAN]
+UID: PSAC-SW-COMP-004
+LEVEL: C
+STATEMENT: >>>
+**Database Manager**
+
+Manages navigation and airport databases. This component is Design Assurance Level C as database issues cause major operational impacts.
+<<<
+
+[PLAN]
+UID: PSAC-SW-COMP-005
+LEVEL: C
+STATEMENT: >>>
+**Display Interface**
+
+Provides pilot interface and displays. This component is Design Assurance Level C as display failures impact pilot situational awareness.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.3 Partitioning Strategy
+
+[TEXT]
+STATEMENT: >>>
+The system implements spatial partitioning between Level A navigation and guidance functions and lower criticality functions. Temporal partitioning ensures deterministic execution of safety-critical tasks.
+
+Memory protection mechanisms prevent Level A code from being corrupted by lower-level partitions. Each partition has protected memory regions verified through static analysis.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.4 Redundancy Mechanisms
+
+[TEXT]
+STATEMENT: >>>
+The FMS implements dual-channel redundancy with cross-channel monitoring. Independent processing channels execute identical software with comparison logic to detect and isolate faults.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3. Certification Considerations
+
+[SECTION]
+TITLE: 3.1 Software Design Assurance Level
+
+[TEXT]
+STATEMENT: >>>
+The software is classified as **Design Assurance Level A** per DO-178C.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.2 Failure Conditions and Software Contribution
+
+[PLAN]
+UID: PSAC-FAIL-001
+LEVEL: A
+STATEMENT: >>>
+**Failure Condition:** Total loss of navigation capability
+**Classification:** Catastrophic
+**Software Contribution:** Software failure leading to incorrect position computation could result in loss of navigation, potentially causing loss of aircraft control.
+<<<
+
+[PLAN]
+UID: PSAC-FAIL-002
+LEVEL: A
+STATEMENT: >>>
+**Failure Condition:** Misleading navigation information
+**Classification:** Hazardous
+**Software Contribution:** Software error causing incorrect guidance commands could mislead flight crew, resulting in hazardous flight conditions.
+<<<
+
+[PLAN]
+UID: PSAC-FAIL-003
+LEVEL: B
+STATEMENT: >>>
+**Failure Condition:** Loss of performance optimization
+**Classification:** Major
+**Software Contribution:** Performance calculator malfunction could result in inefficient fuel usage and operational limitations.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.3 Deactivated Code
+
+[TEXT]
+STATEMENT: >>>
+No deactivated code is present in the delivered software configuration. All code is active and verified according to Level A requirements.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4. Software Lifecycle
+
+[SECTION]
+TITLE: 4.1 Lifecycle Model
+
+[TEXT]
+STATEMENT: >>>
+The software follows a modified V-model lifecycle with iterative development phases. Requirements flow from system to software to design, with corresponding verification activities at each level.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.2 Software Lifecycle Processes
+
+[PLAN]
+UID: PSAC-PROC-001
+LEVEL: A
+STATEMENT: >>>
+**Software Planning Process**
+
+Establishes plans for development, verification, configuration management, and quality assurance.
+<<<
+
+[PLAN]
+UID: PSAC-PROC-002
+LEVEL: A
+STATEMENT: >>>
+**Software Development Process**
+
+Transforms requirements into verified software through requirements analysis, design, and coding.
+<<<
+
+[PLAN]
+UID: PSAC-PROC-003
+LEVEL: A
+STATEMENT: >>>
+**Software Verification Process**
+
+Demonstrates correctness and completeness through reviews, analyses, and testing.
+<<<
+
+[PLAN]
+UID: PSAC-PROC-004
+LEVEL: A
+STATEMENT: >>>
+**Software Configuration Management Process**
+
+Controls and tracks software items throughout the lifecycle.
+<<<
+
+[PLAN]
+UID: PSAC-PROC-005
+LEVEL: A
+STATEMENT: >>>
+**Software Quality Assurance Process**
+
+Provides confidence that processes are performed correctly.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 5. Software Lifecycle Data
+
+[PLAN]
+UID: PSAC-DATA-001
+LEVEL: A
+STATEMENT: >>>
+**Software Development Plan (SDP)**
+
+Defines development processes and standards. Responsible: Software Engineering.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-002
+LEVEL: A
+STATEMENT: >>>
+**Software Verification Plan (SVP)**
+
+Defines verification strategy and procedures. Responsible: Verification Team.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-003
+LEVEL: A
+STATEMENT: >>>
+**Software Configuration Management Plan (SCMP)**
+
+Defines CM processes and tools. Responsible: Configuration Management.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-004
+LEVEL: A
+STATEMENT: >>>
+**Software Quality Assurance Plan (SQAP)**
+
+Defines QA processes and records. Responsible: Quality Assurance.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-005
+LEVEL: A
+STATEMENT: >>>
+**Software Requirements Data (SRD)**
+
+High-level software requirements. Responsible: Requirements Team.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-006
+LEVEL: A
+STATEMENT: >>>
+**Software Design Description (SDD)**
+
+Software architecture and low-level requirements. Responsible: Design Team.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-007
+LEVEL: A
+STATEMENT: >>>
+**Software Verification Cases and Procedures (SVCP)**
+
+Test cases and procedures. Responsible: Test Team.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-008
+LEVEL: A
+STATEMENT: >>>
+**Software Verification Results (SVR)**
+
+Verification evidence and results. Responsible: Verification Team.
+<<<
+
+[PLAN]
+UID: PSAC-DATA-009
+LEVEL: A
+STATEMENT: >>>
+**Software Accomplishment Summary (SAS)**
+
+Certification compliance summary. Responsible: Certification Team.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 6. Schedule
+
+[TEXT]
+STATEMENT: >>>
+The following milestones are planned for the certification program:
+
+**Software Requirements Review** - 2024-03-15
+- Software Requirements Data (SRD)
+- Requirements traceability to system requirements
+
+**Software Design Review** - 2024-06-30
+- Software Design Description (SDD)
+- Low-level requirements traceability
+
+**Code Complete** - 2024-09-30
+- Source code baseline
+- Unit test results
+
+**Software Integration Complete** - 2024-11-15
+- Integration test results
+- Software/hardware integration results
+
+**Software Verification Complete** - 2025-01-30
+- Software Verification Results (SVR)
+- All verification evidence
+
+**Certification Audit** - 2025-03-15
+- Software Accomplishment Summary (SAS)
+- All lifecycle data
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7. Additional Considerations
+
+[SECTION]
+TITLE: 7.1 Previously Developed Software
+
+[TEXT]
+STATEMENT: >>>
+The FMS reuses navigation algorithms from a previously certified system (Level B). This software will be reverified to Level A standards with additional structural coverage analysis and robustness testing.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7.2 Tool Qualification
+
+[TEXT]
+STATEMENT: >>>
+The following development tools require qualification per DO-330:
+- Compiler: Qualified as TQL-5 (verification tool)
+- Static analyzer: Qualified as TQL-5 (verification tool)
+- Requirements management tool: Does not require qualification (no credit taken)
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7.3 Alternative Methods
+
+[TEXT]
+STATEMENT: >>>
+Formal methods will be applied to the navigation state machine to demonstrate correctness per DO-333 supplement. This will satisfy certain verification objectives with analysis rather than testing.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 8. Supplier Oversight
+
+[PLAN]
+UID: PSAC-SUPPLIER-001
+LEVEL: C
+STATEMENT: >>>
+**Database Provider Inc.**
+
+Role: Navigation database development and updates
+Oversight Activities: Quarterly audits of database quality processes and delivery verification
+<<<
+
+[PLAN]
+UID: PSAC-SUPPLIER-002
+LEVEL: A
+STATEMENT: >>>
+**Hardware Systems Corp.**
+
+Role: Flight Management Computer hardware
+Oversight Activities: Software/hardware integration testing and interface verification
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 9. Approval
+
+[TEXT]
+STATEMENT: >>>
+This Plan for Software Aspects of Certification has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Project Manager | | | |
+| Software Manager | | | |
+| Quality Assurance | | | |
+| Certification Authority | | | |
+<<<
+
+[/SECTION]
