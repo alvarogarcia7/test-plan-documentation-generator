@@ -1,0 +1,234 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Plan for Software Aspects of Certification Schema",
+  "description": "Schema for DO-178C PSAC document data",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Unique document identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project/system"
+    },
+    "version": {
+      "type": "string",
+      "description": "Document version"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Document date"
+    },
+    "author": {
+      "type": "string",
+      "description": "Document author"
+    },
+    "organization": {
+      "type": "string",
+      "description": "Organization name"
+    },
+    "certification_authority": {
+      "type": "string",
+      "description": "Certification authority (e.g., FAA, EASA)"
+    },
+    "system_overview": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "System description and intended function"
+        },
+        "system_functions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of system functions"
+        },
+        "hardware_components": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Hardware components"
+        },
+        "safety_features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Safety features implemented"
+        }
+      },
+      "required": ["description"]
+    },
+    "software_overview": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Software description and functions"
+        },
+        "software_components": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"},
+              "level": {
+                "type": "string",
+                "enum": ["A", "B", "C", "D", "E"]
+              }
+            },
+            "required": ["name", "description", "level"]
+          },
+          "description": "Software components with their design assurance levels"
+        },
+        "partitioning": {
+          "type": "string",
+          "description": "Partitioning strategy"
+        },
+        "redundancy": {
+          "type": "string",
+          "description": "Redundancy mechanisms"
+        }
+      },
+      "required": ["description", "software_components"]
+    },
+    "certification_considerations": {
+      "type": "object",
+      "properties": {
+        "software_level": {
+          "type": "string",
+          "enum": ["A", "B", "C", "D", "E"],
+          "description": "Overall software design assurance level"
+        },
+        "failure_conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "condition": {"type": "string"},
+              "classification": {
+                "type": "string",
+                "enum": ["Catastrophic", "Hazardous", "Major", "Minor", "No Effect"]
+              },
+              "software_contribution": {"type": "string"}
+            },
+            "required": ["condition", "classification"]
+          },
+          "description": "System failure conditions and software contribution"
+        },
+        "deactivated_code": {
+          "type": "string",
+          "description": "Deactivated code considerations"
+        }
+      },
+      "required": ["software_level"]
+    },
+    "software_lifecycle": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Software lifecycle model description"
+        },
+        "processes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"}
+            },
+            "required": ["name"]
+          },
+          "description": "Software lifecycle processes"
+        }
+      },
+      "required": ["model"]
+    },
+    "software_lifecycle_data": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "document": {"type": "string"},
+          "description": {"type": "string"},
+          "responsible": {"type": "string"}
+        },
+        "required": ["document", "description"]
+      },
+      "description": "Software lifecycle data items"
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "milestones": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "date": {"type": "string"},
+              "deliverables": {
+                "type": "array",
+                "items": {"type": "string"}
+              }
+            },
+            "required": ["name", "date"]
+          }
+        }
+      }
+    },
+    "additional_considerations": {
+      "type": "object",
+      "properties": {
+        "previously_developed_software": {
+          "type": "string"
+        },
+        "tool_qualification": {
+          "type": "string"
+        },
+        "alternative_methods": {
+          "type": "string"
+        }
+      }
+    },
+    "supplier_oversight": {
+      "type": "object",
+      "properties": {
+        "suppliers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "role": {"type": "string"},
+              "oversight_activities": {"type": "string"}
+            },
+            "required": ["name", "role"]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "document_id",
+    "title",
+    "project_name",
+    "version",
+    "date",
+    "system_overview",
+    "software_overview",
+    "certification_considerations",
+    "software_lifecycle"
+  ]
+}

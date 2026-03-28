@@ -1,0 +1,55 @@
+type: "high_level_test"
+test_id: "HLT-NAV-002"
+requirement_id: "SRS-NAV-110"
+test_objective: "Verify navigation position computation with multiple sensor sources (GPS and IRS)"
+test_level: "Integration"
+
+prerequisites:
+  - "FMS software loaded on target hardware"
+  - "HIL simulator configured with GPS and IRS sensor models"
+  - "Both GPS and IRS providing valid data"
+  - "System in dual-sensor navigation mode"
+
+test_procedure:
+  - step: 1
+    action: "Initialize system with both GPS and IRS available"
+    input: "GPS valid, IRS valid"
+    expected_output: "Navigation mode = DUAL, status = READY"
+    
+  - step: 2
+    action: "Inject GPS position: 40.0°N, 74.0°W, Alt=10000ft; IRS position: 40.0°N, 74.0°W, Alt=10000ft"
+    input: "GPS and IRS positions (aligned)"
+    expected_output: "Computed position: 40.0°N, 74.0°W, 10000ft ±5ft (blended solution)"
+    
+  - step: 3
+    action: "Introduce GPS/IRS discrepancy: GPS=40.0°N, 74.0°W; IRS=40.001°N, 74.001°W"
+    input: "GPS and IRS positions with 300ft separation"
+    expected_output: "Position discrepancy warning generated, blended position computed"
+    
+  - step: 4
+    action: "Set GPS to invalid"
+    input: "GPS status = INVALID"
+    expected_output: "Navigation mode transitions to IRS-ONLY, position from IRS only"
+    
+  - step: 5
+    action: "Restore GPS to valid"
+    input: "GPS status = VALID, GPS position = IRS position"
+    expected_output: "Navigation mode returns to DUAL within 30 seconds"
+
+pass_criteria: |
+  Test passes if:
+  - Dual-sensor navigation blends GPS and IRS correctly (±5ft accuracy)
+  - Position discrepancy warnings are generated when GPS/IRS differ by >200ft
+  - System gracefully transitions to single-sensor mode when one source fails
+  - Recovery to dual-sensor mode occurs within 30 seconds when source is restored
+
+traceability:
+  requirements:
+    - "SRS-NAV-110"
+    - "SRS-NAV-111"
+    - "SRS-NAV-115"
+  design_components:
+    - "NavigationManager"
+    - "SensorFusion"
+    - "GPSInterface"
+    - "IRSInterface"

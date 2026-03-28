@@ -1,0 +1,277 @@
+= {{ title }}
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:icons: font
+
+[cols="1,3"]
+|===
+| Document ID | {{ document_id }}
+| Version | {{ version }}
+| Date | {{ date }}
+| Project | {{ project_name }}
+| Organization | {{ organization }}
+{% if author -%}
+| Author | {{ author }}
+{% endif -%}
+{% if certification_authority -%}
+| Certification Authority | {{ certification_authority }}
+{% endif -%}
+|===
+
+<<<
+
+== Document Purpose
+
+This document links the applicant to the certification authorities and provides a comprehensive overview of the software aspects of certification for the {{ project_name }} system. It addresses software development, verification, configuration management, and quality assurance processes necessary to achieve certification compliance per DO-178C.
+
+== System Overview
+
+=== System Description
+
+{{ system_overview.description | strip }}
+
+{% if system_overview.system_functions -%}
+=== System Functions
+
+The system provides the following functions:
+
+{% for func in system_overview.system_functions -%}
+* {{ func }}
+{% endfor %}
+{% endif %}
+
+{% if system_overview.hardware_components -%}
+=== Hardware Components
+
+{% for component in system_overview.hardware_components -%}
+* {{ component }}
+{% endfor %}
+{% endif %}
+
+{% if system_overview.safety_features -%}
+=== Safety Features
+
+{% for feature in system_overview.safety_features -%}
+* {{ feature }}
+{% endfor %}
+{% endif %}
+
+<<<
+
+== Software Overview
+
+=== Software Description
+
+{{ software_overview.description | strip }}
+
+=== Software Components
+
+The following table summarizes the software components and their design assurance levels:
+
+[cols="2,4,1"]
+|===
+| Component | Description | Design Assurance Level
+
+{% for component in software_overview.software_components -%}
+| {{ component.name }}
+| {{ component.description }}
+| Level {{ component.level }}
+
+{% endfor -%}
+|===
+
+{% if software_overview.partitioning -%}
+=== Partitioning Strategy
+
+{{ software_overview.partitioning | strip }}
+{% endif %}
+
+{% if software_overview.redundancy -%}
+=== Redundancy Mechanisms
+
+{{ software_overview.redundancy | strip }}
+{% endif %}
+
+<<<
+
+== Certification Considerations
+
+=== Software Design Assurance Level
+
+The software is classified as *Design Assurance Level {{ certification_considerations.software_level }}*.
+
+{% if certification_considerations.failure_conditions -%}
+=== Failure Conditions and Software Contribution
+
+The following table identifies system failure conditions and the software's contribution to these conditions:
+
+[cols="3,2,3"]
+|===
+| Failure Condition | Classification | Software Contribution
+
+{% for fc in certification_considerations.failure_conditions -%}
+| {{ fc.condition }}
+| {{ fc.classification }}
+| {% if fc.software_contribution %}{{ fc.software_contribution }}{% else %}N/A{% endif %}
+
+{% endfor -%}
+|===
+{% endif %}
+
+{% if certification_considerations.deactivated_code -%}
+=== Deactivated Code
+
+{{ certification_considerations.deactivated_code | strip }}
+{% endif %}
+
+<<<
+
+== Software Lifecycle
+
+=== Lifecycle Model
+
+{{ software_lifecycle.model | strip }}
+
+{% if software_lifecycle.processes -%}
+=== Software Lifecycle Processes
+
+The following processes are defined for the software lifecycle:
+
+{% for process in software_lifecycle.processes -%}
+==== {{ process.name }}
+
+{% if process.description -%}
+{{ process.description | strip }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+<<<
+
+== Software Lifecycle Data
+
+{% if software_lifecycle_data -%}
+The following software lifecycle data items will be produced:
+
+[cols="2,4,2"]
+|===
+| Document | Description | Responsible Party
+
+{% for item in software_lifecycle_data -%}
+| {{ item.document }}
+| {{ item.description }}
+| {% if item.responsible %}{{ item.responsible }}{% else %}TBD{% endif %}
+
+{% endfor -%}
+|===
+{% else -%}
+Software lifecycle data items are detailed in the Software Development Plan (SDP).
+{% endif %}
+
+<<<
+
+== Schedule
+
+{% if schedule and schedule.milestones -%}
+The following milestones are planned for the certification program:
+
+{% for milestone in schedule.milestones -%}
+=== {{ milestone.name }}
+
+*Target Date:* {{ milestone.date }}
+
+{% if milestone.deliverables -%}
+*Deliverables:*
+
+{% for deliverable in milestone.deliverables -%}
+* {{ deliverable }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% else -%}
+The detailed schedule will be provided in project planning documents.
+{% endif %}
+
+<<<
+
+== Additional Considerations
+
+{% if additional_considerations -%}
+{% if additional_considerations.previously_developed_software -%}
+=== Previously Developed Software
+
+{{ additional_considerations.previously_developed_software | strip }}
+{% endif %}
+
+{% if additional_considerations.tool_qualification -%}
+=== Tool Qualification
+
+{{ additional_considerations.tool_qualification | strip }}
+{% endif %}
+
+{% if additional_considerations.alternative_methods -%}
+=== Alternative Methods
+
+{{ additional_considerations.alternative_methods | strip }}
+{% endif %}
+{% else -%}
+No additional considerations are applicable at this time.
+{% endif %}
+
+<<<
+
+== Supplier Oversight
+
+{% if supplier_oversight and supplier_oversight.suppliers -%}
+The following suppliers are involved in software development:
+
+{% for supplier in supplier_oversight.suppliers -%}
+=== {{ supplier.name }}
+
+*Role:* {{ supplier.role }}
+
+{% if supplier.oversight_activities -%}
+*Oversight Activities:* {{ supplier.oversight_activities }}
+{% endif %}
+{% endfor %}
+{% else -%}
+No external suppliers are involved in software development.
+{% endif %}
+
+<<<
+
+== Approval
+
+This Plan for Software Aspects of Certification has been reviewed and approved by:
+
+[cols="1,2,2,1"]
+|===
+| Role | Name | Signature | Date
+
+| Project Manager
+|
+|
+|
+
+| Software Manager
+|
+|
+|
+
+| Quality Assurance
+|
+|
+|
+
+| Certification Authority
+|
+|
+|
+
+|===
+
+<<<
+
+*End of Document*

@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "High-Level Test Schema",
+  "description": "Schema for DO-178C high-level (requirements-based) test cases",
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["high_level_test"],
+      "description": "Test case type"
+    },
+    "test_id": {
+      "type": "string",
+      "description": "Unique test identifier"
+    },
+    "requirement_id": {
+      "type": "string",
+      "description": "Software requirement being verified"
+    },
+    "test_objective": {
+      "type": "string",
+      "description": "Objective of the test"
+    },
+    "test_level": {
+      "type": "string",
+      "enum": ["Integration", "System", "Hardware-Software Integration"],
+      "description": "Test level"
+    },
+    "prerequisites": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Prerequisites and initial conditions"
+    },
+    "test_procedure": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "step": {"type": "integer"},
+          "action": {"type": "string"},
+          "input": {"type": "string"},
+          "expected_output": {"type": "string"}
+        },
+        "required": ["step", "action", "expected_output"]
+      },
+      "description": "Step-by-step test procedure"
+    },
+    "pass_criteria": {
+      "type": "string",
+      "description": "Criteria for test to pass"
+    },
+    "traceability": {
+      "type": "object",
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "design_components": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    }
+  },
+  "required": [
+    "type",
+    "test_id",
+    "requirement_id",
+    "test_objective",
+    "test_procedure",
+    "pass_criteria"
+  ]
+}

@@ -1,0 +1,441 @@
+[DOCUMENT]
+TITLE: Software Verification Plan
+UID: SVP-001
+VERSION: 1.0
+CLASSIFICATION: DO-178C Level A
+
+[SECTION]
+TITLE: Document Information
+
+[TEXT]
+STATEMENT: >>>
+**Document ID:** SVP-001
+**Project:** Flight Management System
+**Version:** 1.0
+**Date:** 2024-01-15
+**Author:** Verification Team
+**Software Level:** A
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: Document Purpose
+
+[TEXT]
+STATEMENT: >>>
+This Software Verification Plan describes the verification strategy and procedures used to satisfy the verification objectives for Design Assurance Level A software. It establishes the approach for demonstrating that the software requirements are satisfied and that the software does not contain errors.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1. Organization and Independence
+
+[SECTION]
+TITLE: 1.1 Development Organization
+
+[TEXT]
+STATEMENT: >>>
+The software development organization is the Flight Systems Engineering Department of Avionics Systems Inc., responsible for requirements analysis, design, and implementation.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.2 Verification Organization
+
+[TEXT]
+STATEMENT: >>>
+The software verification organization is the Independent Verification and Validation (IV&V) Group, which reports to the Quality Assurance Director independently of the development organization.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1.3 Independence
+
+[TEXT]
+STATEMENT: >>>
+Independence requirements for Level A software are met through organizational separation. The verification team has no reporting relationship to the development team and has independent budget and schedule authority. Reviews, test case development, and test execution are performed by verification personnel who did not develop the item under test.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2. Verification Methods
+
+[SECTION]
+TITLE: 2.1 Reviews
+
+[PLAN]
+UID: SVP-METHOD-001
+LEVEL: A
+STATEMENT: >>>
+Reviews are inspection activities performed to verify that software artifacts comply with standards and requirements. Reviews include requirements reviews, design reviews, code reviews, and test procedure reviews. Formal review checklists based on DO-178C objectives will be used.
+
+**Applicability:** Applied to all software requirements, design, code, and verification procedures.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.2 Analysis
+
+[PLAN]
+UID: SVP-METHOD-002
+LEVEL: A
+STATEMENT: >>>
+Analysis includes examination of software artifacts to verify properties that cannot be easily verified through testing. Analysis methods include:
+- Requirements traceability analysis
+- Data and control flow analysis
+- Timing and memory analysis
+- Stack usage analysis
+- Structural coverage analysis (MC/DC for Level A)
+- Worst-case execution time (WCET) analysis
+
+**Applicability:** Applied to requirements, design, code, and verification coverage.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.3 Test
+
+[PLAN]
+UID: SVP-METHOD-003
+LEVEL: A
+STATEMENT: >>>
+Testing exercises the software with inputs to verify correct behavior and outputs. Test levels include:
+- Requirements-based testing (high-level tests)
+- Low-level testing (unit and integration tests)
+- Software/hardware integration testing
+- Robustness testing (error handling and boundary conditions)
+
+**Applicability:** Applied to verify all software requirements at appropriate abstraction levels.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.4 Demonstration
+
+[PLAN]
+UID: SVP-METHOD-004
+LEVEL: A
+STATEMENT: >>>
+Demonstration verifies operational characteristics through execution in the target environment. Used for features that require human observation or specific operational scenarios.
+
+**Applicability:** Applied selectively for user interface and operational features.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.5 Inspection
+
+[PLAN]
+UID: SVP-METHOD-005
+LEVEL: A
+STATEMENT: >>>
+Inspection is detailed visual examination of software artifacts. Used for aspects that cannot be effectively verified through automated means.
+
+**Applicability:** Applied to build procedures, configuration data, and final object code.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3. Verification Environment
+
+[SECTION]
+TITLE: 3.1 Environment Description
+
+[TEXT]
+STATEMENT: >>>
+The verification environment consists of:
+- Target hardware (Flight Management Computer) with JTAG debug interface
+- Hardware-in-the-loop (HIL) simulator for sensor and avionics interfaces
+- Software development workstations (Linux-based)
+- Requirements management system with traceability tools
+- Static analysis tools for code quality and coverage
+- Version control and configuration management system
+- Automated test execution framework
+- Coverage analysis tools (structural coverage for MC/DC)
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.2 Hardware
+
+[TEXT]
+STATEMENT: >>>
+- Flight Management Computer (target hardware)
+- Hardware-in-the-loop simulator with aircraft sensor models
+- Control Display Unit (CDU) interface
+- JTAG debugger and trace analyzer
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.3 Software Tools
+
+[PLAN]
+UID: SVP-TOOL-001
+LEVEL: A
+STATEMENT: >>>
+**GCC Compiler with DO-178C qualification data**
+
+Purpose: Compilation of source code to object code
+Qualification Required: Yes (TQL-5)
+<<<
+
+[PLAN]
+UID: SVP-TOOL-002
+LEVEL: A
+STATEMENT: >>>
+**VectorCAST**
+
+Purpose: Unit testing and MC/DC coverage analysis
+Qualification Required: Yes (TQL-5)
+<<<
+
+[PLAN]
+UID: SVP-TOOL-003
+LEVEL: A
+STATEMENT: >>>
+**Polyspace Static Analyzer**
+
+Purpose: Static analysis for runtime errors and coding standard compliance
+Qualification Required: Yes (TQL-5)
+<<<
+
+[PLAN]
+UID: SVP-TOOL-004
+LEVEL: A
+STATEMENT: >>>
+**DOORS Requirements Management**
+
+Purpose: Requirements management and traceability
+Qualification Required: No
+<<<
+
+[PLAN]
+UID: SVP-TOOL-005
+LEVEL: A
+STATEMENT: >>>
+**Git with Gerrit**
+
+Purpose: Version control and code review
+Qualification Required: No
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4. Transition Criteria
+
+[SECTION]
+TITLE: 4.1 Requirements to Design
+
+[PLAN]
+UID: SVP-TRANS-001
+LEVEL: A
+STATEMENT: >>>
+**Transition Criteria: Requirements to Design**
+
+- All high-level requirements reviewed and approved
+- Requirements traceability to system requirements verified
+- Requirements coverage analysis complete (no missing derived requirements)
+- Requirements review findings resolved
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.2 Design to Code
+
+[PLAN]
+UID: SVP-TRANS-002
+LEVEL: A
+STATEMENT: >>>
+**Transition Criteria: Design to Code**
+
+- Software architecture and low-level requirements reviewed and approved
+- Design traceability to high-level requirements verified (bi-directional)
+- Low-level requirements satisfy high-level requirements
+- Design review findings resolved
+- Unit test procedures approved
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.3 Code to Integration
+
+[PLAN]
+UID: SVP-TRANS-003
+LEVEL: A
+STATEMENT: >>>
+**Transition Criteria: Code to Integration**
+
+- All source code reviewed and approved
+- Code complies with coding standards
+- Unit testing complete with 100% MC/DC coverage
+- Static analysis findings resolved
+- Code review findings resolved
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.4 Integration to Verification Complete
+
+[PLAN]
+UID: SVP-TRANS-004
+LEVEL: A
+STATEMENT: >>>
+**Transition Criteria: Integration to Verification Complete**
+
+- Integration testing complete
+- Requirements-based testing complete
+- Structural coverage analysis shows 100% MC/DC
+- Robustness testing complete
+- All verification procedures executed
+- All problem reports resolved or deferred with rationale
+- Verification traceability complete
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 5. Partitioning Verification
+
+[TEXT]
+STATEMENT: >>>
+Partitioning integrity will be verified through:
+
+1. **Memory Protection Analysis:** Verify that Level A partitions have protected memory regions and cannot be corrupted by lower-level partitions. Static analysis tools will verify no pointer arithmetic crosses partition boundaries.
+
+2. **Temporal Partitioning Analysis:** Verify that Level A tasks have guaranteed execution time windows and cannot be starved by lower-priority tasks. Worst-case execution time analysis will confirm timing budgets.
+
+3. **Control Flow Analysis:** Verify that Level A code cannot be invoked by lower-level partitions except through defined, protected interfaces.
+
+4. **Integration Testing:** Execute tests that attempt to violate partitioning (e.g., buffer overruns from lower partitions) and verify protection mechanisms.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 6. Compiler and Linker Assumptions
+
+[TEXT]
+STATEMENT: >>>
+The qualified compiler (GCC with DO-178C qualification data) is assumed to correctly translate source code to object code according to the language standard (C99).
+
+Verification of compiler assumptions includes:
+
+1. **Tool Qualification:** The compiler is qualified as a verification tool (TQL-5) per DO-330, including test cases that verify correct code generation.
+
+2. **Object Code Review:** Sample object code will be reviewed to verify:
+   - Correct translation of critical algorithms
+   - Absence of unintended compiler optimizations that affect safety
+   - Correct implementation of language constructs used in the software
+
+3. **Compiler Options:** Only qualified compiler options will be used. Non-qualified optimization levels are prohibited.
+
+4. **Linking Assumptions:** The linker is verified to correctly place code and data in specified memory regions according to the link map.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7. Reverification Methods
+
+[SECTION]
+TITLE: 7.1 Reverification Strategy
+
+[TEXT]
+STATEMENT: >>>
+Changes to previously verified software require reverification to ensure:
+- The change is correctly implemented
+- No unintended side effects are introduced
+- Previous verification results remain valid
+
+The reverification strategy includes:
+
+1. Impact Analysis: Determine which software components are affected by the change
+2. Selective Reverification: Reverify only affected components and their interfaces
+3. Regression Testing: Execute regression test suite to verify no unintended effects
+4. Traceability Update: Update traceability data to reflect changes
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7.2 Impact Analysis Process
+
+[TEXT]
+STATEMENT: >>>
+Impact analysis is performed using:
+
+1. Change Request Analysis: Review change request to identify affected components
+2. Dependency Analysis: Use traceability matrices to identify dependent items
+3. Coverage Analysis: Determine which test cases exercise affected code
+4. Risk Assessment: Assess safety impact and determine verification scope
+5. Reverification Plan: Document selective reverification activities required
+
+The impact analysis results determine the scope of reverification:
+- Minimal impact: Execute affected test cases only
+- Moderate impact: Reverify affected component and interface tests
+- Major impact: Full reverification of software
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 8. Previously Developed Software
+
+[TEXT]
+STATEMENT: >>>
+The navigation algorithm component is previously developed software from a Level B certified system. To use this software in a Level A system:
+
+1. **Assess Existing Verification:** Review previous verification evidence against Level A objectives
+2. **Gap Analysis:** Identify Level A objectives not satisfied by existing verification
+3. **Additional Verification:** Perform additional testing and analysis to close gaps:
+   - MC/DC structural coverage analysis (Level B only required decision coverage)
+   - Additional robustness testing for Level A requirements
+   - Code review to Level A standards
+4. **Configuration Management:** Verify configuration control was maintained
+5. **Traceability:** Establish traceability from Level A requirements to existing software
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 9. Approval
+
+[TEXT]
+STATEMENT: >>>
+This Software Verification Plan has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Verification Manager | | | |
+| Software Manager | | | |
+| Quality Assurance | | | |
+<<<
+
+[/SECTION]

@@ -1,0 +1,62 @@
+type: "low_level_test"
+test_id: "LLT-NAV-002"
+requirement_id: "LLR-NAV-1005"
+unit_under_test: "computePosition()"
+test_objective: "Verify position computation handles GPS invalid condition correctly"
+test_type: "Error Handling"
+
+setup:
+  stubs:
+    - "getGPSData() - returns GPS invalid"
+    - "getIRSData() - returns valid IRS position"
+  initialization: "Initialize navigation state to DUAL mode"
+
+test_inputs:
+  - parameter: "gps_valid"
+    value: "false"
+    description: "GPS validity flag set to invalid"
+  - parameter: "irs_latitude"
+    value: "40.0"
+    description: "IRS latitude in degrees"
+  - parameter: "irs_longitude"
+    value: "-74.0"
+    description: "IRS longitude in degrees"
+  - parameter: "irs_altitude"
+    value: "10000.0"
+    description: "IRS altitude in feet"
+  - parameter: "irs_valid"
+    value: "true"
+    description: "IRS validity flag"
+
+expected_outputs:
+  - parameter: "position.latitude"
+    value: "40.0"
+    description: "Position from IRS only"
+  - parameter: "position.longitude"
+    value: "-74.0"
+    description: "Position from IRS only"
+  - parameter: "position.altitude"
+    value: "10000.0"
+    description: "Altitude from IRS only"
+  - parameter: "position.valid"
+    value: "true"
+    description: "Position valid (IRS provides valid data)"
+  - parameter: "nav_mode"
+    value: "IRS_ONLY"
+    description: "Navigation mode switches to IRS-only"
+  - parameter: "return_value"
+    value: "NAV_SUCCESS"
+    description: "Function succeeds with degraded mode"
+
+coverage_requirements:
+  statement_coverage: true
+  decision_coverage: true
+  mcdc_coverage: true
+
+traceability:
+  low_level_requirements:
+    - "LLR-NAV-1005"
+    - "LLR-NAV-1010"
+  high_level_requirements:
+    - "SRS-NAV-115"
+    - "SRS-NAV-120"

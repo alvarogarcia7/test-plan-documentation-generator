@@ -1,0 +1,79 @@
+=== Low-Level Test: {{ test_id }}
+
+*Unit Under Test:* `{{ unit_under_test }}`  
+*Requirement ID:* {{ requirement_id }}  
+*Test Objective:* {{ test_objective | strip }}  
+{% if test_type -%}
+*Test Type:* {{ test_type }}  
+{% endif %}
+
+{% if setup -%}
+==== Test Setup
+
+{% if setup.initialization -%}
+*Initialization:* {{ setup.initialization | strip }}
+{% endif %}
+
+{% if setup.stubs -%}
+*Stubs Required:*
+
+{% for stub in setup.stubs -%}
+* {{ stub }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+==== Test Inputs
+
+[cols="2,2,4"]
+|===
+| Parameter | Value | Description
+
+{% for input in test_inputs -%}
+| `{{ input.parameter }}`
+| `{{ input.value }}`
+| {% if input.description %}{{ input.description }}{% else %}N/A{% endif %}
+
+{% endfor -%}
+|===
+
+==== Expected Outputs
+
+[cols="2,2,4"]
+|===
+| Parameter | Expected Value | Description
+
+{% for output in expected_outputs -%}
+| `{{ output.parameter }}`
+| `{{ output.value }}`
+| {% if output.description %}{{ output.description }}{% else %}N/A{% endif %}
+
+{% endfor -%}
+|===
+
+{% if coverage_requirements -%}
+==== Coverage Requirements
+
+{% if coverage_requirements.statement_coverage -%}
+* ✓ Statement Coverage
+{% endif -%}
+{% if coverage_requirements.decision_coverage -%}
+* ✓ Decision Coverage
+{% endif -%}
+{% if coverage_requirements.mcdc_coverage -%}
+* ✓ MC/DC Coverage
+{% endif -%}
+{% endif %}
+
+{% if traceability -%}
+==== Traceability
+
+{% if traceability.low_level_requirements -%}
+*Low-Level Requirements:* {{ traceability.low_level_requirements | join(sep=", ") }}  
+{% endif -%}
+{% if traceability.high_level_requirements -%}
+*High-Level Requirements:* {{ traceability.high_level_requirements | join(sep=", ") }}  
+{% endif -%}
+{% endif %}
+
+<<<

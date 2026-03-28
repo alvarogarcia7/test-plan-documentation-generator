@@ -1,0 +1,96 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Software Verification Cases and Procedures Schema",
+  "description": "Schema for DO-178C SVCP document data",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Unique document identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project/system"
+    },
+    "version": {
+      "type": "string",
+      "description": "Document version"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Document date"
+    },
+    "author": {
+      "type": "string",
+      "description": "Document author"
+    },
+    "software_level": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"],
+      "description": "Software design assurance level"
+    },
+    "review_procedures": {
+      "type": "object",
+      "properties": {
+        "scope": {"type": "string"},
+        "depth": {"type": "string"},
+        "checklists": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"}
+            },
+            "required": ["name"]
+          }
+        }
+      },
+      "required": ["scope", "depth"]
+    },
+    "analysis_procedures": {
+      "type": "object",
+      "properties": {
+        "scope": {"type": "string"},
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"},
+              "tools": {"type": "string"}
+            },
+            "required": ["name", "description"]
+          }
+        }
+      },
+      "required": ["scope"]
+    },
+    "test_overview": {
+      "type": "object",
+      "properties": {
+        "high_level_tests": {"type": "string"},
+        "low_level_tests": {"type": "string"},
+        "test_environment": {"type": "string"},
+        "pass_fail_criteria": {"type": "string"}
+      },
+      "required": ["high_level_tests", "low_level_tests"]
+    }
+  },
+  "required": [
+    "document_id",
+    "title",
+    "project_name",
+    "version",
+    "date",
+    "software_level",
+    "review_procedures",
+    "test_overview"
+  ]
+}

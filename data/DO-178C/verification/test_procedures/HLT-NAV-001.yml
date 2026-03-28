@@ -1,0 +1,45 @@
+type: "high_level_test"
+test_id: "HLT-NAV-001"
+requirement_id: "SRS-NAV-100"
+test_objective: "Verify that the Navigation Manager correctly computes aircraft position from GPS sensor data"
+test_level: "Integration"
+
+prerequisites:
+  - "FMS software loaded on target hardware"
+  - "HIL simulator configured with GPS sensor model"
+  - "GPS sensor providing valid position data"
+  - "System initialized to ready state"
+
+test_procedure:
+  - step: 1
+    action: "Initialize system and wait for navigation ready indication"
+    input: "System power-on, GPS sensor valid"
+    expected_output: "Navigation status indicates READY"
+    
+  - step: 2
+    action: "Inject GPS position data: Lat=37.7749°N, Lon=122.4194°W, Alt=100ft"
+    input: "GPS latitude, longitude, altitude"
+    expected_output: "FMS displays position: 37.7749°N, 122.4194°W, 100ft ±10ft"
+    
+  - step: 3
+    action: "Update GPS position to Lat=37.7800°N, Lon=122.4100°W, Alt=5000ft"
+    input: "Updated GPS coordinates"
+    expected_output: "FMS updates position to 37.7800°N, 122.4100°W, 5000ft ±10ft within 1 second"
+    
+  - step: 4
+    action: "Inject GPS invalid flag"
+    input: "GPS sensor status = INVALID"
+    expected_output: "Navigation status indicates GPS INVALID, position hold on last valid position"
+
+pass_criteria: |
+  Test passes if all steps execute successfully and actual outputs match expected outputs 
+  within specified tolerances. Navigation position accuracy must be within ±10 feet and 
+  position updates must occur within 1 second of GPS data change.
+
+traceability:
+  requirements:
+    - "SRS-NAV-100"
+    - "SRS-NAV-101"
+  design_components:
+    - "NavigationManager"
+    - "GPSInterface"

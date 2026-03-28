@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Software Verification Plan Schema",
+  "description": "Schema for DO-178C SVP document data",
+  "type": "object",
+  "properties": {
+    "document_id": {
+      "type": "string",
+      "description": "Unique document identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Document title"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "Name of the project/system"
+    },
+    "version": {
+      "type": "string",
+      "description": "Document version"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Document date"
+    },
+    "author": {
+      "type": "string",
+      "description": "Document author"
+    },
+    "software_level": {
+      "type": "string",
+      "enum": ["A", "B", "C", "D", "E"],
+      "description": "Software design assurance level"
+    },
+    "organization": {
+      "type": "object",
+      "properties": {
+        "development_team": {"type": "string"},
+        "verification_team": {"type": "string"},
+        "independence_statement": {"type": "string"}
+      },
+      "required": ["development_team", "verification_team", "independence_statement"]
+    },
+    "verification_methods": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": ["Reviews", "Analysis", "Test", "Demonstration", "Inspection"]
+          },
+          "description": {"type": "string"},
+          "applicability": {"type": "string"}
+        },
+        "required": ["method", "description"]
+      },
+      "description": "Verification methods to be used"
+    },
+    "verification_environment": {
+      "type": "object",
+      "properties": {
+        "hardware": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "software_tools": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "purpose": {"type": "string"},
+              "qualification_required": {"type": "boolean"}
+            },
+            "required": ["name", "purpose"]
+          }
+        },
+        "test_environment_description": {"type": "string"}
+      },
+      "required": ["test_environment_description"]
+    },
+    "transition_criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": {"type": "string"},
+          "criteria": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["phase", "criteria"]
+      },
+      "description": "Criteria for transitioning between lifecycle phases"
+    },
+    "partitioning_verification": {
+      "type": "string",
+      "description": "Approach for verifying partitioning integrity"
+    },
+    "compiler_assumptions": {
+      "type": "string",
+      "description": "Compiler and linker assumptions and verification"
+    },
+    "reverification": {
+      "type": "object",
+      "properties": {
+        "strategy": {"type": "string"},
+        "impact_analysis_process": {"type": "string"}
+      },
+      "required": ["strategy"]
+    },
+    "previously_developed_software": {
+      "type": "string",
+      "description": "Verification approach for previously developed software"
+    }
+  },
+  "required": [
+    "document_id",
+    "title",
+    "project_name",
+    "version",
+    "date",
+    "software_level",
+    "organization",
+    "verification_methods",
+    "verification_environment",
+    "transition_criteria"
+  ]
+}

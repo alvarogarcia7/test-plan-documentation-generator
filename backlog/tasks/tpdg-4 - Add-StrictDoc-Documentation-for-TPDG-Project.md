@@ -4,10 +4,11 @@ title: Add StrictDoc Documentation for TPDG Project
 status: In Progress
 assignee: []
 created_date: '2026-03-23 09:49'
-updated_date: '2026-03-23 10:07'
+updated_date: '2026-03-28 06:59'
 labels: []
 milestone: m-0
 dependencies: []
+ordinal: 1000
 ---
 
 ## Description

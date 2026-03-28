@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
+use clap::ValueEnum;
 use jsonschema::JSONSchema;
+use log::{debug, error, info, warn};
 use regex::Regex;
 use serde_json::Value as JsonValue;
 use serde_yaml::Value as YamlValue;
@@ -12,6 +14,37 @@ use std::process::exit;
 use tera::Context;
 use tera::Tera;
 use tera::{Filter, Function, Value};
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+enum OutputFormat {
+    #[value(name = "md")]
+    Markdown,
+    #[value(name = "adoc")]
+    Asciidoc,
+}
+
+impl OutputFormat {
+    fn template_suffix(&self) -> &'static str {
+        match self {
+            OutputFormat::Markdown => ".j2",
+            OutputFormat::Asciidoc => "_asciidoc.adoc",
+        }
+    }
+
+    fn context_key(&self) -> &'static str {
+        match self {
+            OutputFormat::Markdown => "requirements_summary_md",
+            OutputFormat::Asciidoc => "requirements_summary_adoc",
+        }
+    }
+
+    fn requirement_aggregation_filename(&self) -> &'static str {
+        match self {
+            OutputFormat::Asciidoc => "requirement_aggregation_template.adoc",
+            OutputFormat::Markdown => "requirement_aggregation_template.j2",
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "tpdg")]
@@ -29,9 +62,9 @@ struct Args {
     #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required = true)]
     test_case: Vec<PathBuf>,
 
-    /// Output format (markdown or asciidoc)
-    #[arg(long = "format", default_value = "markdown", value_parser = ["markdown", "asciidoc"])]
-    format: String,
+    /// Output format (md or adoc)
+    #[arg(long = "format", default_value = "adoc")]
+    format: OutputFormat,
 }
 
 struct ReplaceFilter;
@@ -236,50 +269,16 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
-// Logging macro - logs to file descriptor 3 if available (Unix-like systems)
-macro_rules! log_fd3 {
-    ($($arg:tt)*) => {{
-        // Skip logging in test mode to avoid FD conflicts
-        #[cfg(all(unix, not(test)))]
-        {
-            use std::io::Write;
-            use std::os::unix::io::FromRawFd;
-            unsafe {
-                // Check if FD 3 is valid using fcntl
-                let fd = 3;
-                let flags = libc::fcntl(fd, libc::F_GETFD);
-                if flags != -1 {
-                    // FD 3 is valid, duplicate it to avoid taking ownership
-                    let dup_fd = libc::dup(fd);
-                    if dup_fd != -1 {
-                        let mut file = std::fs::File::from_raw_fd(dup_fd);
-                        let _ = writeln!(file, $($arg)*);
-                        // File will be closed when it goes out of scope
-                    }
-                }
-            }
-        }
-    }};
-}
-
-fn get_template_suffix(format: &str) -> &str {
-    match format {
-        "markdown" => ".j2",
-        "asciidoc" => "_asciidoc.adoc",
-        _ => ".j2",
-    }
-}
-
 fn main() -> Result<()> {
-    log_fd3!("Starting tpdg");
-    tracing_subscriber::fmt::init();
+    env_logger::init();
+    info!("Starting tpdg");
 
     // Log the raw arguments before parsing
     let _raw_args: Vec<String> = std::env::args().collect();
-    log_fd3!("Raw arguments: {:?}", _raw_args);
+    debug!("Raw arguments: {:?}", _raw_args);
 
     let args = Args::parse();
-    log_fd3!("Parsed arguments: {:?}", args);
+    debug!("Parsed arguments: {:?}", args);
 
     // Parse container arguments
     let container_schema = &args.container[0];
@@ -303,7 +302,7 @@ fn main() -> Result<()> {
             "Error: Verification methods directory does not exist or is not a directory: {}",
             verification_methods_dir.display()
         );
-        log_fd3!("{}", message);
+        error!("{}", message);
         eprintln!("{}", message);
         exit(2);
     }
@@ -314,7 +313,7 @@ fn main() -> Result<()> {
             "Error: Container template file does not exist: {}",
             container_template.display()
         );
-        log_fd3!("{}", message);
+        error!("{}", message);
         eprintln!("{}", message);
         exit(2);
     }
@@ -326,7 +325,7 @@ fn main() -> Result<()> {
         test_case_files.iter().collect::<Vec<_>>(),
     ]
     .concat();
-    log_fd3!("Checking file existence...");
+    debug!("Checking file existence...");
     for file in &all_files {
         if !file.exists() {
             missing_files.push(file.display().to_string());
@@ -338,16 +337,16 @@ fn main() -> Result<()> {
             "Error: The following files do not exist:\n{}",
             missing_files_as_str
         );
-        log_fd3!("{}", message);
+        error!("{}", message);
         eprintln!("{}", message);
         exit(2);
     }
-    log_fd3!("All files exist, proceeding.");
+    debug!("All files exist, proceeding.");
 
     // First pass: read all YAML files to get their types and validate they can be loaded
     let mut file_types: HashMap<PathBuf, String> = HashMap::new();
     for file in test_case_files {
-        log_fd3!("Reading type from file: {}", file.display());
+        debug!("Reading type from file: {}", file.display());
         let content = fs::read_to_string(file)?;
         let yaml_val: YamlValue = serde_yaml::from_str(&content)?;
 
@@ -364,12 +363,12 @@ fn main() -> Result<()> {
             anyhow::anyhow!("File {} does not have a 'type' field", file.display())
         })?;
 
-        log_fd3!("File {} has type: {}", file.display(), type_str);
+        debug!("File {} has type: {}", file.display(), type_str);
         file_types.insert(file.clone(), type_str.to_string());
     }
 
     // Build a map of type -> (schema_path, template_path)
-    let template_suffix = get_template_suffix(&args.format);
+    let template_suffix = args.format.template_suffix();
     let mut type_resources: HashMap<String, (PathBuf, PathBuf)> = HashMap::new();
     for type_name in file_types.values() {
         if !type_resources.contains_key(type_name) {
@@ -384,7 +383,7 @@ fn main() -> Result<()> {
                     "Error: Schema file does not exist: {}",
                     schema_path.display()
                 );
-                log_fd3!("{}", message);
+                error!("{}", message);
                 eprintln!("{}", message);
                 exit(2);
             }
@@ -393,12 +392,12 @@ fn main() -> Result<()> {
                     "Error: Template file does not exist: {}",
                     template_path.display()
                 );
-                log_fd3!("{}", message);
+                error!("{}", message);
                 eprintln!("{}", message);
                 exit(2);
             }
 
-            log_fd3!(
+            debug!(
                 "Type '{}' uses schema: {} and template: {}",
                 type_name,
                 schema_path.display(),
@@ -438,7 +437,7 @@ fn main() -> Result<()> {
         let files = &files_by_type[type_name];
         let (schema_path, template_path) = &type_resources[type_name];
 
-        log_fd3!("Processing files of type '{}'", type_name);
+        debug!("Processing files of type '{}'", type_name);
 
         // Load template once per type
         let absolute_template_path = template_path
@@ -458,8 +457,8 @@ fn main() -> Result<()> {
 
         // Process each file of this type
         for file in files {
-            log_fd3!("Validating test-case file: {}", file.display());
-            log_fd3!("\tAgainst schema: {}", schema_path.display());
+            debug!("Validating test-case file: {}", file.display());
+            debug!("\tAgainst schema: {}", schema_path.display());
 
             let content = fs::read_to_string(file)?;
             let yaml_val: YamlValue = serde_yaml::from_str(&content)?;
@@ -469,7 +468,7 @@ fn main() -> Result<()> {
                 validate_json_schema(schema_path, &json_value);
             match validation_result {
                 Ok(_) => {
-                    log_fd3!("\tValidation successful.");
+                    debug!("\tValidation successful.");
                 }
                 Err(errors) => {
                     let message = format!(
@@ -477,11 +476,11 @@ fn main() -> Result<()> {
                         file.display(),
                         schema_path.display()
                     );
-                    log_fd3!("{}", message);
+                    error!("{}", message);
                     eprintln!("{}", message);
                     for error in &errors {
                         let error_msg = format!("  - {}", error);
-                        log_fd3!("{}", error_msg);
+                        error!("{}", error_msg);
                         eprintln!("{}", error_msg);
                     }
                     exit(3);
@@ -489,7 +488,7 @@ fn main() -> Result<()> {
             }
 
             // Render the file
-            log_fd3!("Loading test-case data from: {}", file.display());
+            debug!("Loading test-case data from: {}", file.display());
 
             // Build Tera context from YAML mapping (if applicable)
             let mut tc_context = Context::new();
@@ -509,7 +508,7 @@ fn main() -> Result<()> {
             tc_context.insert("data", &json_value_full);
 
             // Render
-            log_fd3!("Rendering test-case template for: {}", file.display());
+            debug!("Rendering test-case template for: {}", file.display());
             CONTEXT_HOLDER.with(|holder| {
                 *holder.borrow_mut() = Some(tc_context.clone());
             });
@@ -521,7 +520,7 @@ fn main() -> Result<()> {
             concatenated.push_str(&rendered);
         }
     }
-    log_fd3!("Rendering test-case files completed");
+    debug!("Rendering test-case files completed");
 
     // Create a unique temporary directory under the OS temp dir and write output.md
     // Note: The temporary directory is not cleaned up by this process, but the OS
@@ -533,11 +532,11 @@ fn main() -> Result<()> {
             .as_nanos()
     );
     let tmp_dir = std::env::temp_dir().join(&unique);
-    log_fd3!("Created temporary folder: {:?}", unique);
+    debug!("Created temporary folder: {:?}", unique);
     fs::create_dir_all(&tmp_dir)?;
     let output_md_path = tmp_dir.join("output.md");
     fs::write(&output_md_path, &concatenated)?;
-    log_fd3!(
+    debug!(
         "Rendered test-case markdown to: {}",
         output_md_path.display()
     );
@@ -547,7 +546,7 @@ fn main() -> Result<()> {
     // These will be inserted into the container context later.
 
     // Load YAML data from the container file
-    log_fd3!("Loading container data from: {}", container_file.display());
+    debug!("Loading container data from: {}", container_file.display());
     let yaml_str = fs::read_to_string(container_file)?;
     let yaml_data: YamlValue = serde_yaml::from_str(&yaml_str)?;
 
@@ -555,13 +554,13 @@ fn main() -> Result<()> {
     let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
 
     // Validate against container schema
-    log_fd3!("Validating container file: {}", container_file.display());
-    log_fd3!("\tAgainst schema: {}", container_schema.display());
+    debug!("Validating container file: {}", container_file.display());
+    debug!("\tAgainst schema: {}", container_schema.display());
     let validation_result: Result<(), Vec<String>> =
         validate_json_schema(container_schema, &json_value);
     match validation_result {
         Ok(_) => {
-            log_fd3!("\tValidation successful.");
+            debug!("\tValidation successful.");
         }
         Err(errors) => {
             let message = format!(
@@ -569,11 +568,11 @@ fn main() -> Result<()> {
                 container_file.display(),
                 container_schema.display()
             );
-            log_fd3!("{}", message);
+            error!("{}", message);
             eprintln!("{}", message);
             for error in &errors {
                 let error_msg = format!("  - {}", error);
-                log_fd3!("{}", error_msg);
+                error!("{}", error_msg);
                 eprintln!("{}", error_msg);
             }
             exit(3);
@@ -583,7 +582,7 @@ fn main() -> Result<()> {
     // Validate individual test_results entries against verification_schema.json
     if let Some(test_results) = json_value.get("test_results") {
         if let Some(test_results_array) = test_results.as_array() {
-            log_fd3!(
+            debug!(
                 "Validating {} test result entries in container file",
                 test_results_array.len()
             );
@@ -593,18 +592,18 @@ fn main() -> Result<()> {
             let verification_schema_path = container_schema_dir.join("verification_schema.json");
 
             if verification_schema_path.exists() {
-                log_fd3!(
+                debug!(
                     "\tUsing verification schema: {}",
                     verification_schema_path.display()
                 );
 
                 for (index, test_result) in test_results_array.iter().enumerate() {
-                    log_fd3!("\tValidating test result entry #{}", index + 1);
+                    debug!("\tValidating test result entry #{}", index + 1);
                     let validation_result =
                         validate_json_schema(&verification_schema_path, test_result);
                     match validation_result {
                         Ok(_) => {
-                            log_fd3!("\t\tValidation successful for entry #{}", index + 1);
+                            debug!("\t\tValidation successful for entry #{}", index + 1);
                         }
                         Err(errors) => {
                             let default_id = format!("entry #{}", index + 1);
@@ -618,11 +617,11 @@ fn main() -> Result<()> {
                                 container_file.display(),
                                 verification_schema_path.display()
                             );
-                            log_fd3!("{}", message);
+                            error!("{}", message);
                             eprintln!("{}", message);
                             for error in &errors {
                                 let error_msg = format!("  - {}", error);
-                                log_fd3!("{}", error_msg);
+                                error!("{}", error_msg);
                                 eprintln!("{}", error_msg);
                             }
                             exit(3);
@@ -630,7 +629,7 @@ fn main() -> Result<()> {
                     }
                 }
             } else {
-                log_fd3!("\tWarning: verification_schema.json not found at {}, skipping test result validation", verification_schema_path.display());
+                warn!("\tWarning: verification_schema.json not found at {}, skipping test result validation", verification_schema_path.display());
             }
         }
     }
@@ -642,7 +641,7 @@ fn main() -> Result<()> {
     if let YamlValue::Mapping(map) = yaml_data {
         for (key, value) in map {
             if let Some(key_str) = key.as_str() {
-                log_fd3!("\tFound key: {}", key_str);
+                debug!("\tFound key: {}", key_str);
                 // Convert YAML value to JSON value for proper Tera serialization
                 let json_str = serde_json::to_string(&value)?;
                 let json_value: JsonValue = serde_json::from_str(&json_str)?;
@@ -659,14 +658,10 @@ fn main() -> Result<()> {
     );
 
     // Load and render requirement aggregation template (format-specific)
-    let req_agg_filename = match args.format.as_str() {
-        "asciidoc" => "requirement_aggregation_template.adoc",
-        "markdown" => "requirement_aggregation_template.j2",
-        _ => "requirement_aggregation_template.adoc",
-    };
+    let req_agg_filename = args.format.requirement_aggregation_filename();
     let req_agg_template_path = verification_methods_dir.join(req_agg_filename);
     if req_agg_template_path.exists() {
-        log_fd3!(
+        debug!(
             "Loading requirement aggregation template from: {}",
             req_agg_template_path.display()
         );
@@ -685,32 +680,28 @@ fn main() -> Result<()> {
         );
         req_tera.add_raw_template("req_agg_template", &req_agg_template_str)?;
 
-        log_fd3!("Rendering requirement aggregation template...");
+        debug!("Rendering requirement aggregation template...");
         CONTEXT_HOLDER.with(|holder| {
             *holder.borrow_mut() = Some(context.clone());
         });
         match req_tera.render("req_agg_template", &context) {
             Ok(requirements_summary) => {
-                let context_key = match args.format.as_str() {
-                    "asciidoc" => "requirements_summary_adoc",
-                    "markdown" => "requirements_summary_md",
-                    _ => "requirements_summary",
-                };
+                let context_key = args.format.context_key();
                 context.insert(context_key, &requirements_summary);
-                log_fd3!(
+                debug!(
                     "Requirements summary rendered and added to context as '{}'",
                     context_key
                 );
             }
             Err(_e) => {
-                log_fd3!(
+                warn!(
                     "Warning: Failed to render requirement aggregation template: {}",
                     _e
                 );
             }
         }
     } else {
-        log_fd3!(
+        debug!(
             "Requirement aggregation template not found at {}, skipping",
             req_agg_template_path.display()
         );
@@ -739,17 +730,17 @@ fn main() -> Result<()> {
     let rendered = tera.render("template", &context)?;
 
     // Write the output
-    log_fd3!("Rendering container template...");
+    debug!("Rendering container template...");
     if let Some(output_path) = args.output {
-        log_fd3!("Rendering container to file...");
+        debug!("Rendering container to file...");
         fs::write(&output_path, &rendered)?;
         eprintln!(
             "Template rendered successfully to {}",
             output_path.display()
         );
-        log_fd3!("Rendered output, writing to {:?}", output_path);
+        debug!("Rendered output, writing to {:?}", output_path);
     } else {
-        log_fd3!("Rendering container to console. You can redirect the file descriptor 3>log_fd3.txt to capture logs.");
+        info!("Rendering container to console");
         println!("{}", rendered);
     }
 
@@ -768,7 +759,7 @@ fn validate_json_schema(
                 schema_path.display(),
                 e
             );
-            log_fd3!("{}", error_msg);
+            error!("{}", error_msg);
             return Err(vec![error_msg]);
         }
     };
@@ -781,7 +772,7 @@ fn validate_json_schema(
                 schema_path.display(),
                 e
             );
-            log_fd3!("{}", error_msg);
+            error!("{}", error_msg);
             return Err(vec![error_msg]);
         }
     };
@@ -799,19 +790,19 @@ fn validate_json_schema(
                 schema_path.display(),
                 e
             );
-            log_fd3!("{}", error_msg);
+            error!("{}", error_msg);
             return Err(vec![error_msg]);
         }
     };
-    log_fd3!("\tValidating payload against schema...");
+    debug!("\tValidating payload against schema...");
     let validation_result = compiled.validate(payload);
     match validation_result {
         Ok(_) => {
-            log_fd3!("\tSchema validation: VALID");
+            debug!("\tSchema validation: VALID");
             Ok(())
         }
         Err(errors) => {
-            log_fd3!("\tSchema validation: INVALID");
+            debug!("\tSchema validation: INVALID");
             let error_messages: Vec<String> = errors.into_iter().map(|e| e.to_string()).collect();
             Err(error_messages)
         }
@@ -819,7 +810,7 @@ fn validate_json_schema(
 }
 
 fn usage(message: &str, ret_code: i32) -> ! {
-    log_fd3!("{}", message);
+    error!("{}", message);
     eprintln!("Error: {}", message);
     exit(ret_code)
 }
@@ -1178,15 +1169,15 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "markdown");
+        assert!(matches!(args.format, OutputFormat::Asciidoc));
     }
 
     #[test]
-    fn test_parse_format_markdown() {
+    fn test_parse_format_md() {
         let args = Args::try_parse_from([
             "tpdg",
             "--format",
-            "markdown",
+            "md",
             "--container",
             "schema.json",
             "template.tera",
@@ -1198,15 +1189,15 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "markdown");
+        assert!(matches!(args.format, OutputFormat::Markdown));
     }
 
     #[test]
-    fn test_parse_format_asciidoc() {
+    fn test_parse_format_adoc() {
         let args = Args::try_parse_from([
             "tpdg",
             "--format",
-            "asciidoc",
+            "adoc",
             "--container",
             "schema.json",
             "template.tera",
@@ -1218,7 +1209,7 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert_eq!(args.format, "asciidoc");
+        assert!(matches!(args.format, OutputFormat::Asciidoc));
     }
 
     #[test]
@@ -1240,10 +1231,33 @@ mod tests {
     }
 
     #[test]
-    fn test_get_template_suffix() {
-        assert_eq!(get_template_suffix("markdown"), ".j2");
-        assert_eq!(get_template_suffix("asciidoc"), "_asciidoc.adoc");
-        assert_eq!(get_template_suffix("unknown"), ".j2");
+    fn test_output_format_template_suffix() {
+        assert_eq!(OutputFormat::Markdown.template_suffix(), ".j2");
+        assert_eq!(OutputFormat::Asciidoc.template_suffix(), "_asciidoc.adoc");
+    }
+
+    #[test]
+    fn test_output_format_context_key() {
+        assert_eq!(
+            OutputFormat::Markdown.context_key(),
+            "requirements_summary_md"
+        );
+        assert_eq!(
+            OutputFormat::Asciidoc.context_key(),
+            "requirements_summary_adoc"
+        );
+    }
+
+    #[test]
+    fn test_output_format_requirement_aggregation_filename() {
+        assert_eq!(
+            OutputFormat::Markdown.requirement_aggregation_filename(),
+            "requirement_aggregation_template.j2"
+        );
+        assert_eq!(
+            OutputFormat::Asciidoc.requirement_aggregation_filename(),
+            "requirement_aggregation_template.adoc"
+        );
     }
 
     mod test_schema_validation {

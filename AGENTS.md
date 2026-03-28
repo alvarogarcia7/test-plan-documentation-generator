@@ -15,8 +15,16 @@ Before opening a PR, you MUST ensure:
 1. `make test` passes - all unit tests and E2E tests must succeed
 2. `make docker-build` passes - Docker image must build successfully
 3. CI/CD build is passing in GitLab/GitHub - verify pipeline status before submitting PR
+4. If you modify `.sdoc` files, run `make strictdoc-validate` to validate StrictDoc requirements
 
 ## Commands
+
+### StrictDoc Validation
+```bash
+make strictdoc-validate      # Validate StrictDoc .sdoc files in requirements/ directory
+```
+
+**When to use**: Run this command after modifying any `.sdoc` files in the `data/strictdoc/DO-178C/` or `requirements/` directories to ensure they are valid.
 
 ### Build Cache (sccache)
 ```bash

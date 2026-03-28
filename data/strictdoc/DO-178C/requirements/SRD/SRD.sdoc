@@ -1,0 +1,394 @@
+[DOCUMENT]
+TITLE: Software Requirements Data - Navigation Manager
+UID: SRD-NAV-001
+VERSION: 2.1
+CLASSIFICATION: DO-178C Level A
+
+[SECTION]
+TITLE: Document Information
+
+[TEXT]
+STATEMENT: >>>
+**Document ID:** SRD-NAV-001
+**Project:** Flight Management System - Navigation Manager
+**Version:** 2.1
+**Date:** 2024-02-15
+**Software Level:** A
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1. Introduction
+
+[TEXT]
+STATEMENT: >>>
+This document defines the high-level software requirements for the Flight Management System (FMS) Navigation Manager component. These requirements are derived from and traceable to system-level requirements. The Navigation Manager is classified as Design Assurance Level A software.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2. Functional Requirements
+
+[SECTION]
+TITLE: 2.1 Position Computation
+
+[REQUIREMENT]
+UID: SRS-NAV-100
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test, Analysis
+TITLE: GPS Position Computation
+STATEMENT: >>>
+The Navigation Manager shall compute aircraft position from GPS sensor data with accuracy within ±10 feet horizontal and ±20 feet vertical.
+<<<
+RATIONALE: >>>
+Accurate position computation is critical for safe navigation and flight control.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-101
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Position Update Rate
+STATEMENT: >>>
+The Navigation Manager shall update the computed position at a rate of at least 10 Hz (100 milliseconds maximum latency).
+<<<
+RATIONALE: >>>
+High update rate is required to provide timely position information for guidance and control systems.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-110
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test, Analysis
+TITLE: Multi-Sensor Position Fusion
+STATEMENT: >>>
+The Navigation Manager shall blend position data from GPS and IRS sensors using weighted averaging based on sensor quality indicators.
+<<<
+RATIONALE: >>>
+Sensor fusion improves position accuracy and provides redundancy for critical navigation function.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-111
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Sensor Discrepancy Detection
+STATEMENT: >>>
+The Navigation Manager shall generate a position discrepancy warning when GPS and IRS positions differ by more than 200 feet.
+<<<
+RATIONALE: >>>
+Discrepancy detection alerts flight crew to potential sensor failures or navigation anomalies.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-115
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Sensor Failure Handling
+STATEMENT: >>>
+When GPS sensor status indicates invalid data, the Navigation Manager shall transition to IRS-only navigation mode within 1 second.
+<<<
+RATIONALE: >>>
+Graceful degradation ensures continued navigation capability when one sensor fails.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-120
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Sensor Recovery
+STATEMENT: >>>
+When a failed sensor returns to valid status with position matching the current navigation solution within 500 feet, the Navigation Manager shall restore dual-sensor navigation mode within 30 seconds.
+<<<
+RATIONALE: >>>
+Automatic recovery to dual-sensor mode maximizes navigation accuracy and redundancy.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.2 Data Validation
+
+[REQUIREMENT]
+UID: SRS-NAV-130
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Coordinate Range Validation
+STATEMENT: >>>
+The Navigation Manager shall validate that latitude values are within the range [-90.0, +90.0] degrees and longitude values are within the range [-180.0, +180.0] degrees.
+<<<
+RATIONALE: >>>
+Input validation prevents propagation of invalid data that could cause navigation errors.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-131
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Invalid Data Rejection
+STATEMENT: >>>
+When sensor data fails validation checks, the Navigation Manager shall reject the data and log an error to the diagnostic system.
+<<<
+RATIONALE: >>>
+Invalid data must be rejected to maintain navigation integrity and provide diagnostic information.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-135
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Altitude Range Validation
+STATEMENT: >>>
+The Navigation Manager shall validate that altitude values are within the operational range [-1000, +60000] feet.
+<<<
+RATIONALE: >>>
+Altitude validation prevents unrealistic position data from affecting flight operations.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.3 Navigation Modes
+
+[REQUIREMENT]
+UID: SRS-NAV-140
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Navigation Mode Indication
+STATEMENT: >>>
+The Navigation Manager shall provide current navigation mode status: DUAL (GPS+IRS), GPS-ONLY, IRS-ONLY, or INVALID.
+<<<
+RATIONALE: >>>
+Mode indication provides situational awareness to flight crew and other systems.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-141
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Invalid Mode Detection
+STATEMENT: >>>
+When both GPS and IRS sensors indicate invalid status, the Navigation Manager shall set navigation mode to INVALID and set position validity flag to false.
+<<<
+RATIONALE: >>>
+Loss of all navigation sensors must be clearly indicated to prevent use of invalid position data.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3. Performance Requirements
+
+[REQUIREMENT]
+UID: SRS-NAV-200
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Analysis, Test
+TITLE: Computation Execution Time
+STATEMENT: >>>
+The position computation function shall complete execution within 5 milliseconds worst-case execution time (WCET).
+<<<
+RATIONALE: >>>
+Bounded execution time ensures deterministic behavior required for real-time safety-critical system.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-201
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Analysis
+TITLE: Stack Usage
+STATEMENT: >>>
+The Navigation Manager task shall not exceed 2048 bytes of stack usage in worst-case conditions.
+<<<
+RATIONALE: >>>
+Limited stack usage prevents stack overflow which could cause system failure.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-202
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Analysis
+TITLE: Memory Footprint
+STATEMENT: >>>
+The Navigation Manager code and data shall not exceed 64 KB of memory.
+<<<
+RATIONALE: >>>
+Memory budget constraints ensure the software fits within allocated hardware resources.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4. Interface Requirements
+
+[SECTION]
+TITLE: 4.1 GPS Interface
+
+[REQUIREMENT]
+UID: SRS-NAV-300
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: GPS Data Reception
+STATEMENT: >>>
+The Navigation Manager shall receive GPS position data (latitude, longitude, altitude) and validity status from the GPS interface at 10 Hz rate.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-301
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: GPS Timeout Detection
+STATEMENT: >>>
+If GPS data is not received within 200 milliseconds, the Navigation Manager shall mark GPS sensor as invalid.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.2 IRS Interface
+
+[REQUIREMENT]
+UID: SRS-NAV-310
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: IRS Data Reception
+STATEMENT: >>>
+The Navigation Manager shall receive IRS position data (latitude, longitude, altitude) and validity status from the IRS interface at 10 Hz rate.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-311
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: IRS Timeout Detection
+STATEMENT: >>>
+If IRS data is not received within 200 milliseconds, the Navigation Manager shall mark IRS sensor as invalid.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4.3 Output Interface
+
+[REQUIREMENT]
+UID: SRS-NAV-320
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Position Output
+STATEMENT: >>>
+The Navigation Manager shall output computed position (latitude, longitude, altitude), navigation mode, and position validity flag to the Guidance Controller at 10 Hz rate.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-321
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Diagnostic Output
+STATEMENT: >>>
+The Navigation Manager shall output sensor status, discrepancy warnings, and error conditions to the diagnostic system.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 5. Safety Requirements
+
+[REQUIREMENT]
+UID: SRS-NAV-400
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test, Analysis
+TITLE: Fail-Safe Behavior
+STATEMENT: >>>
+In the event of software exception or unexpected error condition, the Navigation Manager shall set position validity flag to false and enter a safe state.
+<<<
+RATIONALE: >>>
+Fail-safe behavior prevents use of corrupted or invalid position data that could lead to catastrophic failure.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-401
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Watchdog Monitoring
+STATEMENT: >>>
+The Navigation Manager shall reset the watchdog timer at least once per 50 milliseconds during normal operation.
+<<<
+RATIONALE: >>>
+Watchdog monitoring detects software hangs or deadlocks that could prevent position updates.
+<<<
+
+[REQUIREMENT]
+UID: SRS-NAV-402
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Analysis
+TITLE: Memory Protection
+STATEMENT: >>>
+The Navigation Manager shall operate within its allocated memory partition and shall not access memory outside partition boundaries.
+<<<
+RATIONALE: >>>
+Memory protection prevents corruption of other software components and maintains partitioning integrity.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 6. Traceability
+
+[TEXT]
+STATEMENT: >>>
+All software requirements in this document trace to system requirements defined in the System Requirements Specification (SyRS). The traceability matrix is maintained in the DOORS requirements management system.
+
+**Key System Requirements:**
+- SyRS-001: Aircraft Position Determination
+- SyRS-002: Navigation Accuracy
+- SyRS-003: Sensor Redundancy
+- SyRS-004: Failure Detection and Isolation
+- SyRS-005: Real-time Performance
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7. Approval
+
+[TEXT]
+STATEMENT: >>>
+This Software Requirements Data document has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Requirements Lead | | | |
+| Software Manager | | | |
+| Systems Engineer | | | |
+| Quality Assurance | | | |
+<<<
+
+[/SECTION]

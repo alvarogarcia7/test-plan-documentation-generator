@@ -1,0 +1,40 @@
+type: "low_level_test"
+test_id: "LLT-NAV-003"
+requirement_id: "LLR-NAV-1008"
+unit_under_test: "validateCoordinates()"
+test_objective: "Verify coordinate validation rejects out-of-range latitude values"
+test_type: "Boundary"
+
+setup:
+  initialization: "No special initialization required"
+
+test_inputs:
+  - parameter: "latitude"
+    value: "91.0"
+    description: "Latitude exceeds maximum valid value (90.0 degrees)"
+  - parameter: "longitude"
+    value: "0.0"
+    description: "Valid longitude"
+  - parameter: "altitude"
+    value: "10000.0"
+    description: "Valid altitude"
+
+expected_outputs:
+  - parameter: "return_value"
+    value: "INVALID_LATITUDE"
+    description: "Function returns error code for invalid latitude"
+  - parameter: "error_logged"
+    value: "true"
+    description: "Error is logged to diagnostic system"
+
+coverage_requirements:
+  statement_coverage: true
+  decision_coverage: true
+  mcdc_coverage: true
+
+traceability:
+  low_level_requirements:
+    - "LLR-NAV-1008"
+    - "LLR-NAV-1009"
+  high_level_requirements:
+    - "SRS-NAV-130"

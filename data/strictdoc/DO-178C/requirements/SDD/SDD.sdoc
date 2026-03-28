@@ -1,0 +1,531 @@
+[DOCUMENT]
+TITLE: Software Design Description - Navigation Manager
+UID: SDD-NAV-001
+VERSION: 2.1
+CLASSIFICATION: DO-178C Level A
+
+[SECTION]
+TITLE: Document Information
+
+[TEXT]
+STATEMENT: >>>
+**Document ID:** SDD-NAV-001
+**Project:** Flight Management System - Navigation Manager
+**Version:** 2.1
+**Date:** 2024-02-20
+**Software Level:** A
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 1. Introduction
+
+[TEXT]
+STATEMENT: >>>
+This document defines the software architecture and low-level requirements for the Navigation Manager component of the Flight Management System (FMS). The design satisfies the high-level requirements specified in the Software Requirements Data (SRD-NAV-001).
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2. Software Architecture
+
+[SECTION]
+TITLE: 2.1 Component Overview
+
+[TEXT]
+STATEMENT: >>>
+The Navigation Manager consists of the following modules:
+
+- **Position Computation Module**: Processes sensor data and computes position
+- **Sensor Interface Module**: Manages GPS and IRS sensor interfaces
+- **Data Validation Module**: Validates sensor data and coordinates
+- **Mode Management Module**: Manages navigation modes (DUAL, GPS-ONLY, IRS-ONLY, INVALID)
+- **Output Interface Module**: Provides position data to other components
+
+**Design Pattern**: The architecture uses a layered design with sensor interfaces at the bottom, processing in the middle, and outputs at the top. Data flows unidirectionally from sensors through processing to outputs.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 2.2 Module Dependencies
+
+[TEXT]
+STATEMENT: >>>
+```
+┌─────────────────────────────────────┐
+│     Output Interface Module         │
+├─────────────────────────────────────┤
+│    Position Computation Module      │
+│                                     │
+│  ┌──────────────┐  ┌────────────┐  │
+│  │ Mode Mgmt    │  │ Data Valid │  │
+│  └──────────────┘  └────────────┘  │
+├─────────────────────────────────────┤
+│    Sensor Interface Module          │
+│  ┌──────────┐      ┌──────────┐    │
+│  │   GPS    │      │   IRS    │    │
+│  └──────────┘      └──────────┘    │
+└─────────────────────────────────────┘
+```
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3. Low-Level Requirements
+
+[SECTION]
+TITLE: 3.1 Position Computation Module
+
+[REQUIREMENT]
+UID: LLR-NAV-1001
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Sensor Data Retrieval
+STATEMENT: >>>
+The computePosition() function shall retrieve GPS position data (latitude, longitude, altitude, validity) and IRS position data (latitude, longitude, altitude, validity) at each invocation.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-100, SRS-NAV-110. Current sensor data is required for accurate position computation.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1002
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Weighted Position Blending
+STATEMENT: >>>
+When both GPS and IRS are valid, the computePosition() function shall blend position data using weighted averaging: 
+- GPS weight = 0.7
+- IRS weight = 0.3
+- Blended position = (GPS * 0.7) + (IRS * 0.3)
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-110. Weighted blending optimizes accuracy based on typical sensor characteristics.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1003
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Position Output
+STATEMENT: >>>
+The computePosition() function shall output the computed position structure containing latitude, longitude, altitude, and validity flag.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-320. Output interface required for downstream consumers.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1004
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Return Status
+STATEMENT: >>>
+The computePosition() function shall return NAV_SUCCESS upon successful computation, NAV_ERROR_GPS_TIMEOUT on GPS timeout, NAV_ERROR_IRS_TIMEOUT on IRS timeout, or NAV_ERROR_ALL_INVALID when all sensors are invalid.
+<<<
+RATIONALE: >>>
+Return status provides error indication to caller for appropriate handling.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1005
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: GPS Invalid Handling
+STATEMENT: >>>
+When GPS validity flag is false and IRS validity flag is true, the computePosition() function shall use IRS position data only and shall set navigation mode to IRS_ONLY.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-115. Graceful degradation ensures continued operation with single sensor.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1006
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: IRS Invalid Handling
+STATEMENT: >>>
+When IRS validity flag is false and GPS validity flag is true, the computePosition() function shall use GPS position data only and shall set navigation mode to GPS_ONLY.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-115. Symmetric handling of GPS and IRS failures.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1007
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: All Sensors Invalid Handling
+STATEMENT: >>>
+When both GPS and IRS validity flags are false, the computePosition() function shall set position validity flag to false, set navigation mode to INVALID, and return NAV_ERROR_ALL_INVALID.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-141. Complete sensor failure must be clearly indicated.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.2 Data Validation Module
+
+[REQUIREMENT]
+UID: LLR-NAV-1008
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Latitude Range Check
+STATEMENT: >>>
+The validateCoordinates() function shall verify that latitude value is within the range [-90.0, +90.0] degrees inclusive.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-130. Latitude range check prevents invalid geographic coordinates.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1009
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Validation Error Return
+STATEMENT: >>>
+When validation fails, the validateCoordinates() function shall return INVALID_LATITUDE for latitude errors, INVALID_LONGITUDE for longitude errors, INVALID_ALTITUDE for altitude errors, and shall log the error to the diagnostic system.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-131. Error return codes enable caller to handle specific validation failures.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1010
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Longitude Range Check
+STATEMENT: >>>
+The validateCoordinates() function shall verify that longitude value is within the range [-180.0, +180.0] degrees inclusive.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-130. Longitude range check prevents invalid geographic coordinates.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1011
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Altitude Range Check
+STATEMENT: >>>
+The validateCoordinates() function shall verify that altitude value is within the range [-1000.0, +60000.0] feet inclusive.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-135. Altitude range check prevents unrealistic altitude values.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.3 Mode Management Module
+
+[REQUIREMENT]
+UID: LLR-NAV-1012
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Mode State Machine
+STATEMENT: >>>
+The navigation mode state machine shall implement the following states and transitions:
+- DUAL: Both GPS and IRS valid
+- GPS_ONLY: GPS valid, IRS invalid
+- IRS_ONLY: IRS valid, GPS invalid
+- INVALID: Both GPS and IRS invalid
+
+Transitions occur immediately upon sensor validity status change.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-140, SRS-NAV-141. State machine provides deterministic mode management.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1013
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Mode Transition Notification
+STATEMENT: >>>
+Upon navigation mode transition, the Mode Management Module shall notify the diagnostic system of the mode change.
+<<<
+RATIONALE: >>>
+Mode change notification provides situational awareness for flight crew and maintenance.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.4 Sensor Interface Module
+
+[REQUIREMENT]
+UID: LLR-NAV-1014
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: GPS Data Freshness Check
+STATEMENT: >>>
+The getGPSData() function shall check that GPS data timestamp is within 200 milliseconds of current time. If data is stale, the function shall mark GPS as invalid.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-301. Stale data detection prevents use of outdated position information.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1015
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: IRS Data Freshness Check
+STATEMENT: >>>
+The getIRSData() function shall check that IRS data timestamp is within 200 milliseconds of current time. If data is stale, the function shall mark IRS as invalid.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-311. Symmetric freshness checking for all sensors.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1016
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Sensor Data Structure
+STATEMENT: >>>
+Sensor interface functions shall return position data in the SensorData structure containing: latitude (double), longitude (double), altitude (double), valid (boolean), timestamp (uint32_t).
+<<<
+RATIONALE: >>>
+Standardized data structure ensures consistent interface between modules.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 3.5 Discrepancy Detection
+
+[REQUIREMENT]
+UID: LLR-NAV-1017
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Position Discrepancy Calculation
+STATEMENT: >>>
+The calculateDiscrepancy() function shall compute the great-circle distance between GPS and IRS positions using the haversine formula.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-111. Accurate distance calculation required for discrepancy detection.
+<<<
+
+[REQUIREMENT]
+UID: LLR-NAV-1018
+LEVEL: A
+STATUS: Approved
+VERIFICATION: Test
+TITLE: Discrepancy Threshold Check
+STATEMENT: >>>
+The calculateDiscrepancy() function shall generate a position discrepancy warning when the distance between GPS and IRS positions exceeds 200 feet.
+<<<
+RATIONALE: >>>
+Satisfies SRS-NAV-111. Threshold detection alerts crew to potential sensor issues.
+<<<
+
+[/SECTION]
+
+[/SECTION]
+
+[SECTION]
+TITLE: 4. Data Structures
+
+[TEXT]
+STATEMENT: >>>
+**SensorData Structure:**
+```c
+typedef struct {
+    double latitude;      // Degrees, -90.0 to +90.0
+    double longitude;     // Degrees, -180.0 to +180.0
+    double altitude;      // Feet, -1000.0 to +60000.0
+    bool valid;           // Sensor validity flag
+    uint32_t timestamp;   // Milliseconds since boot
+} SensorData;
+```
+
+**Position Structure:**
+```c
+typedef struct {
+    double latitude;      // Degrees
+    double longitude;     // Degrees
+    double altitude;      // Feet
+    bool valid;           // Position validity flag
+} Position;
+```
+
+**NavigationMode Enumeration:**
+```c
+typedef enum {
+    NAV_MODE_DUAL,        // Both GPS and IRS valid
+    NAV_MODE_GPS_ONLY,    // GPS only
+    NAV_MODE_IRS_ONLY,    // IRS only
+    NAV_MODE_INVALID      // No valid sensors
+} NavigationMode;
+```
+
+**Return Status Codes:**
+```c
+typedef enum {
+    NAV_SUCCESS = 0,
+    NAV_ERROR_GPS_TIMEOUT = 1,
+    NAV_ERROR_IRS_TIMEOUT = 2,
+    NAV_ERROR_ALL_INVALID = 3,
+    NAV_ERROR_INVALID_LATITUDE = 4,
+    NAV_ERROR_INVALID_LONGITUDE = 5,
+    NAV_ERROR_INVALID_ALTITUDE = 6
+} NavStatus;
+```
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 5. Function Interfaces
+
+[TEXT]
+STATEMENT: >>>
+**computePosition()**
+```c
+NavStatus computePosition(Position* output);
+```
+Purpose: Compute aircraft position from sensor data
+Parameters: output - pointer to Position structure to populate
+Returns: NAV_SUCCESS or error code
+Execution Time: ≤5ms WCET
+Cyclomatic Complexity: 8
+
+**validateCoordinates()**
+```c
+NavStatus validateCoordinates(double lat, double lon, double alt);
+```
+Purpose: Validate coordinate values are within acceptable ranges
+Parameters: lat - latitude, lon - longitude, alt - altitude
+Returns: NAV_SUCCESS or error code
+Execution Time: ≤0.1ms WCET
+Cyclomatic Complexity: 4
+
+**getGPSData()**
+```c
+NavStatus getGPSData(SensorData* data);
+```
+Purpose: Retrieve GPS sensor data
+Parameters: data - pointer to SensorData structure to populate
+Returns: NAV_SUCCESS or NAV_ERROR_GPS_TIMEOUT
+Execution Time: ≤1ms WCET
+Cyclomatic Complexity: 3
+
+**getIRSData()**
+```c
+NavStatus getIRSData(SensorData* data);
+```
+Purpose: Retrieve IRS sensor data
+Parameters: data - pointer to SensorData structure to populate
+Returns: NAV_SUCCESS or NAV_ERROR_IRS_TIMEOUT
+Execution Time: ≤1ms WCET
+Cyclomatic Complexity: 3
+
+**calculateDiscrepancy()**
+```c
+double calculateDiscrepancy(const SensorData* gps, const SensorData* irs);
+```
+Purpose: Calculate great-circle distance between GPS and IRS positions
+Parameters: gps - GPS sensor data, irs - IRS sensor data
+Returns: Distance in feet
+Execution Time: ≤2ms WCET
+Cyclomatic Complexity: 2
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 6. Timing and Performance
+
+[TEXT]
+STATEMENT: >>>
+**Worst-Case Execution Time (WCET):**
+- computePosition(): 5.0 ms
+- validateCoordinates(): 0.1 ms
+- getGPSData(): 1.0 ms
+- getIRSData(): 1.0 ms
+- calculateDiscrepancy(): 2.0 ms
+
+**Stack Usage:**
+- computePosition(): 512 bytes
+- validateCoordinates(): 128 bytes
+- getGPSData(): 256 bytes
+- getIRSData(): 256 bytes
+- calculateDiscrepancy(): 256 bytes
+
+Maximum stack usage: 512 bytes (within 2048 byte limit per SRS-NAV-201)
+
+**Memory Footprint:**
+- Code: 8,192 bytes
+- Data: 2,048 bytes
+- Total: 10,240 bytes (within 64 KB limit per SRS-NAV-202)
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 7. Traceability Matrix
+
+[TEXT]
+STATEMENT: >>>
+| High-Level Requirement | Low-Level Requirements |
+|------------------------|------------------------|
+| SRS-NAV-100 | LLR-NAV-1001, LLR-NAV-1002, LLR-NAV-1003 |
+| SRS-NAV-110 | LLR-NAV-1001, LLR-NAV-1002, LLR-NAV-1017, LLR-NAV-1018 |
+| SRS-NAV-111 | LLR-NAV-1017, LLR-NAV-1018 |
+| SRS-NAV-115 | LLR-NAV-1005, LLR-NAV-1006, LLR-NAV-1012 |
+| SRS-NAV-120 | LLR-NAV-1012 |
+| SRS-NAV-130 | LLR-NAV-1008, LLR-NAV-1010, LLR-NAV-1011 |
+| SRS-NAV-131 | LLR-NAV-1009 |
+| SRS-NAV-135 | LLR-NAV-1011 |
+| SRS-NAV-140 | LLR-NAV-1012 |
+| SRS-NAV-141 | LLR-NAV-1007, LLR-NAV-1012 |
+| SRS-NAV-301 | LLR-NAV-1014 |
+| SRS-NAV-311 | LLR-NAV-1015 |
+
+All 12 high-level requirements are traced to 18 low-level requirements, ensuring complete design coverage.
+<<<
+
+[/SECTION]
+
+[SECTION]
+TITLE: 8. Approval
+
+[TEXT]
+STATEMENT: >>>
+This Software Design Description has been reviewed and approved by:
+
+| Role | Name | Signature | Date |
+|------|------|-----------|------|
+| Design Lead | | | |
+| Software Manager | | | |
+| Requirements Lead | | | |
+| Quality Assurance | | | |
+<<<
+
+[/SECTION]
