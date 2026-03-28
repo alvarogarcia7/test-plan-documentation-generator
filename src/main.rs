@@ -269,32 +269,6 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
-// Logging macro - logs to file descriptor 3 if available (Unix-like systems)
-macro_rules! log_fd3 {
-    ($($arg:tt)*) => {{
-        // Skip logging in test mode to avoid FD conflicts
-        #[cfg(all(unix, not(test)))]
-        {
-            use std::io::Write;
-            use std::os::unix::io::FromRawFd;
-            unsafe {
-                // Check if FD 3 is valid using fcntl
-                let fd = 3;
-                let flags = libc::fcntl(fd, libc::F_GETFD);
-                if flags != -1 {
-                    // FD 3 is valid, duplicate it to avoid taking ownership
-                    let dup_fd = libc::dup(fd);
-                    if dup_fd != -1 {
-                        let mut file = std::fs::File::from_raw_fd(dup_fd);
-                        let _ = writeln!(file, $($arg)*);
-                        // File will be closed when it goes out of scope
-                    }
-                }
-            }
-        }
-    }};
-}
-
 fn main() -> Result<()> {
     env_logger::init();
     info!("Starting tpdg");
