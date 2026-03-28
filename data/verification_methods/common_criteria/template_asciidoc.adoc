@@ -130,3 +130,4 @@
 {% for criterion in acceptance_criteria %}
 * {{ criterion | strip }}
 {% endfor %}
+

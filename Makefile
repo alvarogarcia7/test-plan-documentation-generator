@@ -33,6 +33,7 @@ help:
 	@echo "  make sccache-clean   - Clean sccache directories"
 	@echo "  make verify-github-actions - Verify GitHub Actions CI pipeline status"
 	@echo "  make check-gitlab-pipeline - Check GitLab CI pipeline status"
+	@echo "  make verify-e2e-outputs    - Verify E2E test outputs match expected files"
 	@echo ""
 	@echo "StrictDoc requirements management:"
 	@echo "  make strictdoc-help  - Show StrictDoc-specific commands"
@@ -349,4 +350,9 @@ test-logging-example:
 	@echo "✓ Template loading logging example passed!"
 	@echo ""
 .PHONY: test-logging-example
+
+verify-e2e-outputs: build
+	@echo "Running E2E output verification..."
+	@./scripts/verify_e2e_outputs.sh
+.PHONY: verify-e2e-outputs
 
