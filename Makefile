@@ -241,6 +241,7 @@ test-logging-example:
 	@echo "Watch stderr for log messages showing absolute template paths."
 	@echo ""
 	RUST_LOG=debug ./target/release/tpdg \
+	--format md \
 	--output ./data/logging_example/output.actual.md \
 	--container ./data/logging_example/container/schema.json ./data/logging_example/container/template.j2 ./data/logging_example/container/data.yml \
 	--test-case ./data/logging_example/verification_methods ./data/logging_example/test_case/analysis_case_01.yml ./data/logging_example/test_case/test_case_01.yml ./data/logging_example/test_case/test_case_02.yml \
