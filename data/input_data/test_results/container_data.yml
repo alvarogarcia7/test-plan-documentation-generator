@@ -76,3 +76,51 @@ metadata:
   total_test_cases: 2
   passed_test_cases: 1
   failed_test_cases: 1
+requirements_summary_md: |
+  requirements_with_detail:
+    - requirement: TEST_REQ_001
+      items:
+        - item: 1
+          tc: 1
+          id: TEST_PASSING_001
+          pass: true
+    - requirement: TEST_REQ_002
+      items:
+        - item: 1
+          tc: 2
+          id: TEST_FAILING_002
+          pass: false
+  status_per_requirement:
+    - requirement: TEST_REQ_001
+      pass: true
+    - requirement: TEST_REQ_002
+      pass: false
+  requirements_by_status:
+    pass:
+      - TEST_REQ_001
+    fail:
+      - TEST_REQ_002
+requirements_summary_adoc: |
+  requirements_with_detail:
+    - requirement: TEST_REQ_001
+      items:
+        - item: 1
+          tc: 1
+          id: TEST_PASSING_001
+          pass: true
+    - requirement: TEST_REQ_002
+      items:
+        - item: 1
+          tc: 2
+          id: TEST_FAILING_002
+          pass: false
+  status_per_requirement:
+    - requirement: TEST_REQ_001
+      pass: true
+    - requirement: TEST_REQ_002
+      pass: false
+  requirements_by_status:
+    pass:
+      - TEST_REQ_001
+    fail:
+      - TEST_REQ_002

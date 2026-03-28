@@ -531,7 +531,7 @@ fn handle_multiple_mode(
         rendered_outputs.push(rendered);
     }
 
-    let final_output = rendered_outputs.join("\n");
+    let final_output = rendered_outputs.join("\n\n\n");
 
     if let Some(output_path) = output {
         debug!("Writing output to: {}", output_path.display());
@@ -755,7 +755,7 @@ fn handle_multiple_by_type_mode(
         }
     }
 
-    let final_output = rendered_outputs.join("\n");
+    let final_output = rendered_outputs.join("\n\n\n");
 
     if let Some(output_path) = output {
         debug!("Writing output to: {}", output_path.display());

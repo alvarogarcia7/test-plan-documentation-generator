@@ -147,6 +147,8 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 
 
+
+
 == Test Case: 4.2.2.3 ANOTHER ONE
 
 *Description*: Throughout all the ES6.UpdateMetadata test cases, SMS is used as the secure OTA channel.
@@ -249,6 +251,8 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 
 |===
+
+
 
 
 
@@ -371,6 +375,8 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 
 
+
+
 == Test Case: 4.2.2.5 DM_eUICC_Profile_Management
 
 *Description*: Demonstration of profile download, installation, and lifecycle management operations on a live eUICC device.
@@ -487,6 +493,8 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 
 |===
+
+
 
 
 

@@ -150,10 +150,6 @@ This document presents the results of test execution for Input Data Verification
 | 1 | Echo world | ✓ Pass |
 
 
-
-
-
-
 ---
 
 ## Final Verification Verdict
