@@ -683,6 +683,10 @@ This document presents the results of test execution for GSMA SGP.22 Compliance 
 
 
 
+
+
+
+
 <<<
 
 == Final Verification Verdict
