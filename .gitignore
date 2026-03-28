@@ -9,6 +9,9 @@
 
 /.local/
 
+# Temporary test directories
+/.tmp/
+
 # cargo-tarpaulin coverage artifacts
 cobertura.xml
 tarpaulin-report.html

@@ -63,14 +63,26 @@ test-e2e:
 .PHONY: test-e2e
 
 test-e2e-markdown:
+	@mkdir -p .tmp/tpdg-test-e2e-markdown
+	RUST_LOG=debug ./target/release/tpdg \
+	--format md \
+	--output .tmp/tpdg-test-e2e-markdown/test_cases.md \
+	--multiple-by-type .type ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(## \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-markdown/test_cases.md | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-markdown/test_cases_fixed.tmp
+	@perl -0777 -pe 's/\n+$$/\n/' .tmp/tpdg-test-e2e-markdown/test_cases_fixed.tmp > .tmp/tpdg-test-e2e-markdown/test_cases_fixed.md
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-markdown/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-markdown/test_cases_fixed.md >> .tmp/tpdg-test-e2e-markdown/data_with_test_cases.yml
+	@cat ./data/container/data.yml >> .tmp/tpdg-test-e2e-markdown/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/output.actual.md \
-	--container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
-	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
-	>log.log 2>&1
+	--single ./data/container/schema.json ./data/container/template.j2 .tmp/tpdg-test-e2e-markdown/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/output.actual.md ./data/output.expected.md
+	@rm -rf .tmp/tpdg-test-e2e-markdown
 .PHONY: test-e2e-markdown
 
 test-e2e-asciidoc:
@@ -87,47 +99,95 @@ test-e2e-input-data-all:
 
 
 test-e2e-test-plan-asciidoc:
+	@mkdir -p .tmp/tpdg-test-e2e-test-plan-asciidoc
+	RUST_LOG=debug ./target/release/tpdg \
+	--format adoc \
+	--output .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc \
+	--multiple-by-type .type ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.adoc
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.adoc >> .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
+	@cat ./data/container/data.yml >> .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format adoc \
 	--output ./data/test_plan_output.actual.adoc \
-	--container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
-	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
-	>log.log 2>&1
+	--single ./data/container/schema.json ./data/container/template_asciidoc.adoc .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_plan_output.actual.adoc ./data/test_plan_output.expected.adoc
+	@rm -rf .tmp/tpdg-test-e2e-test-plan-asciidoc
 .PHONY: test-e2e-test-plan-asciidoc
 
 test-e2e-test-results-asciidoc:
+	@mkdir -p .tmp/tpdg-test-e2e-test-results-asciidoc
+	RUST_LOG=debug ./target/release/tpdg \
+	--format adoc \
+	--output .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases.adoc \
+	--multiple-by-type .type ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases_fixed.adoc
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-test-results-asciidoc/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-test-results-asciidoc/test_cases_fixed.adoc >> .tmp/tpdg-test-e2e-test-results-asciidoc/data_with_test_cases.yml
+	@cat ./data/test_results/container_data.yml >> .tmp/tpdg-test-e2e-test-results-asciidoc/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format adoc \
 	--output ./data/test_results_output.actual.adoc \
-	--container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \
-	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
-	>log.log 2>&1
+	--single ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc .tmp/tpdg-test-e2e-test-results-asciidoc/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
+	@rm -rf .tmp/tpdg-test-e2e-test-results-asciidoc
 .PHONY: test-e2e-test-results-asciidoc
 
 test-e2e-test-results-md:
+	@mkdir -p .tmp/tpdg-test-e2e-test-results-md
+	RUST_LOG=debug ./target/release/tpdg \
+	--format md \
+	--output .tmp/tpdg-test-e2e-test-results-md/test_cases.md \
+	--multiple-by-type .type ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(## \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-test-results-md/test_cases.md | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-test-results-md/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-test-results-md/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-test-results-md/test_cases_fixed.md
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-test-results-md/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-test-results-md/test_cases_fixed.md >> .tmp/tpdg-test-e2e-test-results-md/data_with_test_cases.yml
+	@cat ./data/test_results/container_data.yml >> .tmp/tpdg-test-e2e-test-results-md/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/test_results_output.actual.md \
-	--container ./data/test_results/container_schema.json ./data/test_results/container_template.j2 ./data/test_results/container_data.yml \
-	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
-	>log.log 2>&1
+	--single ./data/test_results/container_schema.json ./data/test_results/container_template.j2 .tmp/tpdg-test-e2e-test-results-md/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_results_output.actual.md ./data/test_results_output.expected.md
+	@rm -rf .tmp/tpdg-test-e2e-test-results-md
 .PHONY: test-e2e-test-results-md
 
 test-e2e-input-data:
+	@mkdir -p .tmp/tpdg-test-e2e-input-data
+	RUST_LOG=debug ./target/release/tpdg \
+	--format md \
+	--output .tmp/tpdg-test-e2e-input-data/test_cases.md \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(## \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-input-data/test_cases.md | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-input-data/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-input-data/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-input-data/test_cases_fixed.md
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-input-data/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-input-data/test_cases_fixed.md >> .tmp/tpdg-test-e2e-input-data/data_with_test_cases.yml
+	@cat ./data/input_data/container/data.yml >> .tmp/tpdg-test-e2e-input-data/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/input_data/output.actual.md \
-	--container ./data/input_data/container/schema.json ./data/input_data/container/template.j2 ./data/input_data/container/data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
-	>log.log 2>&1
+	--single ./data/input_data/container/schema.json ./data/input_data/container/template.j2 .tmp/tpdg-test-e2e-input-data/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/output.actual.md ./data/input_data/output.expected.md
+	@rm -rf .tmp/tpdg-test-e2e-input-data
 .PHONY: test-e2e-input-data
 
 test-e2e-input-data-asciidoc:
@@ -137,36 +197,72 @@ test-e2e-input-data-asciidoc:
 .PHONY: test-e2e-input-data-asciidoc
 
 test-e2e-input-data-test-plan-asciidoc:
+	@mkdir -p .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc
+	RUST_LOG=debug ./target/release/tpdg \
+	--format adoc \
+	--output .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases.adoc \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases_fixed.adoc
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/test_cases_fixed.adoc >> .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/data_with_test_cases.yml
+	@cat ./data/input_data/container/data.yml >> .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format adoc \
 	--output ./data/input_data/test_plan_output.actual.adoc \
-	--container ./data/input_data/container/schema.json ./data/input_data/container/template_asciidoc.adoc ./data/input_data/container/data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
-	>log.log 2>&1
+	--single ./data/input_data/container/schema.json ./data/input_data/container/template_asciidoc.adoc .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_plan_output.actual.adoc ./data/input_data/test_plan_output.expected.adoc
+	@rm -rf .tmp/tpdg-test-e2e-input-data-test-plan-asciidoc
 .PHONY: test-e2e-input-data-test-plan-asciidoc
 
 test-e2e-input-data-test-results-asciidoc:
+	@mkdir -p .tmp/tpdg-test-e2e-input-data-test-results-asciidoc
+	RUST_LOG=debug ./target/release/tpdg \
+	--format adoc \
+	--output .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases.adoc \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases_fixed.adoc
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/test_cases_fixed.adoc >> .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/data_with_test_cases.yml
+	@cat ./data/input_data/test_results/container_data.yml >> .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format adoc \
 	--output ./data/input_data/test_results_output.actual.adoc \
-	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template_asciidoc.adoc ./data/input_data/test_results/container_data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
-	>log.log 2>&1
+	--single ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template_asciidoc.adoc .tmp/tpdg-test-e2e-input-data-test-results-asciidoc/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_results_output.actual.adoc ./data/input_data/test_results_output.expected.adoc
+	@rm -rf .tmp/tpdg-test-e2e-input-data-test-results-asciidoc
 .PHONY: test-e2e-input-data-test-results-asciidoc
 
 test-e2e-input-data-test-results-md:
+	@mkdir -p .tmp/tpdg-test-e2e-input-data-test-results-md
+	RUST_LOG=debug ./target/release/tpdg \
+	--format md \
+	--output .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases.md \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(## \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases.md | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases_fixed.md
+	@echo "test_cases_md: |" > .tmp/tpdg-test-e2e-input-data-test-results-md/data_with_test_cases.yml
+	@sed 's/^/  /' .tmp/tpdg-test-e2e-input-data-test-results-md/test_cases_fixed.md >> .tmp/tpdg-test-e2e-input-data-test-results-md/data_with_test_cases.yml
+	@cat ./data/input_data/test_results/container_data.yml >> .tmp/tpdg-test-e2e-input-data-test-results-md/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/input_data/test_results_output.actual.md \
-	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template.j2 ./data/input_data/test_results/container_data.yml \
-	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
-	>log.log 2>&1
+	--single ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template.j2 .tmp/tpdg-test-e2e-input-data-test-results-md/data_with_test_cases.yml \
+	>>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_results_output.actual.md ./data/input_data/test_results_output.expected.md
+	@rm -rf .tmp/tpdg-test-e2e-input-data-test-results-md
 .PHONY: test-e2e-input-data-test-results-md
 
 validate-testcases-data:
