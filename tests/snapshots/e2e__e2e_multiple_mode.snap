@@ -2,6 +2,6 @@
 source: tests/e2e.rs
 expression: normalize(&output)
 ---
-Status: complete
-Status: in-progress
-Status: pending
+Item: First - 10
+Item: Second - 20
+Item: Third - 30

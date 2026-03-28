@@ -2,6 +2,5 @@
 source: tests/e2e.rs
 expression: normalize(&output)
 ---
-Status: complete
-Status: in-progress
-Status: pending
+# Single Mode Test
+Value: 42

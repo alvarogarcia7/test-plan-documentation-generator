@@ -1,0 +1,7 @@
+---
+source: tests/e2e.rs
+expression: normalize(&output)
+---
+REVIEW: R001 - Approved
+TEST: T001 - Test one
+TEST: T002 - Test two

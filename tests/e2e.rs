@@ -14,7 +14,6 @@ fn normalize(s: &str) -> String {
 }
 
 fn get_binary_path() -> PathBuf {
-    // Get the path to the compiled binary in target/debug
     let mut path = std::env::current_exe().unwrap();
     path.pop();
     if path.ends_with("deps") {
@@ -33,41 +32,20 @@ fn test_e2e_basic_yaml_rendering() {
     let template_path = dir.path().join("template.tera");
     let output_path = dir.path().join("output.txt");
 
-    // Write a simple YAML file
     let mut yaml_file = File::create(&yaml_path).unwrap();
     writeln!(yaml_file, "name: InstaTest\nage: 42").unwrap();
 
-    // Write a simple Tera template
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(template_file, "Name: {{{{ name }}}}\nAge: {{{{ age }}}}").unwrap();
 
-    // Create dummy schema files (not used in logic)
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -75,7 +53,6 @@ fn test_e2e_basic_yaml_rendering() {
     assert!(status.success());
 
     assert!(output_path.exists(), "Output file was not created");
-    // Read the output and snapshot it
     let output = std::fs::read_to_string(&output_path).unwrap();
     assert_snapshot!("e2e_basic_yaml_rendering", normalize(&output));
 }
@@ -88,12 +65,9 @@ fn test_e2e_stdout_output() {
     let yaml_path = dir.path().join("data.yaml");
     let template_path = dir.path().join("template.tera");
 
-    // Write YAML file
     let mut yaml_file = File::create(&yaml_path).unwrap();
-    // Write version as a string to preserve formatting when rendered
     writeln!(yaml_file, "title: Test Report\nversion: \"1.0\"").unwrap();
 
-    // Write template
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(
         template_file,
@@ -101,33 +75,14 @@ fn test_e2e_stdout_output() {
     )
     .unwrap();
 
-    // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let output = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .output()
         .expect("failed to run binary");
 
@@ -145,7 +100,6 @@ fn test_e2e_complex_yaml_structure() {
     let template_path = dir.path().join("template.tera");
     let output_path = dir.path().join("output.txt");
 
-    // Write complex YAML with nested structures
     let mut yaml_file = File::create(&yaml_path).unwrap();
     writeln!(yaml_file, "project: TestSuite").unwrap();
     writeln!(yaml_file, "version: \"2.0\"").unwrap();
@@ -157,7 +111,6 @@ fn test_e2e_complex_yaml_structure() {
     writeln!(yaml_file, "  author: TestTeam").unwrap();
     writeln!(yaml_file, "  date: 2025-12-12").unwrap();
 
-    // Write template using complex structures
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(template_file, "# {{{{ project }}}} v{{{{ version }}}}\n").unwrap();
     writeln!(template_file, "## Features").unwrap();
@@ -167,33 +120,14 @@ fn test_e2e_complex_yaml_structure() {
     writeln!(template_file, "Author: {{{{ metadata.author }}}}").unwrap();
     writeln!(template_file, "Date: {{{{ metadata.date }}}}").unwrap();
 
-    // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -209,51 +143,29 @@ fn test_e2e_multiple_test_case_files() {
     std::env::set_var("INSTA_UPDATE", "auto");
 
     let dir = tempdir().unwrap();
-    let yaml_path = dir.path().join("data.yaml");
     let template_path = dir.path().join("template.tera");
     let output_path = dir.path().join("output.txt");
 
-    // Write YAML
-    let mut yaml_file = File::create(&yaml_path).unwrap();
-    writeln!(yaml_file, "status: complete").unwrap();
-
-    // Write template
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(template_file, "Status: {{{{ status }}}}").unwrap();
 
-    // Create dummy files including multiple test case files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case files with type field
     let tc_file1 = dir.path().join("tc_file1.yaml");
-    std::fs::write(&tc_file1, "type: test\n").unwrap();
+    std::fs::write(&tc_file1, "status: complete\n").unwrap();
     let tc_file2 = dir.path().join("tc_file2.yaml");
-    std::fs::write(&tc_file2, "type: test\n").unwrap();
+    std::fs::write(&tc_file2, "status: in-progress\n").unwrap();
     let tc_file3 = dir.path().join("tc_file3.yaml");
-    std::fs::write(&tc_file3, "type: test\n").unwrap();
+    std::fs::write(&tc_file3, "status: pending\n").unwrap();
 
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--multiple")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
-        .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
         .arg(tc_file1.to_str().unwrap())
         .arg(tc_file2.to_str().unwrap())
         .arg(tc_file3.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -273,40 +185,19 @@ fn test_e2e_empty_yaml() {
     let template_path = dir.path().join("template.tera");
     let output_path = dir.path().join("output.txt");
 
-    // Write empty YAML
     File::create(&yaml_path).unwrap();
 
-    // Write template without variables
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(template_file, "Static Content Only").unwrap();
 
-    // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -326,43 +217,22 @@ fn test_e2e_template_with_filters() {
     let template_path = dir.path().join("template.tera");
     let output_path = dir.path().join("output.txt");
 
-    // Write YAML
     let mut yaml_file = File::create(&yaml_path).unwrap();
     writeln!(yaml_file, "name: test user").unwrap();
     writeln!(yaml_file, "count: 42").unwrap();
 
-    // Write template with Tera filters
     let mut template_file = File::create(&template_path).unwrap();
     writeln!(template_file, "Name: {{{{ name | upper }}}}").unwrap();
     writeln!(template_file, "Count: {{{{ count }}}}").unwrap();
 
-    // Create dummy files
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -376,7 +246,6 @@ fn test_e2e_template_with_filters() {
 #[test]
 #[cfg(unix)]
 fn test_e2e_invalid_container_payload_existing_lines() {
-    // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");
 
     let dir = tempfile::tempdir().unwrap();
@@ -388,12 +257,10 @@ fn test_e2e_invalid_container_payload_existing_lines() {
     let vm_dir = "data/verification_methods";
     let tc_data_path = "data/test_case/invalid/invalid_payload.yml";
 
-    // Build and run the binary
     let bin = get_binary_path();
 
     let output_path = dir.path().join("report.md");
 
-    // Capture file descriptor 3 output
     use std::fs::File;
     use std::os::unix::io::{FromRawFd, IntoRawFd};
     use std::os::unix::process::CommandExt;
@@ -424,20 +291,6 @@ fn test_e2e_invalid_container_payload_existing_lines() {
     println!("{:?}", output_with_fd3.stderr);
     println!("{:?}", output_with_fd3.stdout);
 
-    // let mut fd3_output = String::new();
-    // let mut fd3_file_read = unsafe { File::from_raw_fd(fd3_raw) };
-    // use std::io::{Read, Seek, SeekFrom};
-    // fd3_file_read
-    //     .seek(SeekFrom::Start(0))
-    //     .expect("failed to seek fd3");
-    // fd3_file_read
-    //     .read_to_string(&mut fd3_output)
-    //     .expect("failed to read fd3");
-    //
-    // println!("File descriptor 3 output:");
-    // println!("{}", String::from_utf8_lossy(fd3_output.as_bytes()));
-
-    // We expect the program to fail validation and exit with non-zero
     assert!(
         !output_with_fd3.status.success(),
         "binary should have failed schema validation but exited success"
@@ -447,12 +300,10 @@ fn test_e2e_invalid_container_payload_existing_lines() {
 #[test]
 #[cfg(unix)]
 fn test_e2e_invalid_container_payload() {
-    // Ensure snapshots updates don't interfere with this negative test
     std::env::set_var("INSTA_UPDATE", "auto");
 
     let dir = tempfile::tempdir().unwrap();
 
-    // Write a schema that requires the property `name`
     let schema_path = dir.path().join("schema.json");
     let schema = r#"{
         "type": "object",
@@ -461,31 +312,14 @@ fn test_e2e_invalid_container_payload() {
     }"#;
     std::fs::write(&schema_path, schema).unwrap();
 
-    // Write a container template (not important for validation)
     let template_path = dir.path().join("template.tera");
     std::fs::write(&template_path, "Name: {{{{ name }}}}").unwrap();
 
-    // Write an invalid YAML file (missing `name`)
     let data_path = dir.path().join("data.yml");
     std::fs::write(&data_path, "age: 30\n").unwrap();
 
-    // Create verification methods directory structure
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    // Create test case file with type field
-    let tc_file_path = dir.path().join("tc_file.yml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
-    // Build and run the binary
     let bin = get_binary_path();
 
-    // Capture file descriptor 3 output
     use std::fs::File;
     use std::os::unix::io::{FromRawFd, IntoRawFd};
     use std::os::unix::process::CommandExt;
@@ -494,13 +328,10 @@ fn test_e2e_invalid_container_payload() {
     let fd3_raw = fd3_file.into_raw_fd();
 
     let mut cmd = std::process::Command::new(bin);
-    cmd.arg("--container")
+    cmd.arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
-        .arg(data_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap());
+        .arg(data_path.to_str().unwrap());
 
     unsafe {
         cmd.pre_exec(move || {
@@ -527,7 +358,6 @@ fn test_e2e_invalid_container_payload() {
     println!("File descriptor 3 output:");
     println!("{}", fd3_output);
 
-    // We expect the program to fail validation and exit with non-zero
     assert!(
         !output_with_fd3.status.success(),
         "binary should have failed schema validation but exited success"
@@ -537,21 +367,17 @@ fn test_e2e_invalid_container_payload() {
 #[test]
 fn test_e2e_dataset_4_gsma() {
     std::env::set_var("INSTA_UPDATE", "auto");
-    // Run the binary with the real dataset paths (expand test-case files from dir)
     let bin = get_binary_path();
 
-    // Compose the fixed container args
     let container_schema = "./data/container/schema.json";
     let container_template = "./data/container/template.j2";
     let container_file = "./data/container/data.yml";
 
-    // Verification methods directory
     let vm_dir = "./data/verification_methods";
 
     let tc_dir = std::path::Path::new("./data/test_case");
     let tc_files = sorted_test_case_files(tc_dir);
 
-    // Build args vector
     let mut cmd = Command::new(bin);
     cmd.arg("--container")
         .arg(container_schema)
@@ -561,7 +387,6 @@ fn test_e2e_dataset_4_gsma() {
     for f in &tc_files {
         cmd.arg(f);
     }
-    // Use a tempdir to avoid interfering with parallel tests
     let td = tempdir().unwrap();
     let report_path = td.path().join("report.md");
     cmd.arg("--format")
@@ -569,16 +394,13 @@ fn test_e2e_dataset_4_gsma() {
         .arg("-o")
         .arg(report_path.as_os_str());
 
-    // Execute
     let status = cmd.status().expect("failed to execute tpdg");
     assert!(status.success(), "binary exited with non-zero status");
 
-    // Verify report.md was created and is not empty
     assert!(report_path.exists(), "report.md was not created");
     let metadata = std::fs::metadata(&report_path).expect("failed to stat report.md");
     assert!(metadata.len() > 0, "report.md is empty");
 
-    // Read content, sanitize dynamic paths, and snapshot
     let mut output =
         std::fs::read_to_string(&report_path).expect("failed to read generated report.md");
     let tmp_prefix = std::env::temp_dir().to_string_lossy().to_string();
@@ -785,27 +607,11 @@ fn test_e2e_custom_tera_filters() {
     let schema_path = dir.path().join("schema.json");
     std::fs::write(&schema_path, "{}").unwrap();
 
-    let vm_dir = dir.path().join("verification_methods");
-    let test_type_dir = vm_dir.join("test");
-    std::fs::create_dir_all(&test_type_dir).unwrap();
-    let tc_schema_path = test_type_dir.join("schema.json");
-    std::fs::write(&tc_schema_path, "{}").unwrap();
-    let tc_template_path = test_type_dir.join("template.j2");
-    std::fs::write(&tc_template_path, "").unwrap();
-
-    let tc_file_path = dir.path().join("tc_file.yaml");
-    std::fs::write(&tc_file_path, "type: test\n").unwrap();
-
     let status = Command::new(get_binary_path())
-        .arg("--container")
+        .arg("--single")
         .arg(schema_path.to_str().unwrap())
         .arg(template_path.to_str().unwrap())
         .arg(yaml_path.to_str().unwrap())
-        .arg("--test-case")
-        .arg(vm_dir.to_str().unwrap())
-        .arg(tc_file_path.to_str().unwrap())
-        .arg("--format")
-        .arg("md")
         .arg("-o")
         .arg(output_path.to_str().unwrap())
         .status()
@@ -1782,4 +1588,160 @@ fn test_e2e_template_injection_multiple_levels_nested_include() {
         "e2e_template_injection_multiple_levels_nested_include",
         normalize(&output)
     );
+}
+
+#[test]
+fn test_e2e_single_mode() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let schema_path = dir.path().join("schema.json");
+    let template_path = dir.path().join("template.j2");
+    let input_path = dir.path().join("input.yaml");
+    let output_path = dir.path().join("output.txt");
+
+    std::fs::write(&schema_path, "{}").unwrap();
+
+    let mut template_file = File::create(&template_path).unwrap();
+    writeln!(template_file, "# {{{{ title }}}}").unwrap();
+    writeln!(template_file, "Value: {{{{ value }}}}").unwrap();
+
+    let mut input_file = File::create(&input_path).unwrap();
+    writeln!(input_file, "title: Single Mode Test").unwrap();
+    writeln!(input_file, "value: 42").unwrap();
+
+    let status = Command::new(get_binary_path())
+        .arg("--single")
+        .arg(schema_path.to_str().unwrap())
+        .arg(template_path.to_str().unwrap())
+        .arg(input_path.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.to_str().unwrap())
+        .status()
+        .expect("failed to run binary");
+
+    assert!(status.success(), "single mode should succeed");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+    assert!(output.contains("# Single Mode Test"));
+    assert!(output.contains("Value: 42"));
+
+    assert_snapshot!("e2e_single_mode", normalize(&output));
+}
+
+#[test]
+fn test_e2e_multiple_mode() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let schema_path = dir.path().join("schema.json");
+    let template_path = dir.path().join("template.j2");
+    let output_path = dir.path().join("output.txt");
+
+    std::fs::write(&schema_path, "{}").unwrap();
+
+    let mut template_file = File::create(&template_path).unwrap();
+    writeln!(template_file, "Item: {{{{ name }}}} - {{{{ count }}}}").unwrap();
+
+    let input1_path = dir.path().join("input1.yaml");
+    let mut input1_file = File::create(&input1_path).unwrap();
+    writeln!(input1_file, "name: First").unwrap();
+    writeln!(input1_file, "count: 10").unwrap();
+
+    let input2_path = dir.path().join("input2.yaml");
+    let mut input2_file = File::create(&input2_path).unwrap();
+    writeln!(input2_file, "name: Second").unwrap();
+    writeln!(input2_file, "count: 20").unwrap();
+
+    let input3_path = dir.path().join("input3.yaml");
+    let mut input3_file = File::create(&input3_path).unwrap();
+    writeln!(input3_file, "name: Third").unwrap();
+    writeln!(input3_file, "count: 30").unwrap();
+
+    let status = Command::new(get_binary_path())
+        .arg("--multiple")
+        .arg(schema_path.to_str().unwrap())
+        .arg(template_path.to_str().unwrap())
+        .arg(input1_path.to_str().unwrap())
+        .arg(input2_path.to_str().unwrap())
+        .arg(input3_path.to_str().unwrap())
+        .arg("-o")
+        .arg(output_path.to_str().unwrap())
+        .status()
+        .expect("failed to run binary");
+
+    assert!(status.success(), "multiple mode should succeed");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+    assert!(output.contains("Item: First - 10"));
+    assert!(output.contains("Item: Second - 20"));
+    assert!(output.contains("Item: Third - 30"));
+
+    assert_snapshot!("e2e_multiple_mode", normalize(&output));
+}
+
+#[test]
+fn test_e2e_multiple_by_type_mode() {
+    std::env::set_var("INSTA_UPDATE", "auto");
+
+    let dir = tempdir().unwrap();
+    let template_dir = dir.path().join("templates");
+    let output_path = dir.path().join("output.txt");
+
+    let test_dir = template_dir.join("test");
+    let review_dir = template_dir.join("review");
+    std::fs::create_dir_all(&test_dir).unwrap();
+    std::fs::create_dir_all(&review_dir).unwrap();
+
+    std::fs::write(test_dir.join("schema.json"), "{}").unwrap();
+    let mut test_template = File::create(test_dir.join("template.j2")).unwrap();
+    writeln!(test_template, "TEST: {{{{ id }}}} - {{{{ description }}}}").unwrap();
+
+    std::fs::write(review_dir.join("schema.json"), "{}").unwrap();
+    let mut review_template = File::create(review_dir.join("template.j2")).unwrap();
+    writeln!(review_template, "REVIEW: {{{{ id }}}} - {{{{ status }}}}").unwrap();
+
+    let input1_path = dir.path().join("input1.yaml");
+    let mut input1_file = File::create(&input1_path).unwrap();
+    writeln!(input1_file, "type: test").unwrap();
+    writeln!(input1_file, "id: T001").unwrap();
+    writeln!(input1_file, "description: Test one").unwrap();
+
+    let input2_path = dir.path().join("input2.yaml");
+    let mut input2_file = File::create(&input2_path).unwrap();
+    writeln!(input2_file, "type: review").unwrap();
+    writeln!(input2_file, "id: R001").unwrap();
+    writeln!(input2_file, "status: Approved").unwrap();
+
+    let input3_path = dir.path().join("input3.yaml");
+    let mut input3_file = File::create(&input3_path).unwrap();
+    writeln!(input3_file, "type: test").unwrap();
+    writeln!(input3_file, "id: T002").unwrap();
+    writeln!(input3_file, "description: Test two").unwrap();
+
+    let status = Command::new(get_binary_path())
+        .arg("--multiple-by-type")
+        .arg("type")
+        .arg(template_dir.to_str().unwrap())
+        .arg(input1_path.to_str().unwrap())
+        .arg(input2_path.to_str().unwrap())
+        .arg(input3_path.to_str().unwrap())
+        .arg("--format")
+        .arg("md")
+        .arg("-o")
+        .arg(output_path.to_str().unwrap())
+        .status()
+        .expect("failed to run binary");
+
+    assert!(status.success(), "multiple-by-type mode should succeed");
+    assert!(output_path.exists(), "output file was not created");
+
+    let output = std::fs::read_to_string(&output_path).unwrap();
+    assert!(output.contains("REVIEW: R001 - Approved"));
+    assert!(output.contains("TEST: T001 - Test one"));
+    assert!(output.contains("TEST: T002 - Test two"));
+
+    assert_snapshot!("e2e_multiple_by_type_mode", normalize(&output));
 }
