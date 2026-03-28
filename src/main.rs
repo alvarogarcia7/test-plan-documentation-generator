@@ -31,6 +31,7 @@ struct Args {
 
     /// Output format (markdown or asciidoc)
     #[arg(long = "format", default_value = "markdown", value_parser = ["markdown", "asciidoc"])]
+    // 33D5404A-DE4B-45CA-9337-3D5A0B6ACBF1
     format: String,
 }
 
@@ -262,6 +263,7 @@ macro_rules! log_fd3 {
     }};
 }
 
+// 33D5404A-DE4B-45CA-9337-3D5A0B6ACBF1
 fn get_template_suffix(format: &str) -> &str {
     match format {
         "markdown" => ".j2",
