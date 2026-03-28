@@ -49,23 +49,28 @@ check:
 test: build
 	cargo test --release --all-features --tests
 	$(MAKE) test-e2e
-	$(MAKE) test-e2e-asciidoc
 	$(MAKE) validate-testcases-data
-	$(MAKE) test-e2e-input-data
-	$(MAKE) test-e2e-input-data-asciidoc
 	$(MAKE) test-logging-example
 	$(MAKE) strictdoc-validate
 	echo "All steps in test passing"
 .PHONY: test
 
 test-e2e:
-	./target/release/tpdg \
+	$(MAKE) test-e2e-markdown
+	$(MAKE) test-e2e-asciidoc
+	$(MAKE) test-e2e-input-data
+	$(MAKE) test-e2e-input-data-asciidoc
+.PHONY: test-e2e
+
+test-e2e-markdown:
+	RUST_LOG=debug ./target/release/tpdg \
 	--output ./data/output.actual.md \
 	--container ./data/container/schema.json ./data/container/template.j2 ./data/container/data.yml \
 	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/output.actual.md ./data/output.expected.md
-.PHONY: test-e2e
+.PHONY: test-e2e-markdown
 
 test-e2e-asciidoc:
 	$(MAKE) test-e2e-test-plan-asciidoc
@@ -81,40 +86,44 @@ test-e2e-input-data-all:
 
 
 test-e2e-test-plan-asciidoc:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/test_plan_output.actual.adoc \
 	--container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
 	--test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_plan_output.actual.adoc ./data/test_plan_output.expected.adoc
 .PHONY: test-e2e-test-plan-asciidoc
 
 test-e2e-test-results-asciidoc:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/test_results_output.actual.adoc \
 	--container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \
 	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_results_output.actual.adoc ./data/test_results_output.expected.adoc
 .PHONY: test-e2e-test-results-asciidoc
 
 test-e2e-test-results-md:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--output ./data/test_results_output.actual.md \
 	--container ./data/test_results/container_schema.json ./data/test_results/container_template.j2 ./data/test_results/container_data.yml \
 	--test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/test_results_output.actual.md ./data/test_results_output.expected.md
 .PHONY: test-e2e-test-results-md
 
 test-e2e-input-data:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--output ./data/input_data/output.actual.md \
 	--container ./data/input_data/container/schema.json ./data/input_data/container/template.j2 ./data/input_data/container/data.yml \
 	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/output.actual.md ./data/input_data/output.expected.md
 .PHONY: test-e2e-input-data
 
@@ -125,31 +134,34 @@ test-e2e-input-data-asciidoc:
 .PHONY: test-e2e-input-data-asciidoc
 
 test-e2e-input-data-test-plan-asciidoc:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/input_data/test_plan_output.actual.adoc \
 	--container ./data/input_data/container/schema.json ./data/input_data/container/template_asciidoc.adoc ./data/input_data/container/data.yml \
 	--test-case ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_plan_output.actual.adoc ./data/input_data/test_plan_output.expected.adoc
 .PHONY: test-e2e-input-data-test-plan-asciidoc
 
 test-e2e-input-data-test-results-asciidoc:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--format asciidoc \
 	--output ./data/input_data/test_results_output.actual.adoc \
 	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template_asciidoc.adoc ./data/input_data/test_results/container_data.yml \
 	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_results_output.actual.adoc ./data/input_data/test_results_output.expected.adoc
 .PHONY: test-e2e-input-data-test-results-asciidoc
 
 test-e2e-input-data-test-results-md:
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--output ./data/input_data/test_results_output.actual.md \
 	--container ./data/input_data/test_results/container_schema.json ./data/input_data/test_results/container_template.j2 ./data/input_data/test_results/container_data.yml \
 	--test-case ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
-	3>log_3.log
+	>log.log 2>&1
+	./tests/not_empty.sh "${PWD}/log.log"
 	diff ./data/input_data/test_results_output.actual.md ./data/input_data/test_results_output.expected.md
 .PHONY: test-e2e-input-data-test-results-md
 
@@ -224,7 +236,7 @@ test-logging-example:
 	@echo "This example demonstrates template loading logging."
 	@echo "Watch stderr for log messages showing absolute template paths."
 	@echo ""
-	./target/release/tpdg \
+	RUST_LOG=debug ./target/release/tpdg \
 	--output ./data/logging_example/output.actual.md \
 	--container ./data/logging_example/container/schema.json ./data/logging_example/container/template.j2 ./data/logging_example/container/data.yml \
 	--test-case ./data/logging_example/verification_methods ./data/logging_example/test_case/analysis_case_01.yml ./data/logging_example/test_case/test_case_01.yml ./data/logging_example/test_case/test_case_02.yml \

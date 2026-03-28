@@ -4,10 +4,11 @@ title: 'Tera filter: include_file for file inclusion with variable interpolation
 status: Done
 assignee: []
 created_date: '2026-03-16 13:12'
-updated_date: '2026-03-23 10:09'
+updated_date: '2026-03-28 06:59'
 labels: []
 milestone: m-0
 dependencies: []
+ordinal: 1000
 ---
 
 ## Description
