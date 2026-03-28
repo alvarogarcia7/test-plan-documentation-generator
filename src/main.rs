@@ -1377,6 +1377,7 @@ fn usage(message: &str, ret_code: i32) -> ! {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use clap::CommandFactory;
 
     #[test]
     fn test_render_simple_template() {
@@ -1426,10 +1427,6 @@ mod tests {
         assert!(result.is_err(), "Should fail for invalid template syntax");
     }
 
-    // CLI Argument Parser Tests - commented out due to Args structure changes
-    // TODO: Update these tests to match new subcommand-based structure
-
-    /*
     #[test]
     fn test_parse_minimal_valid_args() {
         let args = Args::try_parse_from([
@@ -1789,7 +1786,6 @@ mod tests {
 
         assert!(args.is_err());
     }
-    */
 
     #[test]
     fn test_output_format_template_suffix() {
