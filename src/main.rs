@@ -55,16 +55,20 @@ struct Args {
     output: Option<PathBuf>,
 
     /// Container schema file
-    #[arg(long = "container", value_names = ["CONTAINER_SCHEMA", "CONTAINER_TEMPLATE", "CONTAINER_FILE"], num_args = 3, required = true)]
+    #[arg(long = "container", value_names = ["CONTAINER_SCHEMA", "CONTAINER_TEMPLATE", "CONTAINER_FILE"], num_args = 3, required_unless_present = "single")]
     container: Vec<PathBuf>,
 
     /// Test case verification methods directory and files
-    #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required = true)]
+    #[arg(long = "test-case", value_names = ["VERIFICATION_METHODS_DIR", "TEST_CASE_FILE", "REST_TEST_CASE_FILES"], num_args = 2.., required_unless_present = "single")]
     test_case: Vec<PathBuf>,
 
     /// Output format (md or adoc)
     #[arg(long = "format", default_value = "adoc")]
     format: OutputFormat,
+
+    /// Single mode: validate and render a single template
+    #[arg(long = "single", value_names = ["SCHEMA", "TEMPLATE", "INPUT"], num_args = 3)]
+    single: Vec<PathBuf>,
 }
 
 struct ReplaceFilter;
@@ -269,6 +273,132 @@ fn render_template(template_str: &str, context: &tera::Context) -> Result<String
     Ok(rendered)
 }
 
+fn handle_single_mode(
+    schema_path: &Path,
+    template_path: &Path,
+    input_path: &Path,
+    output: Option<&Path>,
+) -> Result<()> {
+    debug!("Running in single mode");
+    debug!("Schema: {}", schema_path.display());
+    debug!("Template: {}", template_path.display());
+    debug!("Input: {}", input_path.display());
+
+    if !schema_path.exists() {
+        let message = format!(
+            "Error: Schema file does not exist: {}",
+            schema_path.display()
+        );
+        error!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
+    if !template_path.exists() {
+        let message = format!(
+            "Error: Template file does not exist: {}",
+            template_path.display()
+        );
+        error!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
+    if !input_path.exists() {
+        let message = format!("Error: Input file does not exist: {}", input_path.display());
+        error!("{}", message);
+        eprintln!("{}", message);
+        exit(2);
+    }
+
+    debug!("Reading input YAML from: {}", input_path.display());
+    let yaml_str = fs::read_to_string(input_path)?;
+    let yaml_data: YamlValue = serde_yaml::from_str(&yaml_str)?;
+
+    let json_value: JsonValue = serde_json::from_str(&serde_json::to_string(&yaml_data)?)?;
+
+    debug!("Validating input file: {}", input_path.display());
+    debug!("\tAgainst schema: {}", schema_path.display());
+    let validation_result: Result<(), Vec<String>> = validate_json_schema(schema_path, &json_value);
+    match validation_result {
+        Ok(_) => {
+            debug!("\tValidation successful.");
+        }
+        Err(errors) => {
+            let message = format!(
+                "Error: Validation failed for file: {}\nAgainst schema: {}",
+                input_path.display(),
+                schema_path.display()
+            );
+            error!("{}", message);
+            eprintln!("{}", message);
+            for error in &errors {
+                let error_msg = format!("  - {}", error);
+                error!("{}", error_msg);
+                eprintln!("{}", error_msg);
+            }
+            exit(3);
+        }
+    }
+
+    let template_extension = template_path
+        .extension()
+        .and_then(|s| s.to_str())
+        .unwrap_or("");
+    let is_adoc = template_extension == "adoc";
+
+    debug!("Loading template from: {}", template_path.display());
+    let absolute_template_path = template_path
+        .canonicalize()
+        .unwrap_or_else(|_| template_path.to_path_buf());
+    eprintln!("Loading template: {}", absolute_template_path.display());
+    let template_str = fs::read_to_string(template_path)?;
+
+    let mut tera = Tera::default();
+    register_custom_filters_and_functions(
+        &mut tera,
+        template_path.parent().map(|p| p.to_path_buf()),
+    );
+
+    let template_name = if is_adoc {
+        "template.adoc"
+    } else {
+        "template.j2"
+    };
+    tera.add_raw_template(template_name, &template_str)?;
+
+    let mut context = Context::new();
+    if let YamlValue::Mapping(map) = yaml_data {
+        for (key, value) in map {
+            if let Some(key_str) = key.as_str() {
+                debug!("\tFound key: {}", key_str);
+                let json_str = serde_json::to_string(&value)?;
+                let json_value: JsonValue = serde_json::from_str(&json_str)?;
+                context.insert(key_str, &json_value);
+            }
+        }
+    }
+
+    debug!("Rendering template...");
+    CONTEXT_HOLDER.with(|holder| {
+        *holder.borrow_mut() = Some(context.clone());
+    });
+    let rendered = tera.render(template_name, &context)?;
+
+    if let Some(output_path) = output {
+        debug!("Writing output to: {}", output_path.display());
+        fs::write(output_path, &rendered)?;
+        eprintln!(
+            "Template rendered successfully to {}",
+            output_path.display()
+        );
+    } else {
+        println!("{}", rendered);
+    }
+
+    Ok(())
+}
+
 fn main() -> Result<()> {
     env_logger::init();
     info!("Starting tpdg");
@@ -279,6 +409,24 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
     debug!("Parsed arguments: {:?}", args);
+
+    if !args.single.is_empty() {
+        if args.single.len() != 3 {
+            usage(
+                "Single mode requires exactly 3 arguments: SCHEMA, TEMPLATE, INPUT",
+                1,
+            )
+        }
+        let schema_path = &args.single[0];
+        let template_path = &args.single[1];
+        let input_path = &args.single[2];
+        return handle_single_mode(
+            schema_path,
+            template_path,
+            input_path,
+            args.output.as_deref(),
+        );
+    }
 
     // Parse container arguments
     let container_schema = &args.container[0];
