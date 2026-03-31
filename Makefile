@@ -345,3 +345,9 @@ verify-e2e-outputs: build
 	@./scripts/verify_e2e_outputs.sh
 .PHONY: verify-e2e-outputs
 
+
+backlog-browser:
+	./node_modules/backlog.md/cli.js browser --port $$((RANDOM%10000+1000))
+.PHONY: backlog-browser
+
+b: backlog-browser
