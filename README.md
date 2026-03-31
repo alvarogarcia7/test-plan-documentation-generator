@@ -12,7 +12,7 @@ The Test Plan Documentation Generator is designed to streamline the creation of 
 - **Supporting** multiple verification methods (test, analysis, demonstration, inspection)
 - **Generating** both Markdown and AsciiDoc output formats
 
-The tool processes container-level data (test plan metadata) and multiple test case files, validating each against their respective schemas before generating the final documentation.
+The tool processes test data files, validating each against their respective schemas before generating the final documentation.
 
 ## Installation
 
@@ -92,31 +92,9 @@ For rendering multiple files where each has a `type` attribute that determines w
 
 Each input file is validated against `<template_dir>/<type>/schema.json` and rendered with `<template_dir>/<type>/template.j2` (or `.adoc`), then all outputs are concatenated.
 
-### Container Aggregation Workflow (Legacy)
+### Chaining Commands for Two-Stage Processing
 
-For full test plan generation with container-level metadata:
-
-```bash
-./target/release/tpdg \
-  --output ./test_plan.adoc \
-  --format adoc \
-  --container ./data/container/schema.json \
-             ./data/container/template_asciidoc.adoc \
-             ./data/container/data.yml \
-  --test-case ./data/verification_methods \
-              ./data/test_case/test1.yml \
-              ./data/test_case/test2.yml
-```
-
-This mode:
-1. Validates each test case against its type-specific schema
-2. Renders test cases using their type-specific templates
-3. Aggregates rendered test cases and requirements
-4. Renders the final output using the container template
-
-### Chaining Commands for Container-Level Aggregation
-
-You can chain the new modes with container processing:
+You can chain modes to build complex documentation workflows:
 
 ```bash
 # Step 1: Generate test cases using multiple-by-type mode
@@ -126,15 +104,16 @@ You can chain the new modes with container processing:
                      ./data/test_case/*.yml \
   --output ./tmp/test_cases.md
 
-# Step 2: Use the generated test cases in a container template
+# Step 2: Use the generated test cases in a wrapper template
+# (Prepare data.yml to include the test cases content)
 ./target/release/tpdg \
-  --single ./data/container/schema.json \
-           ./data/container/template.j2 \
-           ./data/container/data.yml \
+  --single ./data/wrapper/schema.json \
+           ./data/wrapper/template.j2 \
+           ./data/wrapper/data.yml \
   --output ./test_plan.md
 ```
 
-Note: The container template can reference the generated test cases file via the `test_cases_path` variable or by reading the intermediate file.
+Note: The wrapper template can reference the generated test cases by including their content in the data YAML file.
 
 ## CLI Reference
 
@@ -149,14 +128,11 @@ tpdg [OPTIONS] --multiple <SCHEMA> <TEMPLATE> <INPUT_FILES>...
 
 # Multiple-by-type mode
 tpdg [OPTIONS] --multiple-by-type <TYPE_ATTR_PATH> <TEMPLATE_DIR> <INPUT_FILES>...
-
-# Container aggregation mode (legacy)
-tpdg [OPTIONS] --container <FILES> --test-case <FILES>
 ```
 
 ### Operating Modes
 
-The tool has four mutually exclusive operating modes. You must specify exactly one of: `--single`, `--multiple`, `--multiple-by-type`, or both `--container` and `--test-case`.
+The tool has three mutually exclusive operating modes. You must specify exactly one of: `--single`, `--multiple`, or `--multiple-by-type`.
 
 ### Common Options
 
@@ -269,36 +245,6 @@ Validates and renders multiple input files where each file contains a `type` att
     └── template.j2
 ```
 
-### Mode: Container Aggregation (Legacy)
-
-**Synopsis:**
-```bash
-tpdg --container <SCHEMA> <TEMPLATE> <DATA> --test-case <DIR> <FILES>... [OPTIONS]
-```
-
-Full test plan generation with container-level metadata and test case aggregation. This mode combines multiple-by-type processing with a container template wrapper.
-
-**Arguments for `--container`:**
-- `SCHEMA` - JSON schema file for validating the container data
-- `TEMPLATE` - Tera template file for the container
-- `DATA` - YAML data file containing test plan metadata
-
-**Arguments for `--test-case`:**
-- `DIR` - Directory containing verification method subdirectories (test, analysis, demonstration, inspection)
-- `FILES` - One or more YAML test case data files
-
-**Example:**
-```bash
-./target/release/tpdg \
-  --container ./data/container/schema.json \
-              ./data/container/template.j2 \
-              ./data/container/data.yml \
-  --test-case ./data/verification_methods \
-              ./data/test_case/tc001.yml \
-              ./data/test_case/tc002.yml \
-  --output ./test_plan.md
-```
-
 ### Exit Codes
 
 - `0` - Success
@@ -312,39 +258,9 @@ The tool uses the [Tera](https://tera.netlify.app/) templating engine, which pro
 
 ### Template Variables
 
-#### Container Template Variables
+Templates receive all fields from the input YAML file as top-level variables.
 
-Container templates receive:
-
-- All fields from the container data YAML file as top-level variables
-- `test_cases_md` - Rendered markdown/AsciiDoc from all test cases (string)
-- `test_cases_path` - Path to temporary file containing rendered test cases (string)
-- `requirements_summary_md` or `requirements_summary_adoc` - Rendered requirements aggregation (if template exists)
-
-**Example container template:**
-```jinja2
-# {{ title }}
-
-Date: {{ date }}
-Version: {{ version }}
-
-## Test Cases
-
-{{ test_cases_md }}
-
-## Requirements Summary
-
-{{ requirements_summary_md }}
-```
-
-#### Test Case Template Variables
-
-Test case templates receive:
-
-- All fields from the test case YAML file as top-level variables
-- `data` - Complete test case data structure
-
-**Example test case template:**
+**Example template:**
 ```jinja2
 ## Test Case: {{ id | strip }}
 

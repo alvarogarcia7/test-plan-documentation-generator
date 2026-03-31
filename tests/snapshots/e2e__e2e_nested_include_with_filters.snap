@@ -1,8 +1,7 @@
 ---
 source: tests/e2e.rs
-expression: normalize(&output)
+expression: "normalize(&output)"
 ---
-# Report
 ### TC-001
 Formatted: TEST 123 data 456
 Regex:   test 123 data 456

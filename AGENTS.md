@@ -12,7 +12,7 @@ make docker-build            # Build Docker image (REQUIRED)
 
 ## CLI Usage Patterns
 
-The tool has three new primary modes and one legacy mode:
+The tool has three primary modes:
 
 ### Single Mode - Render One Input
 ```bash
@@ -35,17 +35,6 @@ The tool has three new primary modes and one legacy mode:
   --output <OUTPUT> \
   --format {md|adoc}
 ```
-
-### Container Mode (Legacy)
-```bash
-./target/release/tpdg \
-  --container <SCHEMA> <TEMPLATE> <DATA> \
-  --test-case <VERIFICATION_DIR> <TEST_CASE_FILES...> \
-  --output <OUTPUT> \
-  --format {md|adoc}
-```
-
-**Note:** The `--container` and `--test-case` arguments are still supported for backward compatibility but are considered legacy. New workflows should use the new modes and chain commands for container-level aggregation.
 
 ## Validation Requirements
 Before opening a PR, you MUST ensure:
