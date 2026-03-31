@@ -63,7 +63,7 @@ struct Args {
     test_case: Vec<PathBuf>,
 
     /// Output format (md or adoc)
-    #[arg(long = "format", default_value = "adoc")]
+    #[arg(long = "format", default_value = "md")]
     format: OutputFormat,
 
     /// Single mode: validate and render a single template
@@ -1726,7 +1726,7 @@ mod tests {
 
         assert!(args.is_ok());
         let args = args.unwrap();
-        assert!(matches!(args.format, OutputFormat::Asciidoc));
+        assert!(matches!(args.format, OutputFormat::Markdown));
     }
 
     #[test]
