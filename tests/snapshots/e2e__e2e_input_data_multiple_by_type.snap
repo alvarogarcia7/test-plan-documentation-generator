@@ -1,15 +1,7 @@
 ---
 source: tests/e2e.rs
-expression: normalize(&output)
+expression: "normalize(&output)"
 ---
-# Input Data Test Plan
-## Introduction
-### Overview
-This Test Plan provides a comprehensive set of test cases for the input-data verification system. The test cases demonstrate various scenarios including passing verifications, failing verifications, and mixed results to validate the test execution framework.
-2026-03-16
-### Conventions
-The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this document SHALL be interpreted as described in RFC 2119.
-## Test Plan
 ## Test Case: TEST_FAILING_002
 **Requirement**: TEST_REQ_002
 **Item**: 1
@@ -124,4 +116,3 @@ icon type values from a Profile.
 | --------------- | ---------- | ------------------- | --------------------|
 | 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
-(C) Test Plan Generator 2024. All rights reserved.

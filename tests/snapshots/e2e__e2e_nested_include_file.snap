@@ -1,8 +1,7 @@
 ---
 source: tests/e2e.rs
-expression: normalize(&output)
+expression: "normalize(&output)"
 ---
-# Test Report
 ## Test Case: TC-001
 **Nested content for First Test**
 Value: 100
