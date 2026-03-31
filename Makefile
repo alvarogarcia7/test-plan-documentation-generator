@@ -330,8 +330,7 @@ test-logging-example:
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/logging_example/output.actual.md \
-	--container ./data/logging_example/container/schema.json ./data/logging_example/container/template.j2 ./data/logging_example/container/data.yml \
-	--test-case ./data/logging_example/verification_methods ./data/logging_example/test_case/analysis_case_01.yml ./data/logging_example/test_case/test_case_01.yml ./data/logging_example/test_case/test_case_02.yml \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_results/RESULT_TEST_PASSING_001.yml ./data/input_data/test_results/RESULT_TEST_FAILING_002.yml \
 	2>&1 | tee /dev/stderr | grep "Loading"
 	@echo ""
 	@echo "Verifying output matches expected..."

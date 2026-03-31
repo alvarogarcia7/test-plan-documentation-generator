@@ -1,65 +1,111 @@
-# Template Loading Logging Example
+## Test Case: TEST_FAILING_002
 
-Version: 1.0.0
+**Description:** Test case with some failing verifications
 
----
+**Requirement:** TEST_REQ_002
 
-## Template Loading Demonstration
+**Item:** 1
 
-This example demonstrates the template loading logging feature that outputs absolute file paths to stderr when templates are loaded.
+**TC:** 2
 
-The following templates are loaded during the execution of this example:
+**Overall Status:** ✗ FAIL
 
-1. **Verification Method Templates** - Loaded based on the `type` field in test case YAML files
-2. **Requirement Aggregation Template** - Optional template for aggregating requirements
-3. **Container Template** - This template (the main container)
-4. **Include File Templates** - Loaded via `include_file()` function calls
+### Execution Summary
 
-## Test Cases
-
-### Analysis: AN-LOG-001
-
-**Name**: Analysis Case
-
-**Description**: This demonstrates loading a different verification method type
-
-_This is an analysis-type verification method._
-
----
+| Metric | Count |
+|--------|-------|
+| Total Steps | 3 |
+| Passed Steps | 1 |
+| Failed Steps | 2 |
+| Not Executed Steps | 0 |
 
 
-### Test Case: TC-LOG-001
+### Test Sequence 1: Mixed Results Sequence
 
-**Name**: First Test Case
+**Sequence Status:** ✗ FAIL
 
-**Description**: This test case demonstrates verification method template loading
+#### Step-by-Step Results
 
-_This section was loaded via include_file() function._
-
-**Included Template Details:**
-- This demonstrates nested template loading
-- The absolute path of this file is logged to stderr when loaded
-
-
----
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo that passes | ✓ Pass |
+| 2 | Command that should fail | ✗ Fail |
+| 3 | Exit code mismatch | ✗ Fail |
 
 
-### Test Case: TC-LOG-002
 
-**Name**: Second Test Case
+#### Step 2 - Failure Details
 
-**Description**: Another test case showing template loading with include_file
+**Description:** Command that should fail
 
-_This section was loaded via include_file() function._
+**Reason:** Output mismatch: expected 'expected', got 'wrong'
 
-**Included Template Details:**
-- This demonstrates nested template loading
-- The absolute path of this file is logged to stderr when loaded
+| Property | Expected | Actual |
+|----------|----------|--------|
+| Result | 0 | 0 |
+| Output | expected | wrong |
+| Success | true | N/A |
+
+#### Step 3 - Failure Details
+
+**Description:** Exit code mismatch
+
+**Reason:** Success mismatch: expected true, got false
+
+| Property | Expected | Actual |
+|----------|----------|--------|
+| Result | 0 | 1 |
+| Output |  |  |
+| Success | true | N/A |
 
 
----
 
 
----
+## Test Case: TEST_PASSING_001
 
-End of document.
+**Description:** Test case with all passing verifications
+
+**Requirement:** TEST_REQ_001
+
+**Item:** 1
+
+**TC:** 1
+
+**Overall Status:** ✓ PASS
+
+### Execution Summary
+
+| Metric | Count |
+|--------|-------|
+| Total Steps | 3 |
+| Passed Steps | 3 |
+| Failed Steps | 0 |
+| Not Executed Steps | 0 |
+
+
+### Test Sequence 1: Passing Sequence
+
+**Sequence Status:** ✓ PASS
+
+#### Step-by-Step Results
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo hello | ✓ Pass |
+| 2 | True command | ✓ Pass |
+
+
+
+
+### Test Sequence 2: Second Passing Sequence
+
+**Sequence Status:** ✓ PASS
+
+#### Step-by-Step Results
+
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo world | ✓ Pass |
+
+
+
