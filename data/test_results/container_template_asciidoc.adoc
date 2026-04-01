@@ -73,7 +73,7 @@ This document presents the results of test execution for {{ project }}.
 
 = Detailed Test Results
 
-{{ test_cases_md }}
+{{ include_file(path="test_cases.adoc") }}
 
 
 

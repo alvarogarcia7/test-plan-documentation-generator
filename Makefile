@@ -107,6 +107,8 @@ test-e2e-test-plan-asciidoc:
 	--multiple-by-type .type ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
 	>log.log 2>&1
 	./tests/not_empty.sh "${PWD}/log.log"
+	@sed 's/^\(== \(Analysis\|Demonstration\|Inspection\|Test\):\)/\n\n\1/g' .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc | sed '1{/^$$/d;}; 1{/^$$/d;}' > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp
+	@printf '%s\n' "$$(cat .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.tmp)" > .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases_fixed.adoc
 	cp .tmp/tpdg-test-e2e-test-plan-asciidoc/test_cases.adoc ./data/container/
 	cp ./data/container/data.yml .tmp/tpdg-test-e2e-test-plan-asciidoc/data_with_test_cases.yml
 	RUST_LOG=debug ./target/release/tpdg \
@@ -328,8 +330,7 @@ test-logging-example:
 	RUST_LOG=debug ./target/release/tpdg \
 	--format md \
 	--output ./data/logging_example/output.actual.md \
-	--container ./data/logging_example/container/schema.json ./data/logging_example/container/template.j2 ./data/logging_example/container/data.yml \
-	--test-case ./data/logging_example/verification_methods ./data/logging_example/test_case/analysis_case_01.yml ./data/logging_example/test_case/test_case_01.yml ./data/logging_example/test_case/test_case_02.yml \
+	--multiple-by-type .type ./data/input_data/verification_methods ./data/input_data/test_case/TEST_PASSING_001.yml ./data/input_data/test_case/TEST_FAILING_002.yml ./data/input_data/test_case/gsma_4.4.2.2_TC.yml ./data/input_data/test_case/gsma_4.4.2.3_TC.yml \
 	2>&1 | tee /dev/stderr | grep "Loading"
 	@echo ""
 	@echo "Verifying output matches expected..."

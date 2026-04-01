@@ -1,6 +1,6 @@
 ---
 source: tests/e2e.rs
-expression: normalize(&output)
+expression: "normalize(&output)"
 ---
 # TC-NESTED
 Level1: TOP

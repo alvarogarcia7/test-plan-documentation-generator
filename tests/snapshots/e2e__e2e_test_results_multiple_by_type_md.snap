@@ -1,0 +1,67 @@
+---
+source: tests/e2e.rs
+expression: "normalize(&output)"
+---
+## Test Case: TEST_FAILING_002
+**Description:** Test case with some failing verifications
+**Requirement:** TEST_REQ_002
+**Item:** 1
+**TC:** 2
+**Overall Status:** ✗ FAIL
+### Execution Summary
+| Metric | Count |
+|--------|-------|
+| Total Steps | 3 |
+| Passed Steps | 1 |
+| Failed Steps | 2 |
+| Not Executed Steps | 0 |
+### Test Sequence 1: Mixed Results Sequence
+**Sequence Status:** ✗ FAIL
+#### Step-by-Step Results
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo that passes | ✓ Pass |
+| 2 | Command that should fail | ✗ Fail |
+| 3 | Exit code mismatch | ✗ Fail |
+#### Step 2 - Failure Details
+**Description:** Command that should fail
+**Reason:** Output mismatch: expected 'expected', got 'wrong'
+| Property | Expected | Actual |
+|----------|----------|--------|
+| Result | 0 | 0 |
+| Output | expected | wrong |
+| Success | true | N/A |
+#### Step 3 - Failure Details
+**Description:** Exit code mismatch
+**Reason:** Success mismatch: expected true, got false
+| Property | Expected | Actual |
+|----------|----------|--------|
+| Result | 0 | 1 |
+| Output |  |  |
+| Success | true | N/A |
+## Test Case: TEST_PASSING_001
+**Description:** Test case with all passing verifications
+**Requirement:** TEST_REQ_001
+**Item:** 1
+**TC:** 1
+**Overall Status:** ✓ PASS
+### Execution Summary
+| Metric | Count |
+|--------|-------|
+| Total Steps | 3 |
+| Passed Steps | 3 |
+| Failed Steps | 0 |
+| Not Executed Steps | 0 |
+### Test Sequence 1: Passing Sequence
+**Sequence Status:** ✓ PASS
+#### Step-by-Step Results
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo hello | ✓ Pass |
+| 2 | True command | ✓ Pass |
+### Test Sequence 2: Second Passing Sequence
+**Sequence Status:** ✓ PASS
+#### Step-by-Step Results
+| Step | Description | Status |
+|------|-------------|--------|
+| 1 | Echo world | ✓ Pass |

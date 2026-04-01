@@ -40,7 +40,7 @@ The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this do
 
 = Test Plan
 
-{{ test_cases_md }}
+{{ include_file(path="test_cases.adoc") }}
 
 
 <<<
