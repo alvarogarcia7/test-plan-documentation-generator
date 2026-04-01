@@ -1,5 +1,0 @@
-[build]
-rustc-wrapper = "sccache"
-
-[env]
-SCCACHE_DIR = { value = ".sccache/host", relative = true }

@@ -77,7 +77,7 @@ jobs:
     - name: Run E2E test (asciidoc test plan)
       run: |
         ./target/release/tpdg \
-          --format asciidoc \
+          --format adoc \
           --output ./data/test_plan_output.actual.adoc \
           --container ./data/container/schema.json ./data/container/template_asciidoc.adoc ./data/container/data.yml \
           --test-case ./data/verification_methods ./data/test_case/filter_test_01_TC.yml ./data/test_case/filter_test_02_AN.yml ./data/test_case/filter_test_03_IN.yml ./data/test_case/filter_test_04_DM.yml ./data/test_case/gsma_4.4.2.2_TC.yml ./data/test_case/gsma_4.4.2.3_TC.yml ./data/test_case/gsma_4.4.2.4_AN.yml ./data/test_case/gsma_4.4.2.5_DM.yml ./data/test_case/gsma_4.4.2.6_IN.yml \
@@ -87,7 +87,7 @@ jobs:
     - name: Run E2E test (asciidoc test results)
       run: |
         ./target/release/tpdg \
-          --format asciidoc \
+          --format adoc \
           --output ./data/test_results_output.actual.adoc \
           --container ./data/test_results/container_schema.json ./data/test_results/container_template_asciidoc.adoc ./data/test_results/container_data.yml \
           --test-case ./data/verification_methods ./data/test_results/sample_gsma_4.4.2.2_TC.yml ./data/test_results/sample_gsma_4.4.2.3_TC.yml ./data/test_results/sample_gsma_4.4.2.4_AN.yml ./data/test_results/sample_gsma_4.4.2.5_DM.yml ./data/test_results/sample_gsma_4.4.2.6_IN.yml \

@@ -43,4 +43,4 @@
 {% for step in ts.steps -%}
 | {{ step.step }} | {{ step.description | replace(old="MTD_", new="") | strip }} | {{ step.expected.result | strip }} | {{ step.expected.output | strip }} |
 {% endfor %}
-{% endfor %}
+{% endfor -%}

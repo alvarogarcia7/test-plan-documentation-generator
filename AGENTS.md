@@ -10,6 +10,43 @@ make docker-build            # Build Docker image (REQUIRED)
 # No dev server - this is a CLI tool
 ```
 
+## CLI Usage Patterns
+
+The tool has three new primary modes and one legacy mode:
+
+### Single Mode - Render One Input
+```bash
+./target/release/tpdg \
+  --single <SCHEMA> <TEMPLATE> <INPUT> \
+  --output <OUTPUT>
+```
+
+### Multiple Mode - Render Many with Same Schema
+```bash
+./target/release/tpdg \
+  --multiple <SCHEMA> <TEMPLATE> <INPUT1> <INPUT2> ... \
+  --output <OUTPUT>
+```
+
+### Multiple-by-Type Mode - Type-Specific Templates
+```bash
+./target/release/tpdg \
+  --multiple-by-type <TYPE_ATTR_PATH> <TEMPLATE_DIR> <INPUT1> <INPUT2> ... \
+  --output <OUTPUT> \
+  --format {md|adoc}
+```
+
+### Container Mode (Legacy)
+```bash
+./target/release/tpdg \
+  --container <SCHEMA> <TEMPLATE> <DATA> \
+  --test-case <VERIFICATION_DIR> <TEST_CASE_FILES...> \
+  --output <OUTPUT> \
+  --format {md|adoc}
+```
+
+**Note:** The `--container` and `--test-case` arguments are still supported for backward compatibility but are considered legacy. New workflows should use the new modes and chain commands for container-level aggregation.
+
 ## Validation Requirements
 Before opening a PR, you MUST ensure:
 1. `make test` passes - all unit tests and E2E tests must succeed
