@@ -21,7 +21,9 @@ ENV PATH="$HOME/.local/bin:$PATH"
 
 # Copy pyproject.toml, uv.lock and sync dependencies
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+# Pin Python 3.14: requires-python is ">=3.14", so an unpinned sync picks CPython 3.15,
+# which PyO3 0.26 rejects while building native deps such as watchfiles.
+RUN uv sync --frozen --no-dev --python 3.14
 
 # Verify StrictDoc installation
 RUN uv run strictdoc --version

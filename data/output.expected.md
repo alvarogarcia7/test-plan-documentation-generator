@@ -1,3 +1,24 @@
+1 Introduction
+1.1 Overview
+The main aim of the GSMA Remote SIM Provisioning specifications [2] & [3] is to provide
+solution for the Remote SIM Provisioning of Consumer Devices. The adoption of this
+technical solution will provide the basis for global interoperability between different Operator
+deployment scenarios, for example network equipment (e.g. Subscription Manager Data
+Preparation (SM-DP+)) and various eUICC platforms.
+This Test Plan provides a set of test cases to be used for testing the eUICC implementations
+related to the provisioning system specifications documents [2] & [3]. This document offers
+an unified test strategy for checking the eUICC component.
+
+2020-03-16
+
+
+1.6 Conventions
+The key words "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", and "MAY" in this
+document SHALL be interpreted as described in RFC 2119 [20].
+
+# Test Plan
+
+
 ## Analysis: AN.Filter.Test_02: Normalize Multiple Spaces
 
 **Requirement**: REQ-FILTER-002
@@ -61,6 +82,8 @@ Statistical analysis    with   multiple    spaces    between    words   that   s
 - All edge cases must be handled correctly.
 
 - Documentation must have normalized spacing.
+
+
 
 
 
@@ -134,6 +157,8 @@ Statistical analysis and mathematical modeling
 
 
 
+
+
 ## Demonstration: Demo_Filter_Test_04_Prefix_Removal
 
 **Requirement**: REQ-FILTER-004
@@ -174,6 +199,8 @@ Execute   the   demonstration    scenario   with   multiple   spaces    in   pro
 - Output formatting meets quality standards.
 
 - ID prefixes are properly removed.
+
+
 
 
 
@@ -233,6 +260,8 @@ Demonstration of profile download, installation, and lifecycle management operat
 
 
 
+
+
 ## Inspection: IN.Filter.Test.03: Replace & Normalize Special Chars
 
 **Requirement**: REQ-FILTER-003
@@ -275,6 +304,8 @@ Visual inspection of code and documentation with   extra   whitespace   that   n
 - Test identifiers follow naming conventions.
 
 - Documentation formatting is consistent.
+
+
 
 
 
@@ -507,3 +538,8 @@ icon type values from a Profile.
 | 1 | SENDS_SMS_PP([INSTALL_PERSO_RES_ISDP]; STORE_DATA_SCRIPT(#REMOVE_PPR1, FALSE)) | SW=0x91XX | This operation was successful. |
 | 2 | Fetch 'XX' | MTD_CHECK_SMS_POR(0x9000) | This operation was successful. |
 
+
+
+
+
+(C) GSMA 2024. All rights reserved.
