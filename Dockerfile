@@ -67,6 +67,7 @@ COPY src ./src
 COPY tests ./tests
 COPY data ./data
 COPY requirements ./requirements
+COPY scripts ./scripts
 
 RUN mkdir -p ".cargo"; cargo vendor --locked > .cargo/config.toml
 
