@@ -58,6 +58,8 @@ push-image:
   image: docker:27-cli
   needs:
     - test-image
+    - job: build-image
+      artifacts: true
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
     - docker pull ${CI_REGISTRY_IMAGE}:${COMMIT_SHA}
