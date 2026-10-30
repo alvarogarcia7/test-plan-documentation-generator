@@ -98,11 +98,22 @@ ci:
     - cargo fmt -- --check
     - cargo clippy --all-targets --all-features -- -D warnings
     - cargo build --release
-    - cargo test --release --verbose
+    - cargo install cargo2junit --version 0.1.15 --locked --root /usr/local
+    - |
+      set +e
+      RUSTC_BOOTSTRAP=1 cargo test --release -- -Z unstable-options --format json --report-time > test-output.json
+      test_status=$?
+      set -e
+      mkdir -p test-results
+      cargo2junit < test-output.json > test-results/junit.xml
+      exit $test_status
     - strictdoc export requirements/ --output-dir /tmp/strictdoc-validate-output --no-parallelization
   artifacts:
+    when: always
     paths:
       - target/release/tpdg
+    reports:
+      junit: test-results/junit.xml
     expire_in: 1 day
   coverage: '/(\d+\.\d+)% coverage/'
   allow_failure: false
