@@ -1,4 +1,5 @@
 include mk/strictdocs.mk
+include mk/release.mk
 
 init: install-prek-hooks
 .PHONY: init
@@ -34,6 +35,12 @@ help:
 	@echo "  make verify-github-actions - Verify GitHub Actions CI pipeline status"
 	@echo "  make check-gitlab-pipeline - Check GitLab CI pipeline status"
 	@echo "  make verify-e2e-outputs    - Verify E2E test outputs match expected files"
+	@echo ""
+	@echo "Release (see mk/release.mk for RELEASE_* settings):"
+	@echo "  make version-patch   - Bump patch version, commit and tag"
+	@echo "  make version-minor   - Bump minor version, commit and tag"
+	@echo "  make version-major   - Bump major version, commit and tag"
+	@echo "  make release-tag     - Tag the current version without bumping"
 	@echo ""
 	@echo "StrictDoc requirements management:"
 	@echo "  make strictdoc-help  - Show StrictDoc-specific commands"
@@ -312,6 +319,18 @@ verify-github-actions:
 	@chmod +x verify-github-actions.sh
 	@./verify-github-actions.sh unmodified_push_2026-03-12
 .PHONY: verify-github-actions
+
+version-patch:
+	$(call release-run,--bump=patch)
+.PHONY: version-patch
+
+version-minor:
+	$(call release-run,--bump=minor)
+.PHONY: version-minor
+
+version-major:
+	$(call release-run,--bump=major)
+.PHONY: version-major
 
 check-gitlab-pipeline:
 	@chmod +x check-pipeline-status.sh
