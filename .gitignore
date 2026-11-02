@@ -60,3 +60,7 @@ venv/
 
 # uv
 uv.lock
+data/container/test_cases.adoc
+data/input_data/container/test_cases.adoc
+data/input_data/test_results/test_cases.adoc
+data/test_results/test_cases.adoc
